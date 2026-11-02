@@ -44,8 +44,8 @@ function Designer({ data, set, disabled }: { data: Dict; set: (d: Dict) => void;
           <div key={s.id} className="space-y-2 rounded-sm border border-border p-2">
             <div className="flex items-center gap-2"><span className="font-mono text-[10px] text-primary">STEP {String(i + 1).padStart(2, "0")}</span><I className="h-3 w-3 text-muted-foreground" />
               <Input disabled={disabled} value={s.title} onChange={(e) => upd(i, { title: e.target.value })} />
-              {!disabled && <><Btn variant="ghost" onClick={() => i > 0 && put(steps.map((x, j) => (j === i ? steps[i - 1] : j === i - 1 ? s : x)))}><ArrowUp className="h-3 w-3" /></Btn>
-                <Btn variant="ghost" onClick={() => i < steps.length - 1 && put(steps.map((x, j) => (j === i ? steps[i + 1] : j === i + 1 ? s : x)))}><ArrowDown className="h-3 w-3" /></Btn>
+              {!disabled && <><Btn variant="ghost" onClick={() => i > 0 && put(steps.map((x, j) => (j === i ? steps[i - 1]! : j === i - 1 ? s : x)))}><ArrowUp className="h-3 w-3" /></Btn>
+                <Btn variant="ghost" onClick={() => i < steps.length - 1 && put(steps.map((x, j) => (j === i ? steps[i + 1]! : j === i + 1 ? s : x)))}><ArrowDown className="h-3 w-3" /></Btn>
                 <Btn variant="ghost" onClick={() => put(steps.filter((x) => x.id !== s.id))}><Trash2 className="h-3 w-3" /></Btn></>}
             </div>
             <Input disabled={disabled} value={s.instruction} onChange={(e) => upd(i, { instruction: e.target.value })} />

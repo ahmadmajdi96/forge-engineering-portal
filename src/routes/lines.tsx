@@ -21,7 +21,7 @@ function LineEditor({ data, set, disabled }: { data: Dict; set: (d: Dict) => voi
   const ws = entities.filter((e) => e.kind === "workstations");
   const seq = (data.sequence as string[]) ?? [];
   const u = (k: string, v: unknown) => set({ ...data, [k]: v });
-  const move = (i: number, d: number) => { const s = [...seq]; [s[i], s[i + d]] = [s[i + d], s[i]]; u("sequence", s); };
+  const move = (i: number, d: number) => { const s = [...seq]; [s[i], s[i + d]] = [s[i + d]!, s[i]!]; u("sequence", s); };
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-4 gap-2">
