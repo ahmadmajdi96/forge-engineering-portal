@@ -55,7 +55,7 @@ export function EntityModule({ kind, title, subtitle, defaults, editor, group }:
         </aside>
         <main className="overflow-auto p-4">
           {!cur ? <p className="text-xs text-muted-foreground">Select an item.</p> : (
-            <div className="grid gap-3 xl:grid-cols-[1fr_320px]">
+            <div className="grid gap-3 2xl:grid-cols-[1fr_320px]">
               <Panel title={<span className="flex items-center gap-2">{cur.name}<VersionBadge v={cur.version} /><StatusBadge s={cur.status} /></span>}
                 actions={perm.edit ? <>
                   <Btn variant="primary" disabled={!dirty} onClick={() => upsert({ id: cur.id, kind, name, data })}><Save className="h-3 w-3" />{cur.status === "Draft" ? "Save draft" : "Save as new revision"}</Btn>

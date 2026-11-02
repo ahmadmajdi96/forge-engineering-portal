@@ -36,7 +36,7 @@ function Designer({ data, set, disabled }: { data: Dict; set: (d: Dict) => void;
   const [pv, setPv] = useState(0);
   const cur = steps[Math.min(pv, steps.length - 1)];
   return (
-    <div className="grid gap-3 lg:grid-cols-[1fr_260px]">
+    <div className="grid gap-3 2xl:grid-cols-[1fr_260px]">
       <div className="space-y-2">
         {!disabled && <div className="flex flex-wrap gap-1"><span className="mr-1 self-center text-[10px] uppercase text-muted-foreground">Templates:</span>
           {TEMPLATES.map((t) => <Btn key={t.title} onClick={() => put([...steps, { ...t, id: newId() }])}><Plus className="h-3 w-3" />{t.title}</Btn>)}</div>}
@@ -61,7 +61,7 @@ function Designer({ data, set, disabled }: { data: Dict; set: (d: Dict) => void;
       </div>
       <div>
         <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Operator preview</div>
-        <div className="aspect-[9/16] rounded-lg border-4 border-border bg-background p-3 text-xs">
+        <div className="aspect-[9/16] max-w-[260px] rounded-lg border-4 border-border bg-background p-3 text-xs">
           {cur ? (<div className="flex h-full flex-col">
             <div className="font-mono text-[10px] text-muted-foreground">STEP {Math.min(pv, steps.length - 1) + 1} / {steps.length}</div>
             <div className="mt-1 text-sm font-semibold">{cur.title}</div>
