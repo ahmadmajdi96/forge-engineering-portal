@@ -15,19 +15,20 @@ export const checkAccess = createServerFn({ method: "POST" })
     try {
       const url = `${base.replace(/\/$/, "")}/api/public/v1/access?email=${encodeURIComponent(data.email)}`;
       const res = await fetch(url, { headers: { "x-api-key": key } });
-      if (res.status === 404) return { mode: "hub", active: false, roles: [], permissions: [] };
+      if (res.status === 401) return { mode: "error", message: "Command Access Hub rejected this portal's system key." };
       if (!res.ok) return { mode: "error", message: `Access Hub returned ${res.status}` };
-      const j = (await res.json()) as Record<string, unknown>;
-      const u = (j["user"] as Record<string, unknown>) ?? j;
+      const j = (await res.json()) as {
+        active?: boolean; roles?: unknown[]; permissions?: unknown[];
+        user?: { full_name?: string | null } | null;
+      };
       const toStr = (v: unknown) =>
-        Array.isArray(v) ? v.map((x) => (typeof x === "string" ? x : String((x as { name?: string | undefined })?.name ?? x))) : [];
-      const status = String(u["status"] ?? (u["active"] === false ? "inactive" : "active")).toLowerCase();
+        Array.isArray(v) ? v.map((x) => (typeof x === "string" ? x : String((x as { key?: string; name?: string })?.key ?? (x as { name?: string })?.name ?? ""))).filter(Boolean) : [];
       return {
         mode: "hub",
-        active: status === "active",
-        roles: toStr(u["roles"]),
-        permissions: toStr(u["permissions"]),
-        name: typeof u["name"] === "string" ? (u["name"] as string) : undefined,
+        active: j.active === true && !!j.user,
+        roles: toStr(j.roles),
+        permissions: toStr(j.permissions),
+        name: j.user?.full_name ?? undefined,
       };
     } catch (e) {
       return { mode: "error", message: e instanceof Error ? e.message : "Network error" };
