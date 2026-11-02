@@ -49,6 +49,9 @@
   --color-ok: var(--ok);
   --color-warn: var(--warn);
   --color-info: var(--info);
+  --color-success: var(--ok);
+  --color-warning: var(--warn);
+  --font-display: "Space Grotesk", system-ui, sans-serif;
   --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
   --color-chart-1: var(--chart-1);
@@ -67,7 +70,7 @@
 }
 
 :root {
-  --radius: 0.5rem;
+  --radius: 0.75rem;
   --background: oklch(0.97 0.006 240);
   --foreground: oklch(0.2 0.02 245);
   --card: oklch(1 0 0);
@@ -103,6 +106,7 @@
   --sidebar-accent-foreground: oklch(0.2 0.02 245);
   --sidebar-border: oklch(0.87 0.01 240);
   --sidebar-ring: oklch(0.56 0.12 205);
+  --shadow-glow: 0 0 32px -4px oklch(0.56 0.12 205 / 30%);
 }
 
 /* Matches MES Command Center: graphite + cyan + amber */
@@ -142,6 +146,7 @@
   --sidebar-accent-foreground: oklch(0.96 0.01 240);
   --sidebar-border: oklch(0.25 0.02 245 / 60%);
   --sidebar-ring: oklch(0.78 0.16 195);
+  --shadow-glow: 0 0 32px -4px oklch(0.78 0.16 195 / 35%);
 }
 
 @layer base {
@@ -163,3 +168,18 @@
   .dark select, .dark input[type="date"] { color-scheme: dark; }
   input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
 }
+
+@utility glass-panel {
+  background: linear-gradient(180deg, color-mix(in oklab, var(--card) 92%, transparent), color-mix(in oklab, var(--card) 80%, transparent));
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+}
+@utility status-dot {
+  display: inline-block; width: 0.5rem; height: 0.5rem; border-radius: 9999px;
+  background: currentColor; box-shadow: 0 0 8px currentColor;
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 oklch(0.72 0.18 155 / 50%); }
+  50% { box-shadow: 0 0 0 6px oklch(0.72 0.18 155 / 0%); }
+}
+@utility animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }

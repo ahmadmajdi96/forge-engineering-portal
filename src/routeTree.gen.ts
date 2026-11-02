@@ -10,16 +10,23 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as ChangesRouteImport } from './routes/changes'
 import { Route as HmiRouteImport } from './routes/hmi'
 import { Route as LinesRouteImport } from './routes/lines'
 import { Route as MachinesRouteImport } from './routes/machines'
 import { Route as OperatorAppRouteImport } from './routes/operator-app'
+import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as WorkstationsRouteImport } from './routes/workstations'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnalyticsRoute = AnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChangesRoute = ChangesRouteImport.update({
@@ -47,6 +54,11 @@ const OperatorAppRoute = OperatorAppRouteImport.update({
   path: '/operator-app',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReportsRoute = ReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WorkstationsRoute = WorkstationsRouteImport.update({
   id: '/workstations',
   path: '/workstations',
@@ -55,69 +67,83 @@ const WorkstationsRoute = WorkstationsRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
   '/changes': typeof ChangesRoute
   '/hmi': typeof HmiRoute
   '/lines': typeof LinesRoute
   '/machines': typeof MachinesRoute
   '/operator-app': typeof OperatorAppRoute
+  '/reports': typeof ReportsRoute
   '/workstations': typeof WorkstationsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
   '/changes': typeof ChangesRoute
   '/hmi': typeof HmiRoute
   '/lines': typeof LinesRoute
   '/machines': typeof MachinesRoute
   '/operator-app': typeof OperatorAppRoute
+  '/reports': typeof ReportsRoute
   '/workstations': typeof WorkstationsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
   '/changes': typeof ChangesRoute
   '/hmi': typeof HmiRoute
   '/lines': typeof LinesRoute
   '/machines': typeof MachinesRoute
   '/operator-app': typeof OperatorAppRoute
+  '/reports': typeof ReportsRoute
   '/workstations': typeof WorkstationsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/analytics'
     | '/changes'
     | '/hmi'
     | '/lines'
     | '/machines'
     | '/operator-app'
+    | '/reports'
     | '/workstations'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/analytics'
     | '/changes'
     | '/hmi'
     | '/lines'
     | '/machines'
     | '/operator-app'
+    | '/reports'
     | '/workstations'
   id:
     | '__root__'
     | '/'
+    | '/analytics'
     | '/changes'
     | '/hmi'
     | '/lines'
     | '/machines'
     | '/operator-app'
+    | '/reports'
     | '/workstations'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AnalyticsRoute: typeof AnalyticsRoute
   ChangesRoute: typeof ChangesRoute
   HmiRoute: typeof HmiRoute
   LinesRoute: typeof LinesRoute
   MachinesRoute: typeof MachinesRoute
   OperatorAppRoute: typeof OperatorAppRoute
+  ReportsRoute: typeof ReportsRoute
   WorkstationsRoute: typeof WorkstationsRoute
 }
 
@@ -128,6 +154,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analytics': {
+      id: '/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AnalyticsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/changes': {
@@ -165,6 +198,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OperatorAppRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reports': {
+      id: '/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/workstations': {
       id: '/workstations'
       path: '/workstations'
@@ -177,11 +217,13 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AnalyticsRoute: AnalyticsRoute,
   ChangesRoute: ChangesRoute,
   HmiRoute: HmiRoute,
   LinesRoute: LinesRoute,
   MachinesRoute: MachinesRoute,
   OperatorAppRoute: OperatorAppRoute,
+  ReportsRoute: ReportsRoute,
   WorkstationsRoute: WorkstationsRoute,
 }
 export const routeTree = rootRouteImport
