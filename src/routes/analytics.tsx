@@ -15,8 +15,8 @@ export const Route = createFileRoute("/analytics")({
 });
 
 const KINDS = ["lines", "workstations", "machines", "operator-app", "hmi"] as const;
-const STAGE_COLORS = ["var(--muted-foreground)", "var(--warn)", "var(--info)", "var(--ok)"];
-const stageCfg = { Draft: { label: "Draft", color: STAGE_COLORS[0] }, "Under Review": { label: "Under Review", color: STAGE_COLORS[1] }, Approved: { label: "Approved", color: STAGE_COLORS[2] }, Active: { label: "Active", color: STAGE_COLORS[3] } } satisfies ChartConfig;
+const STAGE_COLORS: string[] = ["var(--muted-foreground)", "var(--warn)", "var(--info)", "var(--ok)"];
+const stageCfg = { Draft: { label: "Draft", color: "var(--muted-foreground)" }, "Under Review": { label: "Under Review", color: "var(--warn)" }, Approved: { label: "Approved", color: "var(--info)" }, Active: { label: "Active", color: "var(--ok)" } } satisfies ChartConfig;
 
 function Kpi({ label, value, hint }: { label: string; value: string | number; hint: string }) {
   return (
