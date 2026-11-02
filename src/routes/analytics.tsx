@@ -59,7 +59,7 @@ function Analytics() {
             <ChartContainer config={stageCfg} className="h-64 w-full">
               <BarChart data={byKind}><CartesianGrid vertical={false} strokeOpacity={0.2} /><XAxis dataKey="kind" tickLine={false} axisLine={false} fontSize={11} /><YAxis allowDecimals={false} tickLine={false} axisLine={false} fontSize={11} width={24} />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                {STAGES.map((s) => <Bar key={s} dataKey={s} stackId="a" fill={`var(--color-${s.replace(" ", "\\ ")})`} radius={0} />)}
+                {STAGES.map((s, i) => <Bar key={s} dataKey={s} stackId="a" fill={STAGE_COLORS[i]} />)}
               </BarChart>
             </ChartContainer>
           </CardContent>
