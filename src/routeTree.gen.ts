@@ -10,33 +10,115 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ChangesRouteImport } from './routes/changes'
+import { Route as HmiRouteImport } from './routes/hmi'
+import { Route as LinesRouteImport } from './routes/lines'
+import { Route as MachinesRouteImport } from './routes/machines'
+import { Route as OperatorAppRouteImport } from './routes/operator-app'
+import { Route as WorkstationsRouteImport } from './routes/workstations'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ChangesRoute = ChangesRouteImport.update({
+  id: '/changes',
+  path: '/changes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HmiRoute = HmiRouteImport.update({
+  id: '/hmi',
+  path: '/hmi',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LinesRoute = LinesRouteImport.update({
+  id: '/lines',
+  path: '/lines',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MachinesRoute = MachinesRouteImport.update({
+  id: '/machines',
+  path: '/machines',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperatorAppRoute = OperatorAppRouteImport.update({
+  id: '/operator-app',
+  path: '/operator-app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WorkstationsRoute = WorkstationsRouteImport.update({
+  id: '/workstations',
+  path: '/workstations',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/changes': typeof ChangesRoute
+  '/hmi': typeof HmiRoute
+  '/lines': typeof LinesRoute
+  '/machines': typeof MachinesRoute
+  '/operator-app': typeof OperatorAppRoute
+  '/workstations': typeof WorkstationsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/changes': typeof ChangesRoute
+  '/hmi': typeof HmiRoute
+  '/lines': typeof LinesRoute
+  '/machines': typeof MachinesRoute
+  '/operator-app': typeof OperatorAppRoute
+  '/workstations': typeof WorkstationsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/changes': typeof ChangesRoute
+  '/hmi': typeof HmiRoute
+  '/lines': typeof LinesRoute
+  '/machines': typeof MachinesRoute
+  '/operator-app': typeof OperatorAppRoute
+  '/workstations': typeof WorkstationsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/changes'
+    | '/hmi'
+    | '/lines'
+    | '/machines'
+    | '/operator-app'
+    | '/workstations'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/changes'
+    | '/hmi'
+    | '/lines'
+    | '/machines'
+    | '/operator-app'
+    | '/workstations'
+  id:
+    | '__root__'
+    | '/'
+    | '/changes'
+    | '/hmi'
+    | '/lines'
+    | '/machines'
+    | '/operator-app'
+    | '/workstations'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ChangesRoute: typeof ChangesRoute
+  HmiRoute: typeof HmiRoute
+  LinesRoute: typeof LinesRoute
+  MachinesRoute: typeof MachinesRoute
+  OperatorAppRoute: typeof OperatorAppRoute
+  WorkstationsRoute: typeof WorkstationsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +130,59 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/changes': {
+      id: '/changes'
+      path: '/changes'
+      fullPath: '/changes'
+      preLoaderRoute: typeof ChangesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hmi': {
+      id: '/hmi'
+      path: '/hmi'
+      fullPath: '/hmi'
+      preLoaderRoute: typeof HmiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lines': {
+      id: '/lines'
+      path: '/lines'
+      fullPath: '/lines'
+      preLoaderRoute: typeof LinesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/machines': {
+      id: '/machines'
+      path: '/machines'
+      fullPath: '/machines'
+      preLoaderRoute: typeof MachinesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operator-app': {
+      id: '/operator-app'
+      path: '/operator-app'
+      fullPath: '/operator-app'
+      preLoaderRoute: typeof OperatorAppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/workstations': {
+      id: '/workstations'
+      path: '/workstations'
+      fullPath: '/workstations'
+      preLoaderRoute: typeof WorkstationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ChangesRoute: ChangesRoute,
+  HmiRoute: HmiRoute,
+  LinesRoute: LinesRoute,
+  MachinesRoute: MachinesRoute,
+  OperatorAppRoute: OperatorAppRoute,
+  WorkstationsRoute: WorkstationsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
