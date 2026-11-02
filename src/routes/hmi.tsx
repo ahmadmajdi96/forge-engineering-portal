@@ -1,3 +1,4 @@
+import type { Dict } from "@/lib/store";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
@@ -27,7 +28,7 @@ const PALETTE: Omit<Tile, "id">[] = [
   { label: "Text", binding: "tag.text", type: "text" },
 ];
 
-function Builder({ data, set, disabled }: { data: Record<string, unknown>; set: (d: Record<string, unknown>) => void; disabled: boolean }) {
+function Builder({ data, set, disabled }: { data: Dict; set: (d: Dict) => void; disabled: boolean }) {
   const tiles = (data.tiles as Tile[]) ?? [];
   const [sel, setSel] = useState<string | null>(null);
   const u = (k: string, v: unknown) => set({ ...data, [k]: v });

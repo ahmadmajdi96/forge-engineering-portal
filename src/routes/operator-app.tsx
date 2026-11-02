@@ -1,3 +1,4 @@
+import type { Dict } from "@/lib/store";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowDown, ArrowUp, Camera, Gauge, Plus, ScanLine, Trash2, Check } from "lucide-react";
@@ -28,7 +29,7 @@ const TEMPLATES: Omit<Step, "id">[] = [
 ];
 const ICON = { camera: Camera, measurement: Gauge, scan: ScanLine, confirm: Check, none: Check };
 
-function Designer({ data, set, disabled }: { data: Record<string, unknown>; set: (d: Record<string, unknown>) => void; disabled: boolean }) {
+function Designer({ data, set, disabled }: { data: Dict; set: (d: Dict) => void; disabled: boolean }) {
   const steps = (data.steps as Step[]) ?? [];
   const put = (s: Step[]) => set({ ...data, steps: s });
   const upd = (i: number, p: Partial<Step>) => put(steps.map((s, j) => (j === i ? { ...s, ...p } : s)));

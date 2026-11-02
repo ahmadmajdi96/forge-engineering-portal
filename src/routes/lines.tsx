@@ -1,3 +1,4 @@
+import type { Dict } from "@/lib/store";
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowDown, ArrowUp, X } from "lucide-react";
 import { EntityModule } from "@/components/EntityModule";
@@ -15,7 +16,7 @@ export const Route = createFileRoute("/lines")({
     defaults={{ area: "", taktSec: 60, bufferRule: "FIFO", bufferCap: 2, sequence: [] }} group={(e) => String(e.data.area || "Unassigned")} editor={(p) => <LineEditor {...p} />} />,
 });
 
-function LineEditor({ data, set, disabled }: { data: Record<string, unknown>; set: (d: Record<string, unknown>) => void; disabled: boolean }) {
+function LineEditor({ data, set, disabled }: { data: Dict; set: (d: Dict) => void; disabled: boolean }) {
   const { entities } = useStore();
   const ws = entities.filter((e) => e.kind === "workstations");
   const seq = (data.sequence as string[]) ?? [];

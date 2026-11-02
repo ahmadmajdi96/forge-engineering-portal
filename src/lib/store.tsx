@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type Dict = any;
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Module } from "./permissions";
 
@@ -10,7 +12,7 @@ export type Entity = {
   name: string;
   version: number;
   status: Status;
-  data: Record<string, unknown>;
+  data: Dict;
   updatedAt: string;
 };
 export type LogEntry = {

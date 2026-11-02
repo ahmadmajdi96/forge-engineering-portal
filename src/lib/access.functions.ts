@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 export type AccessResult =
-  | { mode: "hub"; active: boolean; roles: string[]; permissions: string[]; name?: string }
+  | { mode: "hub"; active: boolean; roles: string[]; permissions: string[]; name?: string | undefined }
   | { mode: "unconfigured" }
   | { mode: "error"; message: string };
 
@@ -20,7 +20,7 @@ export const checkAccess = createServerFn({ method: "POST" })
       const j = (await res.json()) as Record<string, unknown>;
       const u = (j["user"] as Record<string, unknown>) ?? j;
       const toStr = (v: unknown) =>
-        Array.isArray(v) ? v.map((x) => (typeof x === "string" ? x : String((x as { name?: string })?.name ?? x))) : [];
+        Array.isArray(v) ? v.map((x) => (typeof x === "string" ? x : String((x as { name?: string | undefined })?.name ?? x))) : [];
       const status = String(u["status"] ?? (u["active"] === false ? "inactive" : "active")).toLowerCase();
       return {
         mode: "hub",

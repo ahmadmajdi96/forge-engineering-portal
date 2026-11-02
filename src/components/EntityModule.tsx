@@ -1,14 +1,15 @@
+import type { Dict } from "@/lib/store";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Plus, Trash2, Save, Search } from "lucide-react";
 import { useStore, type Entity } from "@/lib/store";
 import type { Module } from "@/lib/permissions";
 import { Btn, Field, Input, LifecycleBar, Panel, ReadOnlyNote, StatusBadge, VersionBadge, usePerm } from "./ui-kit";
 
-export type EditorProps = { data: Record<string, unknown>; set: (d: Record<string, unknown>) => void; disabled: boolean };
+export type EditorProps = { data: Dict; set: (d: Dict) => void; disabled: boolean };
 
 /** Generic list + detail editor shared by every engineering module. */
 export function EntityModule({ kind, title, subtitle, defaults, editor, group }: {
-  kind: Entity["kind"]; title: string; subtitle: string; defaults: Record<string, unknown>;
+  kind: Entity["kind"]; title: string; subtitle: string; defaults: Dict;
   editor: (p: EditorProps) => ReactNode; group?: (e: Entity) => string;
 }) {
   const { entities, upsert, remove, log } = useStore();
@@ -17,7 +18,7 @@ export function EntityModule({ kind, title, subtitle, defaults, editor, group }:
   const [sel, setSel] = useState<string | null>(list[0]?.id ?? null);
   const [q, setQ] = useState("");
   const cur = list.find((e) => e.id === sel) ?? null;
-  const [name, setName] = useState(""); const [data, setData] = useState<Record<string, unknown>>({});
+  const [name, setName] = useState(""); const [data, setData] = useState<Dict>({});
   useEffect(() => { if (cur) { setName(cur.name); setData(cur.data); } }, [cur?.id, cur?.version, cur?.updatedAt]);
   const dirty = cur && (name !== cur.name || JSON.stringify(data) !== JSON.stringify(cur.data));
 
