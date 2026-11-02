@@ -12,3 +12,4 @@
 - Access checks go through `checkAccess` server fn calling Command Access Hub with ACCESS_HUB_URL + ACCESS_HUB_API_KEY secrets — the key must never reach the browser.
 - Engineering data currently lives in browser storage via `src/lib/store.tsx`; all modules share the generic `EntityModule` editor with lifecycle + change log.
 - Role→module rules live in `src/lib/permissions.ts` (tested); hub "module:action" permissions override.
+- App chrome (sidebar, top bar, sign-in) lives in src/components/Shell.tsx and mirrors MES Command Center's layout using shadcn ui/sidebar; why: one consistent look across MES apps.
