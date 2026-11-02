@@ -26,7 +26,7 @@ export const Field = ({ label, children }: { label: string; children: ReactNode 
   <label className="block space-y-1"><span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>{children}</label>
 );
 export const Panel = ({ title, actions, children, className }: { title?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string }) => (
-  <section className={cn("rounded-sm border border-border bg-card", className)}>
+  <section className={cn("rounded-sm border border-border bg-card/80 backdrop-blur", className)}>
     {title && <header className="flex h-9 items-center justify-between border-b border-border px-3"><h2 className="text-xs font-semibold uppercase tracking-wider">{title}</h2><div className="flex gap-1.5">{actions}</div></header>}
     <div className="p-3">{children}</div>
   </section>
