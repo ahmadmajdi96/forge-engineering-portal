@@ -4,6 +4,8 @@ import { Field, Input, Select } from "@/components/ui-kit";
 
 export const Route = createFileRoute("/machines")({
   head: () => ({ meta: [
+    { name: "twitter:card", content: "summary" },
+    { property: "og:type", content: "website" },
     { title: "Machines · Engineering Portal" },
     { name: "description", content: "Register machines, telemetry protocols, edge connections and calibration." },
     { property: "og:title", content: "Machines · Engineering Portal" },

@@ -6,6 +6,8 @@ import type { Module } from "@/lib/permissions";
 
 export const Route = createFileRoute("/changes")({
   head: () => ({ meta: [
+    { name: "twitter:card", content: "summary" },
+    { property: "og:type", content: "website" },
     { title: "Change Management · Engineering Portal" },
     { name: "description", content: "Lifecycle board, e-signature approvals and audit log for engineering revisions." },
     { property: "og:title", content: "Change Management · Engineering Portal" },

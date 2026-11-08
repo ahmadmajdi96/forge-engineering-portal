@@ -5,6 +5,8 @@ import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/workstations")({
   head: () => ({ meta: [
+    { name: "twitter:card", content: "summary" },
+    { property: "og:type", content: "website" },
     { title: "Workstations · Engineering Portal" },
     { name: "description", content: "Configure workstations, operating parameters, hardware bindings and line assignment." },
     { property: "og:title", content: "Workstations · Engineering Portal" },
