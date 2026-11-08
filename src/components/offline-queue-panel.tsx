@@ -11,7 +11,7 @@ export function OfflineQueuePanel() {
       <div className="flex items-center justify-between">
         <span className={`flex items-center gap-1.5 font-medium ${online ? "text-success" : "text-warning"}`}>
           {online ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
-          {online ? "Online" : "Offline — records are saved on this device"}
+          {online ? "Online" : "MES not connected — actions are unavailable"}
         </span>
         <span className="text-muted-foreground">
           {pending.length} waiting to send{failed.length ? ` · ${failed.length} need attention` : ""}

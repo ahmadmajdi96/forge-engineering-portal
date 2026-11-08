@@ -885,7 +885,7 @@ function StationCard({
   );
 }
 
-function UploadFileButton({ onUpload, label }: { onUpload: (f: { name: string; size: number; mime?: string | undefined; dataUrl: string }) => void; label?: string }) {
+function UploadFileButton({ onUpload, label }: { onUpload: (f: { name: string; size: number; mime?: string | undefined; dataUrl: string }) => void; label?: string | undefined }) {
   return (
     <label className="inline-flex cursor-pointer items-center gap-1 rounded border border-primary/40 bg-primary/10 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider text-primary hover:bg-primary/20">
       <FileUp className="h-2.5 w-2.5" />

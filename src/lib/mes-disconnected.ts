@@ -6,6 +6,8 @@ export async function refuseMesAction(..._args: unknown[]): Promise<never> {
   throw new Error(MES_CONNECTION_MESSAGE);
 }
 type Row = any;
+export type StationHold = any;
+export type WasteReason = any;
 function emptyRows(key: string) {
   return useQuery<Row[]>({ queryKey: ["mes-disconnected", key], queryFn: async () => [] });
 }

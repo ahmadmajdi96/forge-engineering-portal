@@ -101,7 +101,7 @@ type Actions = {
   /** Attach an output file (base64 dataURL) to a station. Returns the new output id. */
   uploadStationOutput: (
     stationId: string,
-    file: { name: string; size: number; mime?: string; dataUrl: string },
+    file: { name: string; size: number; mime?: string | undefined; dataUrl: string },
   ) => string;
   deleteStationOutput: (id: string) => void;
   /** Bump refreshedAt so subscribed views re-read derived state immediately. */

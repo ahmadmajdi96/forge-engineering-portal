@@ -4,7 +4,7 @@ import { Sparkles, Loader2 } from "lucide-react";
 import { troubleshootIssue } from "@/lib/mes-disconnected";
 
 /** Operator describes an issue in their own words; AI returns causes, checks and next steps. */
-export function TroubleshootPanel(props: { stationId: string; stationName: string; lineName?: string; unitUid?: string | null }) {
+export function TroubleshootPanel(props: { stationId: string; stationName: string; lineName?: string | undefined; unitUid?: string | null }) {
   const run = troubleshootIssue;
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);

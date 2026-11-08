@@ -337,7 +337,7 @@ function StationProfile() {
                 <button
                   onClick={() => {
                     store.sendStationCommand(station.id, "accept", outputs[0]?.id);
-                    toast.success(`ACCEPT sent → ${station.machine.acceptCommand}`);
+                    toast.error("MES is not connected. No command was sent.");
                   }}
                   className="inline-flex items-center gap-1.5 rounded-lg border border-success/40 bg-success/10 px-3 py-1.5 text-xs font-medium text-success hover:bg-success/20"
                 >
@@ -348,7 +348,7 @@ function StationProfile() {
                 <button
                   onClick={() => {
                     store.sendStationCommand(station.id, "reject", outputs[0]?.id);
-                    toast.error(`REJECT sent → ${station.machine.rejectCommand}`);
+                    toast.error("MES is not connected. No command was sent.");
                   }}
                   className="inline-flex items-center gap-1.5 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/20"
                 >
@@ -582,7 +582,7 @@ function TemplatePicker({ assigned, all, onAdd }: { assigned: string[]; all: Ste
   );
 }
 
-function AssignOperatorPicker({ stationId, currentUserId }: { stationId: string; currentUserId?: string }) {
+function AssignOperatorPicker({ stationId, currentUserId }: { stationId: string; currentUserId?: string | undefined }) {
   const store = useMes();
   const [open, setOpen] = useState(false);
   const candidates = store.users.filter((u) => u.role === "operator" || u.role === "team_lead");

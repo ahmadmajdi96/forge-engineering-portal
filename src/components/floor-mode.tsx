@@ -6,7 +6,8 @@ const KEY = "mes-floor-mode";
 
 /** Large-text, high-contrast mode for shop-floor screens viewed from a distance. */
 export function FloorModeToggle() {
-  const [on, setOn] = useState(() => { try { return localStorage.getItem(KEY) === "1"; } catch { return false; } });
+  const [on, setOn] = useState(false);
+  useEffect(() => { try { setOn(localStorage.getItem(KEY) === "1"); } catch {} }, []);
   useEffect(() => {
     document.documentElement.classList.toggle("floor-mode", on);
     try { localStorage.setItem(KEY, on ? "1" : "0"); } catch { /* ignore */ }
