@@ -12,12 +12,18 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as ChangesRouteImport } from './routes/changes'
+import { Route as HmiRouteImport } from './routes/hmi'
 import { Route as HmiLayoutsRouteImport } from './routes/hmi-layouts'
 import { Route as LineEngineeringRouteImport } from './routes/line-engineering'
+import { Route as LinesRouteImport } from './routes/lines'
 import { Route as LiveRouteImport } from './routes/live'
 import { Route as MachinesRouteImport } from './routes/machines'
+import { Route as OperatorRouteImport } from './routes/operator'
 import { Route as OperatorAppRouteImport } from './routes/operator-app'
+import { Route as OperatorAppsRouteImport } from './routes/operator-apps'
+import { Route as ProcedureDesignerRouteImport } from './routes/procedure-designer'
 import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as StationsRouteImport } from './routes/stations'
 import { Route as StepTemplatesRouteImport } from './routes/step-templates'
 import { Route as WorkstationsRouteImport } from './routes/workstations'
 import { Route as HmiIndexRouteImport } from './routes/hmi.index'
@@ -44,6 +50,11 @@ const ChangesRoute = ChangesRouteImport.update({
   path: '/changes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HmiRoute = HmiRouteImport.update({
+  id: '/hmi',
+  path: '/hmi',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HmiLayoutsRoute = HmiLayoutsRouteImport.update({
   id: '/hmi-layouts',
   path: '/hmi-layouts',
@@ -52,6 +63,11 @@ const HmiLayoutsRoute = HmiLayoutsRouteImport.update({
 const LineEngineeringRoute = LineEngineeringRouteImport.update({
   id: '/line-engineering',
   path: '/line-engineering',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LinesRoute = LinesRouteImport.update({
+  id: '/lines',
+  path: '/lines',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LiveRoute = LiveRouteImport.update({
@@ -64,14 +80,34 @@ const MachinesRoute = MachinesRouteImport.update({
   path: '/machines',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OperatorRoute = OperatorRouteImport.update({
+  id: '/operator',
+  path: '/operator',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OperatorAppRoute = OperatorAppRouteImport.update({
   id: '/operator-app',
   path: '/operator-app',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OperatorAppsRoute = OperatorAppsRouteImport.update({
+  id: '/operator-apps',
+  path: '/operator-apps',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProcedureDesignerRoute = ProcedureDesignerRouteImport.update({
+  id: '/procedure-designer',
+  path: '/procedure-designer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ReportsRoute = ReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StationsRoute = StationsRouteImport.update({
+  id: '/stations',
+  path: '/stations',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StepTemplatesRoute = StepTemplatesRouteImport.update({
@@ -85,56 +121,62 @@ const WorkstationsRoute = WorkstationsRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const HmiIndexRoute = HmiIndexRouteImport.update({
-  id: '/hmi/',
-  path: '/hmi/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => HmiRoute,
 } as any)
 const HmiStationIdRoute = HmiStationIdRouteImport.update({
-  id: '/hmi/$stationId',
-  path: '/hmi/$stationId',
-  getParentRoute: () => rootRouteImport,
+  id: '/$stationId',
+  path: '/$stationId',
+  getParentRoute: () => HmiRoute,
 } as any)
 const LinesIndexRoute = LinesIndexRouteImport.update({
-  id: '/lines/',
-  path: '/lines/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => LinesRoute,
 } as any)
 const LinesLineIdRoute = LinesLineIdRouteImport.update({
-  id: '/lines/$lineId',
-  path: '/lines/$lineId',
-  getParentRoute: () => rootRouteImport,
+  id: '/$lineId',
+  path: '/$lineId',
+  getParentRoute: () => LinesRoute,
 } as any)
 const OperatorIndexRoute = OperatorIndexRouteImport.update({
-  id: '/operator/',
-  path: '/operator/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => OperatorRoute,
 } as any)
 const OperatorStationIdRoute = OperatorStationIdRouteImport.update({
-  id: '/operator/$stationId',
-  path: '/operator/$stationId',
-  getParentRoute: () => rootRouteImport,
+  id: '/$stationId',
+  path: '/$stationId',
+  getParentRoute: () => OperatorRoute,
 } as any)
 const StationsIndexRoute = StationsIndexRouteImport.update({
-  id: '/stations/',
-  path: '/stations/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => StationsRoute,
 } as any)
 const StationsStationIdRoute = StationsStationIdRouteImport.update({
-  id: '/stations/$stationId',
-  path: '/stations/$stationId',
-  getParentRoute: () => rootRouteImport,
+  id: '/$stationId',
+  path: '/$stationId',
+  getParentRoute: () => StationsRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/changes': typeof ChangesRoute
+  '/hmi': typeof HmiRouteWithChildren
   '/hmi-layouts': typeof HmiLayoutsRoute
   '/line-engineering': typeof LineEngineeringRoute
+  '/lines': typeof LinesRouteWithChildren
   '/live': typeof LiveRoute
   '/machines': typeof MachinesRoute
+  '/operator': typeof OperatorRouteWithChildren
   '/operator-app': typeof OperatorAppRoute
+  '/operator-apps': typeof OperatorAppsRoute
+  '/procedure-designer': typeof ProcedureDesignerRoute
   '/reports': typeof ReportsRoute
+  '/stations': typeof StationsRouteWithChildren
   '/step-templates': typeof StepTemplatesRoute
   '/workstations': typeof WorkstationsRoute
   '/hmi/$stationId': typeof HmiStationIdRoute
@@ -155,6 +197,8 @@ export interface FileRoutesByTo {
   '/live': typeof LiveRoute
   '/machines': typeof MachinesRoute
   '/operator-app': typeof OperatorAppRoute
+  '/operator-apps': typeof OperatorAppsRoute
+  '/procedure-designer': typeof ProcedureDesignerRoute
   '/reports': typeof ReportsRoute
   '/step-templates': typeof StepTemplatesRoute
   '/workstations': typeof WorkstationsRoute
@@ -172,12 +216,18 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/changes': typeof ChangesRoute
+  '/hmi': typeof HmiRouteWithChildren
   '/hmi-layouts': typeof HmiLayoutsRoute
   '/line-engineering': typeof LineEngineeringRoute
+  '/lines': typeof LinesRouteWithChildren
   '/live': typeof LiveRoute
   '/machines': typeof MachinesRoute
+  '/operator': typeof OperatorRouteWithChildren
   '/operator-app': typeof OperatorAppRoute
+  '/operator-apps': typeof OperatorAppsRoute
+  '/procedure-designer': typeof ProcedureDesignerRoute
   '/reports': typeof ReportsRoute
+  '/stations': typeof StationsRouteWithChildren
   '/step-templates': typeof StepTemplatesRoute
   '/workstations': typeof WorkstationsRoute
   '/hmi/$stationId': typeof HmiStationIdRoute
@@ -195,12 +245,18 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/changes'
+    | '/hmi'
     | '/hmi-layouts'
     | '/line-engineering'
+    | '/lines'
     | '/live'
     | '/machines'
+    | '/operator'
     | '/operator-app'
+    | '/operator-apps'
+    | '/procedure-designer'
     | '/reports'
+    | '/stations'
     | '/step-templates'
     | '/workstations'
     | '/hmi/$stationId'
@@ -221,6 +277,8 @@ export interface FileRouteTypes {
     | '/live'
     | '/machines'
     | '/operator-app'
+    | '/operator-apps'
+    | '/procedure-designer'
     | '/reports'
     | '/step-templates'
     | '/workstations'
@@ -237,12 +295,18 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/changes'
+    | '/hmi'
     | '/hmi-layouts'
     | '/line-engineering'
+    | '/lines'
     | '/live'
     | '/machines'
+    | '/operator'
     | '/operator-app'
+    | '/operator-apps'
+    | '/procedure-designer'
     | '/reports'
+    | '/stations'
     | '/step-templates'
     | '/workstations'
     | '/hmi/$stationId'
@@ -259,22 +323,20 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalyticsRoute: typeof AnalyticsRoute
   ChangesRoute: typeof ChangesRoute
+  HmiRoute: typeof HmiRouteWithChildren
   HmiLayoutsRoute: typeof HmiLayoutsRoute
   LineEngineeringRoute: typeof LineEngineeringRoute
+  LinesRoute: typeof LinesRouteWithChildren
   LiveRoute: typeof LiveRoute
   MachinesRoute: typeof MachinesRoute
+  OperatorRoute: typeof OperatorRouteWithChildren
   OperatorAppRoute: typeof OperatorAppRoute
+  OperatorAppsRoute: typeof OperatorAppsRoute
+  ProcedureDesignerRoute: typeof ProcedureDesignerRoute
   ReportsRoute: typeof ReportsRoute
+  StationsRoute: typeof StationsRouteWithChildren
   StepTemplatesRoute: typeof StepTemplatesRoute
   WorkstationsRoute: typeof WorkstationsRoute
-  HmiStationIdRoute: typeof HmiStationIdRoute
-  LinesLineIdRoute: typeof LinesLineIdRoute
-  OperatorStationIdRoute: typeof OperatorStationIdRoute
-  StationsStationIdRoute: typeof StationsStationIdRoute
-  HmiIndexRoute: typeof HmiIndexRoute
-  LinesIndexRoute: typeof LinesIndexRoute
-  OperatorIndexRoute: typeof OperatorIndexRoute
-  StationsIndexRoute: typeof StationsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -300,6 +362,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChangesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/hmi': {
+      id: '/hmi'
+      path: '/hmi'
+      fullPath: '/hmi'
+      preLoaderRoute: typeof HmiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/hmi-layouts': {
       id: '/hmi-layouts'
       path: '/hmi-layouts'
@@ -312,6 +381,13 @@ declare module '@tanstack/react-router' {
       path: '/line-engineering'
       fullPath: '/line-engineering'
       preLoaderRoute: typeof LineEngineeringRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lines': {
+      id: '/lines'
+      path: '/lines'
+      fullPath: '/lines'
+      preLoaderRoute: typeof LinesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/live': {
@@ -328,6 +404,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MachinesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/operator': {
+      id: '/operator'
+      path: '/operator'
+      fullPath: '/operator'
+      preLoaderRoute: typeof OperatorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/operator-app': {
       id: '/operator-app'
       path: '/operator-app'
@@ -335,11 +418,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OperatorAppRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/operator-apps': {
+      id: '/operator-apps'
+      path: '/operator-apps'
+      fullPath: '/operator-apps'
+      preLoaderRoute: typeof OperatorAppsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/procedure-designer': {
+      id: '/procedure-designer'
+      path: '/procedure-designer'
+      fullPath: '/procedure-designer'
+      preLoaderRoute: typeof ProcedureDesignerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reports': {
       id: '/reports'
       path: '/reports'
       fullPath: '/reports'
       preLoaderRoute: typeof ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stations': {
+      id: '/stations'
+      path: '/stations'
+      fullPath: '/stations'
+      preLoaderRoute: typeof StationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/step-templates': {
@@ -358,83 +462,133 @@ declare module '@tanstack/react-router' {
     }
     '/hmi/': {
       id: '/hmi/'
-      path: '/hmi'
+      path: '/'
       fullPath: '/hmi/'
       preLoaderRoute: typeof HmiIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof HmiRoute
     }
     '/hmi/$stationId': {
       id: '/hmi/$stationId'
-      path: '/hmi/$stationId'
+      path: '/$stationId'
       fullPath: '/hmi/$stationId'
       preLoaderRoute: typeof HmiStationIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof HmiRoute
     }
     '/lines/': {
       id: '/lines/'
-      path: '/lines'
+      path: '/'
       fullPath: '/lines/'
       preLoaderRoute: typeof LinesIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof LinesRoute
     }
     '/lines/$lineId': {
       id: '/lines/$lineId'
-      path: '/lines/$lineId'
+      path: '/$lineId'
       fullPath: '/lines/$lineId'
       preLoaderRoute: typeof LinesLineIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof LinesRoute
     }
     '/operator/': {
       id: '/operator/'
-      path: '/operator'
+      path: '/'
       fullPath: '/operator/'
       preLoaderRoute: typeof OperatorIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof OperatorRoute
     }
     '/operator/$stationId': {
       id: '/operator/$stationId'
-      path: '/operator/$stationId'
+      path: '/$stationId'
       fullPath: '/operator/$stationId'
       preLoaderRoute: typeof OperatorStationIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof OperatorRoute
     }
     '/stations/': {
       id: '/stations/'
-      path: '/stations'
+      path: '/'
       fullPath: '/stations/'
       preLoaderRoute: typeof StationsIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof StationsRoute
     }
     '/stations/$stationId': {
       id: '/stations/$stationId'
-      path: '/stations/$stationId'
+      path: '/$stationId'
       fullPath: '/stations/$stationId'
       preLoaderRoute: typeof StationsStationIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof StationsRoute
     }
   }
 }
+
+interface HmiRouteChildren {
+  HmiStationIdRoute: typeof HmiStationIdRoute
+  HmiIndexRoute: typeof HmiIndexRoute
+}
+
+const HmiRouteChildren: HmiRouteChildren = {
+  HmiStationIdRoute: HmiStationIdRoute,
+  HmiIndexRoute: HmiIndexRoute,
+}
+
+const HmiRouteWithChildren = HmiRoute._addFileChildren(HmiRouteChildren)
+
+interface LinesRouteChildren {
+  LinesLineIdRoute: typeof LinesLineIdRoute
+  LinesIndexRoute: typeof LinesIndexRoute
+}
+
+const LinesRouteChildren: LinesRouteChildren = {
+  LinesLineIdRoute: LinesLineIdRoute,
+  LinesIndexRoute: LinesIndexRoute,
+}
+
+const LinesRouteWithChildren = LinesRoute._addFileChildren(LinesRouteChildren)
+
+interface OperatorRouteChildren {
+  OperatorStationIdRoute: typeof OperatorStationIdRoute
+  OperatorIndexRoute: typeof OperatorIndexRoute
+}
+
+const OperatorRouteChildren: OperatorRouteChildren = {
+  OperatorStationIdRoute: OperatorStationIdRoute,
+  OperatorIndexRoute: OperatorIndexRoute,
+}
+
+const OperatorRouteWithChildren = OperatorRoute._addFileChildren(
+  OperatorRouteChildren,
+)
+
+interface StationsRouteChildren {
+  StationsStationIdRoute: typeof StationsStationIdRoute
+  StationsIndexRoute: typeof StationsIndexRoute
+}
+
+const StationsRouteChildren: StationsRouteChildren = {
+  StationsStationIdRoute: StationsStationIdRoute,
+  StationsIndexRoute: StationsIndexRoute,
+}
+
+const StationsRouteWithChildren = StationsRoute._addFileChildren(
+  StationsRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyticsRoute: AnalyticsRoute,
   ChangesRoute: ChangesRoute,
+  HmiRoute: HmiRouteWithChildren,
   HmiLayoutsRoute: HmiLayoutsRoute,
   LineEngineeringRoute: LineEngineeringRoute,
+  LinesRoute: LinesRouteWithChildren,
   LiveRoute: LiveRoute,
   MachinesRoute: MachinesRoute,
+  OperatorRoute: OperatorRouteWithChildren,
   OperatorAppRoute: OperatorAppRoute,
+  OperatorAppsRoute: OperatorAppsRoute,
+  ProcedureDesignerRoute: ProcedureDesignerRoute,
   ReportsRoute: ReportsRoute,
+  StationsRoute: StationsRouteWithChildren,
   StepTemplatesRoute: StepTemplatesRoute,
   WorkstationsRoute: WorkstationsRoute,
-  HmiStationIdRoute: HmiStationIdRoute,
-  LinesLineIdRoute: LinesLineIdRoute,
-  OperatorStationIdRoute: OperatorStationIdRoute,
-  StationsStationIdRoute: StationsStationIdRoute,
-  HmiIndexRoute: HmiIndexRoute,
-  LinesIndexRoute: LinesIndexRoute,
-  OperatorIndexRoute: OperatorIndexRoute,
-  StationsIndexRoute: StationsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
