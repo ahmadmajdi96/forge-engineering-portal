@@ -6,6 +6,8 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } f
 
 export const Route = createFileRoute("/analytics")({
   head: () => ({ meta: [
+    { name: "twitter:card", content: "summary" },
+    { property: "og:type", content: "website" },
     { title: "Engineering Analytics · Engineering Portal" },
     { name: "description", content: "Lifecycle, revision and approval analytics across lines, workstations, machines and HMI configurations." },
     { property: "og:title", content: "Engineering Analytics · Engineering Portal" },

@@ -4,6 +4,8 @@ import { Panel, StatusBadge, VersionBadge } from "@/components/ui-kit";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [
+    { name: "twitter:card", content: "summary" },
+    { property: "og:type", content: "website" },
     { title: "Overview · Engineering Portal" },
     { name: "description", content: "Asset hierarchy, lifecycle status and pending approvals for MES engineering." },
     { property: "og:title", content: "Overview · Engineering Portal" },

@@ -10,17 +10,22 @@ import {
   SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger,
 } from "@/components/ui/sidebar";
 
-type NavItem = { title: string; url: "/" | "/lines" | "/workstations" | "/machines" | "/operator-app" | "/hmi" | "/changes" | "/analytics" | "/reports"; icon: typeof Boxes };
+type NavItem = { title: string; url: "/" | "/lines" | "/stations" | "/live" | "/operator" | "/operator-apps" | "/step-templates" | "/workstations" | "/machines" | "/operator-app" | "/hmi" | "/changes" | "/analytics" | "/reports"; icon: typeof Boxes };
 const GROUPS: { label: string; items: NavItem[] }[] = [
   { label: "Overview", items: [{ title: "Overview", url: "/", icon: LayoutDashboard }] },
   { label: "Asset Engineering", items: [
     { title: "Production Lines", url: "/lines", icon: Network },
+    { title: "Stations", url: "/stations", icon: Boxes },
     { title: "Workstations", url: "/workstations", icon: Boxes },
     { title: "Machines", url: "/machines", icon: Cpu },
   ] },
   { label: "Process Design", items: [
+    { title: "Live Shopfloor", url: "/live", icon: LayoutDashboard },
+    { title: "Operator Consoles", url: "/operator", icon: ListChecks },
     { title: "Operator App", url: "/operator-app", icon: ListChecks },
+    { title: "Operator Apps", url: "/operator-apps", icon: ListChecks },
     { title: "HMI Runtime", url: "/hmi", icon: LayoutGrid },
+    { title: "Step Templates", url: "/step-templates", icon: ListChecks },
   ] },
   { label: "Governance", items: [
     { title: "Change Management", url: "/changes", icon: GitBranch },
@@ -89,7 +94,7 @@ function SignIn() {
 
 function AppSidebar() {
   const path = useRouterState({ select: (r) => r.location.pathname });
-  const isActive = (url: string) => (url === "/" ? path === "/" : path.startsWith(url));
+  const isActive = (url: string) => path === url || (url !== "/" && path.startsWith(`${url}/`));
   const { session } = useStore();
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
@@ -126,7 +131,7 @@ function AppSidebar() {
             <span className={`status-dot animate-pulse-glow ${session?.source === "hub" ? "text-success" : "text-warning"}`} />
             <span className="font-medium">{session?.source === "hub" ? "Access Hub verified" : "Demo access"}</span>
           </div>
-          <p className="mt-1 text-[10px] text-muted-foreground">Engineering data separated from shop floor</p>
+          <p className="mt-1 text-[10px] text-warning">MES preview · sample data · not connected</p>
         </div>
       </SidebarFooter>
     </Sidebar>
@@ -171,7 +176,7 @@ export function Shell() {
         <AppSidebar />
         <div className="flex min-w-0 flex-1 flex-col">
           <TopBar />
-          <main className="min-h-0 flex-1"><Outlet /></main>
+          <main className="min-h-0 flex-1 p-4 lg:p-6"><Outlet /></main>
         </div>
       </div>
     </SidebarProvider>

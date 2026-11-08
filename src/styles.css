@@ -49,6 +49,7 @@
   --color-ok: var(--ok);
   --color-warn: var(--warn);
   --color-info: var(--info);
+  --color-overlay: var(--overlay);
   --color-success: var(--ok);
   --color-warning: var(--warn);
   --font-display: "Space Grotesk", system-ui, sans-serif;
@@ -70,6 +71,7 @@
 }
 
 :root {
+  --overlay: oklch(0 0 0);
   --radius: 0.75rem;
   --background: oklch(0.97 0.006 240);
   --foreground: oklch(0.2 0.02 245);

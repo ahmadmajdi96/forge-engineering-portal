@@ -11,6 +11,8 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import { StoreProvider } from "@/lib/store";
+import { MesProvider } from "@/lib/mes-store";
+import { Toaster } from "@/components/ui/sonner";
 import { Shell } from "@/components/Shell";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -122,7 +124,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <StoreProvider>
-        <Shell />
+        <MesProvider><Shell /><Toaster /></MesProvider>
       </StoreProvider>
     </QueryClientProvider>
   );

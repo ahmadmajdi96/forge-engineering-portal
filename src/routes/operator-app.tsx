@@ -1,80 +1,45 @@
-import type { Dict } from "@/lib/store";
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { ArrowDown, ArrowUp, Camera, Gauge, Plus, ScanLine, Trash2, Check } from "lucide-react";
-import { EntityModule } from "@/components/EntityModule";
-import { Btn, Field, Input, Select } from "@/components/ui-kit";
-import { newId } from "@/lib/store";
-
-type Step = { id: string; title: string; instruction: string; evidence: "none" | "camera" | "measurement" | "scan" | "confirm"; min?: number; max?: number; unit?: string };
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Hand, Zap, Cpu, ArrowRight } from "lucide-react";
+import { useMes } from "@/lib/mes-store";
 
 export const Route = createFileRoute("/operator-app")({
-  head: () => ({ meta: [
-    { title: "Operator App · Engineering Portal" },
-    { name: "description", content: "Author step templates and procedures with evidence requirements and preview before publishing." },
-    { property: "og:title", content: "Operator App · Engineering Portal" },
-    { property: "og:description", content: "Author step templates and procedures with evidence requirements and preview before publishing." },
-  ] }),
-  component: () => (
-    <EntityModule kind="operator-app" title="Operator App Procedures" subtitle="Step templates, procedure designer, evidence rules and live preview"
-      defaults={{ steps: [] }} editor={(p) => <Designer {...p} />} />
-  ),
+  head: () => ({
+    meta: [
+      { property: "og:title", content: "Operator-App · Engineering Portal" },
+      { property: "og:description", content: "MES Operator configuration and station monitoring in the Engineering Portal." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { title: "Operator-App · Engineering Portal" },
+      { name: "description", content: "Simplified operator sub-apps per station — scan, process, waste, hold." },
+    ],
+  }),
+  component: OperatorIndex,
 });
 
-const TEMPLATES: Omit<Step, "id">[] = [
-  { title: "Scan serial", instruction: "Scan the part label.", evidence: "scan" },
-  { title: "Torque check", instruction: "Fasten and record torque.", evidence: "measurement", min: 0, max: 10, unit: "Nm" },
-  { title: "Photo evidence", instruction: "Capture a photo of the result.", evidence: "camera" },
-  { title: "Visual confirm", instruction: "Confirm the item is OK.", evidence: "confirm" },
-];
-const ICON = { camera: Camera, measurement: Gauge, scan: ScanLine, confirm: Check, none: Check };
-
-function Designer({ data, set, disabled }: { data: Dict; set: (d: Dict) => void; disabled: boolean }) {
-  const steps = (data.steps as Step[]) ?? [];
-  const put = (s: Step[]) => set({ ...data, steps: s });
-  const upd = (i: number, p: Partial<Step>) => put(steps.map((s, j) => (j === i ? { ...s, ...p } : s)));
-  const [pv, setPv] = useState(0);
-  const cur = steps[Math.min(pv, steps.length - 1)];
+function OperatorIndex() {
+  const store = useMes();
   return (
-    <div className="grid gap-3 2xl:grid-cols-[1fr_260px]">
-      <div className="space-y-2">
-        {!disabled && <div className="flex flex-wrap gap-1"><span className="mr-1 self-center text-[10px] uppercase text-muted-foreground">Templates:</span>
-          {TEMPLATES.map((t) => <Btn key={t.title} onClick={() => put([...steps, { ...t, id: newId() }])}><Plus className="h-3 w-3" />{t.title}</Btn>)}</div>}
-        {steps.map((s, i) => { const I = ICON[s.evidence]; return (
-          <div key={s.id} className="space-y-2 rounded-sm border border-border p-2">
-            <div className="flex items-center gap-2"><span className="font-mono text-[10px] text-primary">STEP {String(i + 1).padStart(2, "0")}</span><I className="h-3 w-3 text-muted-foreground" />
-              <Input disabled={disabled} value={s.title} onChange={(e) => upd(i, { title: e.target.value })} />
-              {!disabled && <><Btn variant="ghost" onClick={() => i > 0 && put(steps.map((x, j) => (j === i ? steps[i - 1]! : j === i - 1 ? s : x)))}><ArrowUp className="h-3 w-3" /></Btn>
-                <Btn variant="ghost" onClick={() => i < steps.length - 1 && put(steps.map((x, j) => (j === i ? steps[i + 1]! : j === i + 1 ? s : x)))}><ArrowDown className="h-3 w-3" /></Btn>
-                <Btn variant="ghost" onClick={() => put(steps.filter((x) => x.id !== s.id))}><Trash2 className="h-3 w-3" /></Btn></>}
-            </div>
-            <Input disabled={disabled} value={s.instruction} onChange={(e) => upd(i, { instruction: e.target.value })} />
-            <div className="grid grid-cols-4 gap-2">
-              <Field label="Evidence"><Select disabled={disabled} value={s.evidence} onChange={(e) => upd(i, { evidence: e.target.value as Step["evidence"] })}>{["none", "confirm", "scan", "camera", "measurement"].map((x) => <option key={x}>{x}</option>)}</Select></Field>
-              {s.evidence === "measurement" && <>
-                <Field label="Min"><Input type="number" disabled={disabled} value={s.min ?? 0} onChange={(e) => upd(i, { min: +e.target.value })} /></Field>
-                <Field label="Max"><Input type="number" disabled={disabled} value={s.max ?? 0} onChange={(e) => upd(i, { max: +e.target.value })} /></Field>
-                <Field label="Unit"><Input disabled={disabled} value={s.unit ?? ""} onChange={(e) => upd(i, { unit: e.target.value })} /></Field></>}
-            </div>
-          </div>); })}
-        {steps.length === 0 && <p className="text-xs text-muted-foreground">Add a step from the templates above.</p>}
-      </div>
+    <div className="space-y-4">
       <div>
-        <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Operator preview</div>
-        <div className="aspect-[9/16] max-w-[260px] rounded-lg border-4 border-border bg-background p-3 text-xs">
-          {cur ? (<div className="flex h-full flex-col">
-            <div className="font-mono text-[10px] text-muted-foreground">STEP {Math.min(pv, steps.length - 1) + 1} / {steps.length}</div>
-            <div className="mt-1 text-sm font-semibold">{cur.title}</div>
-            <p className="mt-1 text-muted-foreground">{cur.instruction}</p>
-            <div className="mt-3 flex flex-1 items-center justify-center rounded-sm border border-dashed border-border">
-              {cur.evidence === "camera" && <span className="flex items-center gap-1"><Camera className="h-4 w-4" /> Capture photo</span>}
-              {cur.evidence === "measurement" && <span className="font-mono">{cur.min}–{cur.max} {cur.unit}</span>}
-              {cur.evidence === "scan" && <span className="flex items-center gap-1"><ScanLine className="h-4 w-4" /> Waiting for scan…</span>}
-              {(cur.evidence === "confirm" || cur.evidence === "none") && <span>Tap to confirm</span>}
-            </div>
-            <div className="mt-2 flex gap-1"><Btn className="flex-1 justify-center" onClick={() => setPv(Math.max(0, pv - 1))}>Back</Btn><Btn variant="primary" className="flex-1 justify-center" onClick={() => setPv(Math.min(steps.length - 1, pv + 1))}>Next</Btn></div>
-          </div>) : <p className="text-muted-foreground">No steps.</p>}
-        </div>
+        <h1 className="font-display text-2xl font-semibold tracking-tight">Operator Apps</h1>
+        <p className="text-xs text-muted-foreground">Big-button, scan-first UI for the shop floor. Uses the same recipe / waste / hold engine as the HMI.</p>
+      </div>
+      <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+        {store.stations.map((s) => {
+          const auto = s.type === "automatic";
+          const semi = (s.type as string) === "semi_auto";
+          const Icon = auto ? Cpu : semi ? Zap : Hand;
+          return (
+            <Link key={s.id} to="/operator/$stationId" params={{ stationId: s.id }} className="group flex items-center gap-3 rounded-xl border border-border/60 bg-card/60 p-3 hover:bg-card">
+              <div className="grid h-11 w-11 place-items-center rounded-lg border border-border/40 bg-background/40"><Icon className="h-5 w-5" /></div>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-medium">{s.name}</div>
+                <div className="truncate text-[11px] text-muted-foreground"><span className="font-mono">{s.id}</span> · {semi ? "semi-auto" : s.type}</div>
+              </div>
+              <ArrowRight className="h-4 w-4 opacity-40 transition group-hover:translate-x-0.5 group-hover:opacity-100" />
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

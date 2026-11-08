@@ -9,6 +9,8 @@ import { StatusBadge, VersionBadge, Select } from "@/components/ui-kit";
 
 export const Route = createFileRoute("/reports")({
   head: () => ({ meta: [
+    { name: "twitter:card", content: "summary" },
+    { property: "og:type", content: "website" },
     { title: "Engineering Reports · Engineering Portal" },
     { name: "description", content: "Exportable reports for engineering master data, calibration due dates and signed change history." },
     { property: "og:title", content: "Engineering Reports · Engineering Portal" },
