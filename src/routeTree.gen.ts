@@ -25,6 +25,7 @@ import { Route as ProcedureDesignerRouteImport } from './routes/procedure-design
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as StationsRouteImport } from './routes/stations'
 import { Route as StepTemplatesRouteImport } from './routes/step-templates'
+import { Route as WasteReasonsRouteImport } from './routes/waste-reasons'
 import { Route as WorkstationsRouteImport } from './routes/workstations'
 import { Route as HmiIndexRouteImport } from './routes/hmi.index'
 import { Route as HmiStationIdRouteImport } from './routes/hmi.$stationId'
@@ -34,6 +35,8 @@ import { Route as OperatorIndexRouteImport } from './routes/operator.index'
 import { Route as OperatorStationIdRouteImport } from './routes/operator.$stationId'
 import { Route as StationsIndexRouteImport } from './routes/stations.index'
 import { Route as StationsStationIdRouteImport } from './routes/stations.$stationId'
+import { Route as UnitsUidRouteImport } from './routes/units.$uid'
+import { Route as WorkOrdersWoIdRouteImport } from './routes/work-orders.$woId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -115,6 +118,11 @@ const StepTemplatesRoute = StepTemplatesRouteImport.update({
   path: '/step-templates',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WasteReasonsRoute = WasteReasonsRouteImport.update({
+  id: '/waste-reasons',
+  path: '/waste-reasons',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WorkstationsRoute = WorkstationsRouteImport.update({
   id: '/workstations',
   path: '/workstations',
@@ -160,6 +168,16 @@ const StationsStationIdRoute = StationsStationIdRouteImport.update({
   path: '/$stationId',
   getParentRoute: () => StationsRoute,
 } as any)
+const UnitsUidRoute = UnitsUidRouteImport.update({
+  id: '/units/$uid',
+  path: '/units/$uid',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WorkOrdersWoIdRoute = WorkOrdersWoIdRouteImport.update({
+  id: '/work-orders/$woId',
+  path: '/work-orders/$woId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -178,11 +196,14 @@ export interface FileRoutesByFullPath {
   '/reports': typeof ReportsRoute
   '/stations': typeof StationsRouteWithChildren
   '/step-templates': typeof StepTemplatesRoute
+  '/waste-reasons': typeof WasteReasonsRoute
   '/workstations': typeof WorkstationsRoute
   '/hmi/$stationId': typeof HmiStationIdRoute
   '/lines/$lineId': typeof LinesLineIdRoute
   '/operator/$stationId': typeof OperatorStationIdRoute
   '/stations/$stationId': typeof StationsStationIdRoute
+  '/units/$uid': typeof UnitsUidRoute
+  '/work-orders/$woId': typeof WorkOrdersWoIdRoute
   '/hmi/': typeof HmiIndexRoute
   '/lines/': typeof LinesIndexRoute
   '/operator/': typeof OperatorIndexRoute
@@ -201,11 +222,14 @@ export interface FileRoutesByTo {
   '/procedure-designer': typeof ProcedureDesignerRoute
   '/reports': typeof ReportsRoute
   '/step-templates': typeof StepTemplatesRoute
+  '/waste-reasons': typeof WasteReasonsRoute
   '/workstations': typeof WorkstationsRoute
   '/hmi/$stationId': typeof HmiStationIdRoute
   '/lines/$lineId': typeof LinesLineIdRoute
   '/operator/$stationId': typeof OperatorStationIdRoute
   '/stations/$stationId': typeof StationsStationIdRoute
+  '/units/$uid': typeof UnitsUidRoute
+  '/work-orders/$woId': typeof WorkOrdersWoIdRoute
   '/hmi': typeof HmiIndexRoute
   '/lines': typeof LinesIndexRoute
   '/operator': typeof OperatorIndexRoute
@@ -229,11 +253,14 @@ export interface FileRoutesById {
   '/reports': typeof ReportsRoute
   '/stations': typeof StationsRouteWithChildren
   '/step-templates': typeof StepTemplatesRoute
+  '/waste-reasons': typeof WasteReasonsRoute
   '/workstations': typeof WorkstationsRoute
   '/hmi/$stationId': typeof HmiStationIdRoute
   '/lines/$lineId': typeof LinesLineIdRoute
   '/operator/$stationId': typeof OperatorStationIdRoute
   '/stations/$stationId': typeof StationsStationIdRoute
+  '/units/$uid': typeof UnitsUidRoute
+  '/work-orders/$woId': typeof WorkOrdersWoIdRoute
   '/hmi/': typeof HmiIndexRoute
   '/lines/': typeof LinesIndexRoute
   '/operator/': typeof OperatorIndexRoute
@@ -258,11 +285,14 @@ export interface FileRouteTypes {
     | '/reports'
     | '/stations'
     | '/step-templates'
+    | '/waste-reasons'
     | '/workstations'
     | '/hmi/$stationId'
     | '/lines/$lineId'
     | '/operator/$stationId'
     | '/stations/$stationId'
+    | '/units/$uid'
+    | '/work-orders/$woId'
     | '/hmi/'
     | '/lines/'
     | '/operator/'
@@ -281,11 +311,14 @@ export interface FileRouteTypes {
     | '/procedure-designer'
     | '/reports'
     | '/step-templates'
+    | '/waste-reasons'
     | '/workstations'
     | '/hmi/$stationId'
     | '/lines/$lineId'
     | '/operator/$stationId'
     | '/stations/$stationId'
+    | '/units/$uid'
+    | '/work-orders/$woId'
     | '/hmi'
     | '/lines'
     | '/operator'
@@ -308,11 +341,14 @@ export interface FileRouteTypes {
     | '/reports'
     | '/stations'
     | '/step-templates'
+    | '/waste-reasons'
     | '/workstations'
     | '/hmi/$stationId'
     | '/lines/$lineId'
     | '/operator/$stationId'
     | '/stations/$stationId'
+    | '/units/$uid'
+    | '/work-orders/$woId'
     | '/hmi/'
     | '/lines/'
     | '/operator/'
@@ -336,7 +372,10 @@ export interface RootRouteChildren {
   ReportsRoute: typeof ReportsRoute
   StationsRoute: typeof StationsRouteWithChildren
   StepTemplatesRoute: typeof StepTemplatesRoute
+  WasteReasonsRoute: typeof WasteReasonsRoute
   WorkstationsRoute: typeof WorkstationsRoute
+  UnitsUidRoute: typeof UnitsUidRoute
+  WorkOrdersWoIdRoute: typeof WorkOrdersWoIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -453,6 +492,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StepTemplatesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/waste-reasons': {
+      id: '/waste-reasons'
+      path: '/waste-reasons'
+      fullPath: '/waste-reasons'
+      preLoaderRoute: typeof WasteReasonsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/workstations': {
       id: '/workstations'
       path: '/workstations'
@@ -515,6 +561,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/stations/$stationId'
       preLoaderRoute: typeof StationsStationIdRouteImport
       parentRoute: typeof StationsRoute
+    }
+    '/units/$uid': {
+      id: '/units/$uid'
+      path: '/units/$uid'
+      fullPath: '/units/$uid'
+      preLoaderRoute: typeof UnitsUidRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/work-orders/$woId': {
+      id: '/work-orders/$woId'
+      path: '/work-orders/$woId'
+      fullPath: '/work-orders/$woId'
+      preLoaderRoute: typeof WorkOrdersWoIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -588,7 +648,10 @@ const rootRouteChildren: RootRouteChildren = {
   ReportsRoute: ReportsRoute,
   StationsRoute: StationsRouteWithChildren,
   StepTemplatesRoute: StepTemplatesRoute,
+  WasteReasonsRoute: WasteReasonsRoute,
   WorkstationsRoute: WorkstationsRoute,
+  UnitsUidRoute: UnitsUidRoute,
+  WorkOrdersWoIdRoute: WorkOrdersWoIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
