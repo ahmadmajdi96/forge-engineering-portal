@@ -5,7 +5,7 @@ import { EntityModule } from "@/components/EntityModule";
 import { Btn, Field, Input, Select } from "@/components/ui-kit";
 import { useStore } from "@/lib/store";
 
-export const Route = createFileRoute("/lines")({
+export const Route = createFileRoute("/line-engineering")({
   head: () => ({ meta: [
     { title: "Production Lines · Engineering Portal" },
     { name: "description", content: "Define production lines, workstation sequencing and buffer rules." },

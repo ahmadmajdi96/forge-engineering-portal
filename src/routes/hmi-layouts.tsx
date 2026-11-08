@@ -8,7 +8,7 @@ import { newId } from "@/lib/store";
 
 type Tile = { id: string; label: string; binding: string; type: "kpi" | "button" | "status" | "text" };
 
-export const Route = createFileRoute("/hmi")({
+export const Route = createFileRoute("/hmi-layouts")({
   head: () => ({ meta: [
     { title: "HMI Runtime · Engineering Portal" },
     { name: "description", content: "Build touchscreen HMI layouts with tile bindings, action buttons and display settings." },
