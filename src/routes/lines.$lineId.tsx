@@ -391,12 +391,10 @@ function LineDetailPage() {
                           onAddTemplate={(tid) => store.applyTemplateToStation(s.id, tid)}
                           onRemoveTemplate={(tid) => store.removeTemplateFromStation(s.id, tid)}
                           onSendCommand={(kind, outId) => {
-                            store.sendStationCommand(s.id, kind, outId);
-                            toast.success(`${kind === "accept" ? "ACCEPT" : "REJECT"} sent to ${s.id}`);
+                            toast.error("MES is not connected. This action was not sent or saved.");
                           }}
                           onUploadOutput={(file) => {
-                            store.uploadStationOutput(s.id, file);
-                            toast.success(`Uploaded ${file.name}`);
+                            toast.error("MES is not connected. This action was not sent or saved.");
                           }}
                           onDeleteOutput={(oid) => store.deleteStationOutput(oid)}
                           onLogDowntime={(reason, category, durationMin) => {

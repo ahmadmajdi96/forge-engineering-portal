@@ -322,7 +322,7 @@ function LivePage() {
                                   <div className="flex gap-1">
                                     {s.machine?.acceptCommand && (
                                       <button
-                                        onClick={() => { store.sendStationCommand(s.id, "accept"); toast.success(`ACCEPT → ${s.id}`); }}
+                                        onClick={() => { toast.error("MES is not connected. This action was not sent or saved."); }}
                                         className="flex-1 inline-flex items-center justify-center gap-1 rounded border border-success/40 bg-success/10 px-1 py-0.5 font-mono text-[9px] text-success hover:bg-success/20"
                                       >
                                         <Check className="h-2.5 w-2.5" /> ACCEPT
@@ -330,7 +330,7 @@ function LivePage() {
                                     )}
                                     {s.machine?.rejectCommand && (
                                       <button
-                                        onClick={() => { store.sendStationCommand(s.id, "reject"); toast.error(`REJECT → ${s.id}`); }}
+                                        onClick={() => { toast.error("MES is not connected. This action was not sent or saved."); }}
                                         className="flex-1 inline-flex items-center justify-center gap-1 rounded border border-destructive/40 bg-destructive/10 px-1 py-0.5 font-mono text-[9px] text-destructive hover:bg-destructive/20"
                                       >
                                         <Ban className="h-2.5 w-2.5" /> REJECT
