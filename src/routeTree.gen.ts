@@ -12,12 +12,22 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as ChangesRouteImport } from './routes/changes'
-import { Route as HmiRouteImport } from './routes/hmi'
-import { Route as LinesRouteImport } from './routes/lines'
+import { Route as HmiLayoutsRouteImport } from './routes/hmi-layouts'
+import { Route as LineEngineeringRouteImport } from './routes/line-engineering'
+import { Route as LiveRouteImport } from './routes/live'
 import { Route as MachinesRouteImport } from './routes/machines'
 import { Route as OperatorAppRouteImport } from './routes/operator-app'
 import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as StepTemplatesRouteImport } from './routes/step-templates'
 import { Route as WorkstationsRouteImport } from './routes/workstations'
+import { Route as HmiIndexRouteImport } from './routes/hmi.index'
+import { Route as HmiStationIdRouteImport } from './routes/hmi.$stationId'
+import { Route as LinesIndexRouteImport } from './routes/lines.index'
+import { Route as LinesLineIdRouteImport } from './routes/lines.$lineId'
+import { Route as OperatorIndexRouteImport } from './routes/operator.index'
+import { Route as OperatorStationIdRouteImport } from './routes/operator.$stationId'
+import { Route as StationsIndexRouteImport } from './routes/stations.index'
+import { Route as StationsStationIdRouteImport } from './routes/stations.$stationId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -34,14 +44,19 @@ const ChangesRoute = ChangesRouteImport.update({
   path: '/changes',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HmiRoute = HmiRouteImport.update({
-  id: '/hmi',
-  path: '/hmi',
+const HmiLayoutsRoute = HmiLayoutsRouteImport.update({
+  id: '/hmi-layouts',
+  path: '/hmi-layouts',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LinesRoute = LinesRouteImport.update({
-  id: '/lines',
-  path: '/lines',
+const LineEngineeringRoute = LineEngineeringRouteImport.update({
+  id: '/line-engineering',
+  path: '/line-engineering',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LiveRoute = LiveRouteImport.update({
+  id: '/live',
+  path: '/live',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MachinesRoute = MachinesRouteImport.update({
@@ -59,9 +74,54 @@ const ReportsRoute = ReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StepTemplatesRoute = StepTemplatesRouteImport.update({
+  id: '/step-templates',
+  path: '/step-templates',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WorkstationsRoute = WorkstationsRouteImport.update({
   id: '/workstations',
   path: '/workstations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HmiIndexRoute = HmiIndexRouteImport.update({
+  id: '/hmi/',
+  path: '/hmi/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HmiStationIdRoute = HmiStationIdRouteImport.update({
+  id: '/hmi/$stationId',
+  path: '/hmi/$stationId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LinesIndexRoute = LinesIndexRouteImport.update({
+  id: '/lines/',
+  path: '/lines/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LinesLineIdRoute = LinesLineIdRouteImport.update({
+  id: '/lines/$lineId',
+  path: '/lines/$lineId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperatorIndexRoute = OperatorIndexRouteImport.update({
+  id: '/operator/',
+  path: '/operator/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperatorStationIdRoute = OperatorStationIdRouteImport.update({
+  id: '/operator/$stationId',
+  path: '/operator/$stationId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StationsIndexRoute = StationsIndexRouteImport.update({
+  id: '/stations/',
+  path: '/stations/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StationsStationIdRoute = StationsStationIdRouteImport.update({
+  id: '/stations/$stationId',
+  path: '/stations/$stationId',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -69,35 +129,65 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/changes': typeof ChangesRoute
-  '/hmi': typeof HmiRoute
-  '/lines': typeof LinesRoute
+  '/hmi-layouts': typeof HmiLayoutsRoute
+  '/line-engineering': typeof LineEngineeringRoute
+  '/live': typeof LiveRoute
   '/machines': typeof MachinesRoute
   '/operator-app': typeof OperatorAppRoute
   '/reports': typeof ReportsRoute
+  '/step-templates': typeof StepTemplatesRoute
   '/workstations': typeof WorkstationsRoute
+  '/hmi/$stationId': typeof HmiStationIdRoute
+  '/lines/$lineId': typeof LinesLineIdRoute
+  '/operator/$stationId': typeof OperatorStationIdRoute
+  '/stations/$stationId': typeof StationsStationIdRoute
+  '/hmi/': typeof HmiIndexRoute
+  '/lines/': typeof LinesIndexRoute
+  '/operator/': typeof OperatorIndexRoute
+  '/stations/': typeof StationsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/changes': typeof ChangesRoute
-  '/hmi': typeof HmiRoute
-  '/lines': typeof LinesRoute
+  '/hmi-layouts': typeof HmiLayoutsRoute
+  '/line-engineering': typeof LineEngineeringRoute
+  '/live': typeof LiveRoute
   '/machines': typeof MachinesRoute
   '/operator-app': typeof OperatorAppRoute
   '/reports': typeof ReportsRoute
+  '/step-templates': typeof StepTemplatesRoute
   '/workstations': typeof WorkstationsRoute
+  '/hmi/$stationId': typeof HmiStationIdRoute
+  '/lines/$lineId': typeof LinesLineIdRoute
+  '/operator/$stationId': typeof OperatorStationIdRoute
+  '/stations/$stationId': typeof StationsStationIdRoute
+  '/hmi': typeof HmiIndexRoute
+  '/lines': typeof LinesIndexRoute
+  '/operator': typeof OperatorIndexRoute
+  '/stations': typeof StationsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/changes': typeof ChangesRoute
-  '/hmi': typeof HmiRoute
-  '/lines': typeof LinesRoute
+  '/hmi-layouts': typeof HmiLayoutsRoute
+  '/line-engineering': typeof LineEngineeringRoute
+  '/live': typeof LiveRoute
   '/machines': typeof MachinesRoute
   '/operator-app': typeof OperatorAppRoute
   '/reports': typeof ReportsRoute
+  '/step-templates': typeof StepTemplatesRoute
   '/workstations': typeof WorkstationsRoute
+  '/hmi/$stationId': typeof HmiStationIdRoute
+  '/lines/$lineId': typeof LinesLineIdRoute
+  '/operator/$stationId': typeof OperatorStationIdRoute
+  '/stations/$stationId': typeof StationsStationIdRoute
+  '/hmi/': typeof HmiIndexRoute
+  '/lines/': typeof LinesIndexRoute
+  '/operator/': typeof OperatorIndexRoute
+  '/stations/': typeof StationsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -105,46 +195,86 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/changes'
-    | '/hmi'
-    | '/lines'
+    | '/hmi-layouts'
+    | '/line-engineering'
+    | '/live'
     | '/machines'
     | '/operator-app'
     | '/reports'
+    | '/step-templates'
     | '/workstations'
+    | '/hmi/$stationId'
+    | '/lines/$lineId'
+    | '/operator/$stationId'
+    | '/stations/$stationId'
+    | '/hmi/'
+    | '/lines/'
+    | '/operator/'
+    | '/stations/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/analytics'
     | '/changes'
-    | '/hmi'
-    | '/lines'
+    | '/hmi-layouts'
+    | '/line-engineering'
+    | '/live'
     | '/machines'
     | '/operator-app'
     | '/reports'
+    | '/step-templates'
     | '/workstations'
+    | '/hmi/$stationId'
+    | '/lines/$lineId'
+    | '/operator/$stationId'
+    | '/stations/$stationId'
+    | '/hmi'
+    | '/lines'
+    | '/operator'
+    | '/stations'
   id:
     | '__root__'
     | '/'
     | '/analytics'
     | '/changes'
-    | '/hmi'
-    | '/lines'
+    | '/hmi-layouts'
+    | '/line-engineering'
+    | '/live'
     | '/machines'
     | '/operator-app'
     | '/reports'
+    | '/step-templates'
     | '/workstations'
+    | '/hmi/$stationId'
+    | '/lines/$lineId'
+    | '/operator/$stationId'
+    | '/stations/$stationId'
+    | '/hmi/'
+    | '/lines/'
+    | '/operator/'
+    | '/stations/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalyticsRoute: typeof AnalyticsRoute
   ChangesRoute: typeof ChangesRoute
-  HmiRoute: typeof HmiRoute
-  LinesRoute: typeof LinesRoute
+  HmiLayoutsRoute: typeof HmiLayoutsRoute
+  LineEngineeringRoute: typeof LineEngineeringRoute
+  LiveRoute: typeof LiveRoute
   MachinesRoute: typeof MachinesRoute
   OperatorAppRoute: typeof OperatorAppRoute
   ReportsRoute: typeof ReportsRoute
+  StepTemplatesRoute: typeof StepTemplatesRoute
   WorkstationsRoute: typeof WorkstationsRoute
+  HmiStationIdRoute: typeof HmiStationIdRoute
+  LinesLineIdRoute: typeof LinesLineIdRoute
+  OperatorStationIdRoute: typeof OperatorStationIdRoute
+  StationsStationIdRoute: typeof StationsStationIdRoute
+  HmiIndexRoute: typeof HmiIndexRoute
+  LinesIndexRoute: typeof LinesIndexRoute
+  OperatorIndexRoute: typeof OperatorIndexRoute
+  StationsIndexRoute: typeof StationsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -170,18 +300,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChangesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/hmi': {
-      id: '/hmi'
-      path: '/hmi'
-      fullPath: '/hmi'
-      preLoaderRoute: typeof HmiRouteImport
+    '/hmi-layouts': {
+      id: '/hmi-layouts'
+      path: '/hmi-layouts'
+      fullPath: '/hmi-layouts'
+      preLoaderRoute: typeof HmiLayoutsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lines': {
-      id: '/lines'
-      path: '/lines'
-      fullPath: '/lines'
-      preLoaderRoute: typeof LinesRouteImport
+    '/line-engineering': {
+      id: '/line-engineering'
+      path: '/line-engineering'
+      fullPath: '/line-engineering'
+      preLoaderRoute: typeof LineEngineeringRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/live': {
+      id: '/live'
+      path: '/live'
+      fullPath: '/live'
+      preLoaderRoute: typeof LiveRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/machines': {
@@ -205,11 +342,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/step-templates': {
+      id: '/step-templates'
+      path: '/step-templates'
+      fullPath: '/step-templates'
+      preLoaderRoute: typeof StepTemplatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/workstations': {
       id: '/workstations'
       path: '/workstations'
       fullPath: '/workstations'
       preLoaderRoute: typeof WorkstationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hmi/': {
+      id: '/hmi/'
+      path: '/hmi'
+      fullPath: '/hmi/'
+      preLoaderRoute: typeof HmiIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hmi/$stationId': {
+      id: '/hmi/$stationId'
+      path: '/hmi/$stationId'
+      fullPath: '/hmi/$stationId'
+      preLoaderRoute: typeof HmiStationIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lines/': {
+      id: '/lines/'
+      path: '/lines'
+      fullPath: '/lines/'
+      preLoaderRoute: typeof LinesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lines/$lineId': {
+      id: '/lines/$lineId'
+      path: '/lines/$lineId'
+      fullPath: '/lines/$lineId'
+      preLoaderRoute: typeof LinesLineIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operator/': {
+      id: '/operator/'
+      path: '/operator'
+      fullPath: '/operator/'
+      preLoaderRoute: typeof OperatorIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operator/$stationId': {
+      id: '/operator/$stationId'
+      path: '/operator/$stationId'
+      fullPath: '/operator/$stationId'
+      preLoaderRoute: typeof OperatorStationIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stations/': {
+      id: '/stations/'
+      path: '/stations'
+      fullPath: '/stations/'
+      preLoaderRoute: typeof StationsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stations/$stationId': {
+      id: '/stations/$stationId'
+      path: '/stations/$stationId'
+      fullPath: '/stations/$stationId'
+      preLoaderRoute: typeof StationsStationIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -219,12 +419,22 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyticsRoute: AnalyticsRoute,
   ChangesRoute: ChangesRoute,
-  HmiRoute: HmiRoute,
-  LinesRoute: LinesRoute,
+  HmiLayoutsRoute: HmiLayoutsRoute,
+  LineEngineeringRoute: LineEngineeringRoute,
+  LiveRoute: LiveRoute,
   MachinesRoute: MachinesRoute,
   OperatorAppRoute: OperatorAppRoute,
   ReportsRoute: ReportsRoute,
+  StepTemplatesRoute: StepTemplatesRoute,
   WorkstationsRoute: WorkstationsRoute,
+  HmiStationIdRoute: HmiStationIdRoute,
+  LinesLineIdRoute: LinesLineIdRoute,
+  OperatorStationIdRoute: OperatorStationIdRoute,
+  StationsStationIdRoute: StationsStationIdRoute,
+  HmiIndexRoute: HmiIndexRoute,
+  LinesIndexRoute: LinesIndexRoute,
+  OperatorIndexRoute: OperatorIndexRoute,
+  StationsIndexRoute: StationsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
