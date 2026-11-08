@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-function relTime(iso?: string, now = Date.now()) {
+function relTime(iso?: string | undefined, now = Date.now()) {
   if (!iso) return "—";
   const t = new Date(iso).getTime();
   const s = Math.max(0, Math.round((now - t) / 1000));
@@ -270,7 +270,7 @@ function LivePage() {
                           : s.status === "maintenance" ? "border-warning/40"
                           : "border-border/60";
                         const lastCmd = store.commands.find((c) => c.stationId === s.id);
-                        const hasCommands = s.machine && s.machine.outputKind && s.machine.outputKind !== "none";
+                        const hasCommands = s.machine && s.machine?.outputKind && s.machine?.outputKind !== "none";
                         return (
                           <div key={s.id} className="flex items-stretch gap-1">
                             <div className={`flex w-56 shrink-0 flex-col rounded-lg border bg-card/60 transition hover:border-primary/50 ${ring}`}>
@@ -320,17 +320,17 @@ function LivePage() {
                               {hasCommands && (
                                 <div className="border-t border-border/40 p-1.5">
                                   <div className="flex gap-1">
-                                    {s.machine.acceptCommand && (
+                                    {s.machine?.acceptCommand && (
                                       <button
-                                        onClick={() => { store.sendStationCommand(s.id, "accept"); toast.success(`ACCEPT → ${s.id}`); }}
+                                        onClick={() => { toast.error("MES is not connected. This action was not sent or saved."); }}
                                         className="flex-1 inline-flex items-center justify-center gap-1 rounded border border-success/40 bg-success/10 px-1 py-0.5 font-mono text-[9px] text-success hover:bg-success/20"
                                       >
                                         <Check className="h-2.5 w-2.5" /> ACCEPT
                                       </button>
                                     )}
-                                    {s.machine.rejectCommand && (
+                                    {s.machine?.rejectCommand && (
                                       <button
-                                        onClick={() => { store.sendStationCommand(s.id, "reject"); toast.error(`REJECT → ${s.id}`); }}
+                                        onClick={() => { toast.error("MES is not connected. This action was not sent or saved."); }}
                                         className="flex-1 inline-flex items-center justify-center gap-1 rounded border border-destructive/40 bg-destructive/10 px-1 py-0.5 font-mono text-[9px] text-destructive hover:bg-destructive/20"
                                       >
                                         <Ban className="h-2.5 w-2.5" /> REJECT

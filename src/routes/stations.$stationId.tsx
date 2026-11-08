@@ -336,8 +336,7 @@ function StationProfile() {
               {station.machine.acceptCommand && (
                 <button
                   onClick={() => {
-                    store.sendStationCommand(station.id, "accept", outputs[0]?.id);
-                    toast.success(`ACCEPT sent → ${station.machine.acceptCommand}`);
+                    toast.error("MES is not connected. This action was not sent or saved.");
                   }}
                   className="inline-flex items-center gap-1.5 rounded-lg border border-success/40 bg-success/10 px-3 py-1.5 text-xs font-medium text-success hover:bg-success/20"
                 >
@@ -347,8 +346,7 @@ function StationProfile() {
               {station.machine.rejectCommand && (
                 <button
                   onClick={() => {
-                    store.sendStationCommand(station.id, "reject", outputs[0]?.id);
-                    toast.error(`REJECT sent → ${station.machine.rejectCommand}`);
+                    toast.error("MES is not connected. This action was not sent or saved.");
                   }}
                   className="inline-flex items-center gap-1.5 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/20"
                 >
@@ -395,7 +393,7 @@ function StationProfile() {
                 <span className="ml-1 font-mono text-muted-foreground">pattern: {station.machine.outputLabel}</span>
               )}
             </div>
-            <UploadOutputButton onUpload={(f) => { store.uploadStationOutput(station.id, f); toast.success(`Uploaded ${f.name}`); }} />
+            <UploadOutputButton onUpload={(f) => { toast.error("MES is not connected. This action was not sent or saved."); }} />
           </div>
 
           {outputs.length === 0 ? (
@@ -457,7 +455,7 @@ function StationProfile() {
                           <a href={o.dataUrl} download={o.name} className="grid h-6 w-6 place-items-center rounded-md border border-border/60 bg-card/60 hover:text-primary" title="Download">
                             <span className="text-[10px]">↓</span>
                           </a>
-                          <button onClick={() => { store.deleteStationOutput(o.id); toast.success("Removed"); }} className="grid h-6 w-6 place-items-center rounded-md border border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/20" title="Delete">
+                          <button onClick={() => { toast.error("MES is not connected. This action was not sent or saved."); }} className="grid h-6 w-6 place-items-center rounded-md border border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/20" title="Delete">
                             <X className="h-3 w-3" />
                           </button>
                         </div>
@@ -582,7 +580,7 @@ function TemplatePicker({ assigned, all, onAdd }: { assigned: string[]; all: Ste
   );
 }
 
-function AssignOperatorPicker({ stationId, currentUserId }: { stationId: string; currentUserId?: string }) {
+function AssignOperatorPicker({ stationId, currentUserId }: { stationId: string; currentUserId?: string | undefined }) {
   const store = useMes();
   const [open, setOpen] = useState(false);
   const candidates = store.users.filter((u) => u.role === "operator" || u.role === "team_lead");

@@ -9,9 +9,8 @@ const KEY = "mes-active-operator";
 export type ActiveOperator = { id: string; name: string };
 
 export function useActiveOperator(): [ActiveOperator | null, (o: ActiveOperator | null) => void] {
-  const [op, setOp] = useState<ActiveOperator | null>(() => {
-    try { const raw = localStorage.getItem(KEY); return raw ? JSON.parse(raw) : null; } catch { return null; }
-  });
+  const [op, setOp] = useState<ActiveOperator | null>(null);
+  useEffect(() => { try { const raw = localStorage.getItem(KEY); if (raw) setOp(JSON.parse(raw)); } catch {} }, []);
   const set = (o: ActiveOperator | null) => {
     setOp(o);
     try { o ? localStorage.setItem(KEY, JSON.stringify(o)) : localStorage.removeItem(KEY); } catch { /* ignore */ }
