@@ -185,3 +185,12 @@
   50% { box-shadow: 0 0 0 6px oklch(0.72 0.18 155 / 0%); }
 }
 @utility animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+.floor-mode body { font-size: 18px; }
+.floor-mode .text-xs, .floor-mode .text-\[10px\], .floor-mode .text-\[11px\] { font-size: 15px; }
+.floor-mode .text-sm { font-size: 17px; }
+.floor-mode button, .floor-mode select, .floor-mode input { min-height: 44px; }
+.floor-mode h1 { font-size: 2rem; }
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-glow { animation: none; }
+}
