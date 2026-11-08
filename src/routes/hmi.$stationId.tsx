@@ -454,7 +454,7 @@ function HoldPanel({
       <div className="mt-4">
         <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Open holds · {openHolds.length}</div>
         {openHolds.length === 0 ? (
-          <div className="mt-1 text-xs text-muted-foreground">None. Station clear.</div>
+          <div className="mt-1 text-xs text-muted-foreground">MES is not connected. Hold status is unavailable.</div>
         ) : (
           <div className="mt-1 space-y-2">
             {openHolds.map((h) => (
