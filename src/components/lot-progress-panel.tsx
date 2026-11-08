@@ -86,8 +86,8 @@ export function LotProgressPanel({
 
   const qc = useQueryClient();
   function submit() {
-    if (!effBatch) return toast.error("Pick a batch");
-    if (!effStation) return toast.error("Pick a station");
+    if (!effBatch) { toast.error("Pick a batch"); return; }
+    if (!effStation) { toast.error("Pick a station"); return; }
     const payload = {
         batch_id: effBatch,
         station_id: effStation,
@@ -130,7 +130,7 @@ export function LotProgressPanel({
               className="mt-1 h-9 w-full rounded-lg border border-border/60 bg-card/60 px-2 text-sm"
             >
               <option value="">— select batch —</option>
-              {batches.map((b) => (
+              {batches.map((b: any) => (
                 <option key={b.id} value={b.id}>
                   {b.number} · {b.lot_number} ({Number(b.qty)} {b.uom})
                 </option>
@@ -147,7 +147,7 @@ export function LotProgressPanel({
               className="mt-1 h-9 w-full rounded-lg border border-border/60 bg-card/60 px-2 text-sm"
             >
               <option value="">— select station —</option>
-              {stations.map((s) => (
+              {stations.map((s: any) => (
                 <option key={s.id} value={s.id}>
                   {s.id} · {s.name}
                 </option>

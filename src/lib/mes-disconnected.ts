@@ -5,7 +5,7 @@ export const MES_CONNECTION_MESSAGE = "MES is not connected. This action was not
 export async function refuseMesAction(..._args: unknown[]): Promise<never> {
   throw new Error(MES_CONNECTION_MESSAGE);
 }
-type Row = Record<string, any>;
+type Row = any;
 function emptyRows(key: string) {
   return useQuery<Row[]>({ queryKey: ["mes-disconnected", key], queryFn: async () => [] });
 }

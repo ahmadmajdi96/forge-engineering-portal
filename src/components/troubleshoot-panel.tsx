@@ -15,7 +15,7 @@ export function TroubleshootPanel(props: { stationId: string; stationName: strin
     setBusy(true); setError(null); setAnswer("");
     try {
       const r = await run({ data: { description: text, station_id: props.stationId, station_name: props.stationName, line_name: props.lineName, unit_uid: props.unitUid } });
-      if (r.error) setError(r.error); else setAnswer(r.guidance);
+      if (r.error) setError(r.error); else setAnswer(r.guidance ?? "");
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally { setBusy(false); }

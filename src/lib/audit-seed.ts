@@ -22,7 +22,11 @@ function mulberry32(seed: number) {
 }
 
 const rand = mulberry32(20260408);
-const pick = <T,>(arr: readonly T[]): T => arr[Math.floor(rand() * arr.length)];
+const pick = <T,>(arr: readonly T[] | undefined): T => {
+  const value = arr?.[Math.floor(rand() * arr.length)];
+  if (value === undefined) throw new Error("Missing sample data");
+  return value;
+};
 const chance = (p: number) => rand() < p;
 const intBetween = (a: number, b: number) => a + Math.floor(rand() * (b - a + 1));
 
@@ -174,7 +178,7 @@ function generate(): AuditEntry[] {
         const win = shiftWindow[shift];
         const ops = operatorsByShift[shift];
         if (ops.length === 0) continue;
-        const lead = ops.find((o) => o.role === "team_lead") ?? ops[0];
+        const lead = ops.find((o) => o.role === "team_lead") ?? pick(ops);
         const operator = pick(ops);
         const sup = pick(supervisors);
 

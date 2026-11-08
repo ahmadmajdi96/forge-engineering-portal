@@ -35,11 +35,11 @@ export function OperatorSwitch() {
   const [busy, setBusy] = useState(false);
 
   const switchTo = async () => {
-    if (!pick || !pin) return toast.error("Pick a person and enter their PIN");
+    if (!pick || !pin) { toast.error("Pick a person and enter their PIN"); return; }
     setBusy(true);
     try {
       const r = await verifyOperatorPin({ data: { user_id: pick, pin } });
-      if (!r.ok) return toast.error(r.error ?? "Wrong PIN");
+      if (!r.ok) { toast.error(r.error ?? "Wrong PIN"); return; }
       setOp({ id: pick, name: r.name ?? "Operator" });
       toast.success(`Now working as ${r.name}`);
       setOpen(false); setPin(""); setPick("");

@@ -118,7 +118,7 @@ function nextId(prefix: string, list: { id: string }[]) {
   const nums = list
     .map((x) => {
       const m = x.id.match(/(\d+)(?!.*\d)/);
-      return m ? parseInt(m[1], 10) : 0;
+      return m ? parseInt(m[1] ?? "0", 10) : 0;
     })
     .filter((n) => !isNaN(n));
   const max = nums.length ? Math.max(...nums) : 0;
@@ -150,14 +150,15 @@ function jitterNumeric(s: string | undefined, pct = 0.02): string | undefined {
   if (!s) return s;
   const m = s.match(/^([\d.]+)(.*)$/);
   if (!m) return s;
-  const n = parseFloat(m[1]);
+  const n = parseFloat(m[1] ?? "0");
   if (!isFinite(n)) return s;
   const delta = n * pct * (Math.random() - 0.5) * 2;
   const next = Math.round((n + delta) * 100) / 100;
   return `${next}${m[2]}`;
 }
 
-export function MesStoreProvider({ children }: { children: ReactNode }) {
+export function MesProvider({ children }: { children: ReactNode }) {
+  const { session } = useStore();
   const [state, setState] = useState<State>(() => ({
     workOrders: seedWO,
     downtime: seedDT,
@@ -433,13 +434,16 @@ export function MesStoreProvider({ children }: { children: ReactNode }) {
       state.stations.forEach((x, i) => {
         if (x.lineId === st.lineId && x.sequence === st.sequence) siblingIdx.push(i);
       });
-      const currentPos = siblingIdx.findIndex((i) => state.stations[i].id === id);
+      const currentPos = siblingIdx.findIndex((i) => state.stations[i]?.id === id);
       const targetPos = direction === "up" ? currentPos - 1 : currentPos + 1;
       if (targetPos < 0 || targetPos >= siblingIdx.length) return;
       const a = siblingIdx[currentPos];
       const b = siblingIdx[targetPos];
       const nextArr = state.stations.slice();
-      [nextArr[a], nextArr[b]] = [nextArr[b], nextArr[a]];
+      if (a === undefined || b === undefined) return;
+      const first = nextArr[a]; const second = nextArr[b];
+      if (!first || !second) return;
+      nextArr[a] = second; nextArr[b] = first;
       setState((s) => ({ ...s, stations: nextArr }));
       audit("station", id, "update", { order: currentPos }, { order: targetPos },
         `Reordered ${id} ${direction} within step ${st.sequence}`);

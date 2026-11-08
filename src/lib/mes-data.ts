@@ -10,8 +10,8 @@ export interface ProductionLine {
   availability: number;
   performance: number;
   quality: number;
-  currentWorkOrder?: string;
-  product?: string;
+  currentWorkOrder?: string | undefined;
+  product?: string | undefined;
   output: number;
   target: number;
   uptime: string;
@@ -41,17 +41,17 @@ export interface Machine {
   protocol: CommProtocol;
   receivedDataTypes: string;   // comma-separated tag list ingested from the machine
   sentDataTypes: string;       // comma-separated commands/setpoints written to the machine
-  firmware?: string;
+  firmware?: string | undefined;
   /** What this station emits as output of the step */
-  outputKind?: OutputKind;
+  outputKind?: OutputKind | undefined;
   /** Filename pattern or text label of the output payload */
-  outputLabel?: string;
+  outputLabel?: string | undefined;
   /** Protocol used to deliver accept/reject decisions back to the machine */
-  outputProtocol?: CommProtocol;
+  outputProtocol?: CommProtocol | undefined;
   /** Command string sent on ACCEPT decision (e.g. "ACK", "PASS") */
-  acceptCommand?: string;
+  acceptCommand?: string | undefined;
   /** Command string sent on REJECT decision (e.g. "NAK", "REJ") */
-  rejectCommand?: string;
+  rejectCommand?: string | undefined;
 }
 
 export interface Station {
@@ -62,15 +62,15 @@ export interface Station {
   type: StationType;
   status: StationStatus;
   cycleTimeSec: number;
-  currentStep?: string;
-  currentValue?: string;
-  target?: string;
-  oee?: number;
-  machine?: Machine;
+  currentStep?: string | undefined;
+  currentValue?: string | undefined;
+  target?: string | undefined;
+  oee?: number | undefined;
+  machine?: Machine | undefined;
   /** Step templates applied to this station (must contain at least one on creation) */
-  templateIds?: string[];
+  templateIds?: string[] | undefined;
   /** Timestamp of last live telemetry tick — drives the "live" badge */
-  lastTickAt?: string;
+  lastTickAt?: string | undefined;
 }
 
 export const stations: Station[] = [
@@ -178,8 +178,8 @@ export interface AuditEntry {
   entity: AuditEntity;
   entityId: string;
   action: AuditAction;
-  before?: Record<string, any> | null;
-  after?: Record<string, any> | null;
+  before?: Record<string, any> | null | undefined;
+  after?: Record<string, any> | null | undefined;
   summary: string;
 }
 // Seeded 3-month audit-log history (see audit-seed.ts)
@@ -197,7 +197,7 @@ export interface MesUser {
   role: UserRole;
   shift: "A" | "B" | "C";
   status: UserStatus;
-  skills?: string;
+  skills?: string | undefined;
 }
 
 export const users: MesUser[] = [
@@ -236,7 +236,7 @@ export interface Assignment {
   targetId: string;           // stationId or teamId
   shift: "A" | "B" | "C";
   startedAt: string;
-  endsAt?: string;
+  endsAt?: string | undefined;
   active: boolean;
 }
 
@@ -257,14 +257,14 @@ export interface StationCommand {
   stationId: string;
   at: string;               // ISO timestamp sent
   kind: CommandKind;
-  protocol?: CommProtocol;
+  protocol?: CommProtocol | undefined;
   command: string;          // literal command string sent to the machine
   status: CommandStatus;
-  response?: string;        // machine reply, e.g. "OK 200 · 128ms"
-  respondedAt?: string;     // ISO timestamp resolved
+  response?: string | undefined;        // machine reply, e.g. "OK 200 · 128ms"
+  respondedAt?: string | undefined;     // ISO timestamp resolved
   actorId: string;
   actorName: string;
-  outputId?: string;        // optional link to the StationOutputFile decided
+  outputId?: string | undefined;        // optional link to the StationOutputFile decided
 }
 export const stationCommands: StationCommand[] = [];
 
@@ -274,13 +274,13 @@ export interface StationOutputFile {
   stationId: string;
   name: string;             // filename
   size: number;             // bytes
-  mime?: string;
+  mime?: string | undefined;
   dataUrl: string;          // base64 data URL — persisted in localStorage
   uploadedAt: string;       // ISO
   actorId: string;
   actorName: string;
-  decision?: CommandKind | null;
-  decidedAt?: string;
+  decision?: CommandKind | null | undefined;
+  decidedAt?: string | undefined;
 }
 export const stationOutputs: StationOutputFile[] = [];
 
@@ -295,9 +295,9 @@ export interface WorkOrder {
   qtyTarget: number;
   qtyProduced: number;
   uom: string;
-  startedAt?: string;
-  endsAt?: string;
-  operator?: string;
+  startedAt?: string | undefined;
+  endsAt?: string | undefined;
+  operator?: string | undefined;
   shift: "A" | "B" | "C";
   progress: number;
 }
@@ -320,7 +320,7 @@ export interface RecipeStep {
   target: string;
   tolerance: string;
   status: "done" | "active" | "pending" | "warn";
-  capturedValue?: string;
+  capturedValue?: string | undefined;
 }
 
 export const recipeSteps: RecipeStep[] = [
@@ -360,19 +360,19 @@ export interface DowntimeEvent {
   lineId: string;
   lineName: string;
   /** Station where the stoppage originated (optional for line-wide events) */
-  stationId?: string;
+  stationId?: string | undefined;
   /** Active assignment that was on station when the event was raised */
-  assignmentId?: string;
+  assignmentId?: string | undefined;
   /** Operator on station at the time, captured for traceability */
-  operatorId?: string;
-  operatorName?: string;
+  operatorId?: string | undefined;
+  operatorName?: string | undefined;
   reasonCode: string;
   category: "equipment_failure" | "changeover" | "material_shortage" | "quality_hold" | "operator_break";
   startedAt: string;
   durationMin: number;
-  workOrderId?: string;
+  workOrderId?: string | undefined;
   status: "open" | "resolved";
-  notes?: string;
+  notes?: string | undefined;
 }
 
 export const downtime: DowntimeEvent[] = [

@@ -218,7 +218,7 @@ export function EntityFormDialog<T extends Record<string, any>>({
                     />
                   ) : f.type === "select" ? (
                     <Select
-                      value={values[f.name] === "" || values[f.name] == null ? undefined : String(values[f.name])}
+                      value={values[f.name] === "" || values[f.name] == null ? "" : String(values[f.name])}
                       onValueChange={(val) => setField(f, val === NONE ? "" : val)}
                     >
                       <SelectTrigger id={f.name} className={`bg-card/60 ${errors[f.name] ? "border-destructive/60" : ""}`}>
