@@ -249,7 +249,7 @@ function generate(): AuditEntry[] {
         }
 
         // 5) Machine command activations on automatic stations (CCP + seal + metal detect)
-        const autoStations = stationsByLine[line.id].filter((_, idx) => idx > 0);
+        const autoStations = (stationsByLine[line.id] ?? []).filter((_, idx) => idx > 0);
         const cmdCount = intBetween(1, 4);
         for (let i = 0; i < cmdCount; i++) {
           const stId = pick(autoStations);

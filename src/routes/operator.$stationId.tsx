@@ -93,12 +93,12 @@ function OperatorApp() {
       // Values are recorded first: critical steps refuse the exit without them.
       let queued = false;
       if (Object.keys(values).length > 0) {
-        const r = await submitOrQueue("reading", { unit_uid: uid, station_id: stationId, mode, variables: values }, `Values · ${uid} @ ${station.name}`);
+        const r = await submitOrQueue("reading", { unit_uid: uid, station_id: stationId, mode, variables: values }, `Values · ${uid} @ ${station?.name ?? "Station"}`);
         queued = r.queued;
       }
-      const ev = { unit_uid: uid, station_id: stationId, station_name: station.name, line_id: line?.id, event: "processed" };
+      const ev = { unit_uid: uid, station_id: stationId, station_name: station?.name ?? "Station", line_id: line?.id, event: "processed" };
       void queued;
-      const r2 = await submitOrQueue("unit_event", ev, `Pass · ${uid} @ ${station.name}`);
+      const r2 = await submitOrQueue("unit_event", ev, `Pass · ${uid} @ ${station?.name ?? "Station"}`);
       if (r2.queued) toast.warning(`Offline · PASS ${uid} saved on this device, will send when back online`);
       else { toast.success(`PASS · ${uid}`); qc.invalidateQueries(); }
       setUid(null);
@@ -108,10 +108,10 @@ function OperatorApp() {
   }
   async function scrap() {
     const r = options.find((x) => x.id === wasteReason);
-    if (!r || !uid) return toast.error("Pick a reason");
+    if (!r || !uid) { toast.error("Pick a reason"); return; }
     try {
       await logWaste.mutateAsync({
-        unit_uid: uid, station_id: stationId, station_name: station.name, line_id: line?.id,
+        unit_uid: uid, station_id: stationId, station_name: station?.name ?? "Station", line_id: line?.id,
         production_order_id: po?.id ?? null, lot_number: po?.lot_number ?? null,
         reason_code: r.code, reason_label: r.label, reason_category: r.category,
         notes: wasteNotes, evidence_urls: wasteFiles,
@@ -123,9 +123,9 @@ function OperatorApp() {
     }
   }
   async function submitHold() {
-    if (!holdReason.trim()) return toast.error("Enter reason");
+    if (!holdReason.trim()) { toast.error("Enter reason"); return; }
     try {
-      const r = await submitOrQueue("hold", { station_id: stationId, hold_type: holdType, reason: holdReason, evidence_urls: holdFiles }, `Hold · ${station.name}: ${holdReason}`);
+      const r = await submitOrQueue("hold", { station_id: stationId, hold_type: holdType, reason: holdReason, evidence_urls: holdFiles }, `Hold · ${station?.name ?? "Station"}: ${holdReason}`);
       toast.warning(r.queued ? "Offline · hold saved on this device, will send when back online" : "Station on hold");
       if (!r.queued) qc.invalidateQueries();
       setHoldOpen(false); setHoldReason(""); setHoldFiles([]);

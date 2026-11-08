@@ -86,26 +86,26 @@ function HmiStation() {
   }
 
   async function startOp() {
-    if (!activeUid) return toast.error("Scan a unit first");
+    if (!activeUid) { toast.error("Scan a unit first"); return; }
     await process.mutateAsync({
-      unit_uid: activeUid, station_id: stationId, station_name: station.name, line_id: line?.id,
+      unit_uid: activeUid, station_id: stationId, station_name: station?.name ?? "Station", line_id: line?.id,
       event: "started",
     });
     toast.success("Operation started");
   }
 
   async function completeOp() {
-    if (!activeUid) return toast.error("Scan a unit first");
+    if (!activeUid) { toast.error("Scan a unit first"); return; }
     // Validate required inputs
     for (const v of variables) {
       if ((v.direction === "input" || v.direction === "reading") && v.required && (values[v.key] === "" || values[v.key] === undefined)) {
-        return toast.error(`Missing: ${v.label}`);
+        { toast.error(`Missing: ${v.label}`); return; }
       }
       if (v.type === "number" && (v.min !== undefined || v.max !== undefined)) {
         const n = Number(values[v.key]);
         if (!Number.isNaN(n)) {
-          if (v.min !== undefined && n < v.min) return toast.error(`${v.label} below min ${v.min}`);
-          if (v.max !== undefined && n > v.max) return toast.error(`${v.label} above max ${v.max}`);
+          if (v.min !== undefined && n < v.min) { toast.error(`${v.label} below min ${v.min}`); return; }
+          if (v.max !== undefined && n > v.max) { toast.error(`${v.label} above max ${v.max}`); return; }
         }
       }
     }
@@ -117,7 +117,7 @@ function HmiStation() {
         });
       }
       await process.mutateAsync({
-        unit_uid: activeUid, station_id: stationId, station_name: station.name,
+        unit_uid: activeUid, station_id: stationId, station_name: station?.name ?? "Station",
         line_id: line?.id, event: "processed",
       });
       toast.success(`Unit ${activeUid} processed`);
@@ -332,7 +332,7 @@ function VariableField({
   );
 }
 
-function Ctx({ label, value, extra, mono }: { label: string; value: string; extra?: string; mono?: boolean }) {
+function Ctx({ label, value, extra, mono }: { label: string; value: string; extra?: string | undefined; mono?: boolean }) {
   return (
     <div className="rounded-lg border border-border/40 bg-background/40 p-2.5">
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
@@ -345,7 +345,7 @@ function Ctx({ label, value, extra, mono }: { label: string; value: string; extr
 function WasteButton({
   stationId, stationName, lineId, unitUid, po, onDone,
 }: {
-  stationId: string; stationName: string; lineId?: string;
+  stationId: string; stationName: string; lineId?: string | undefined;
   unitUid: string; po: { id: string; lot_number: string } | null;
   onDone: () => void;
 }) {
@@ -360,7 +360,7 @@ function WasteButton({
 
   async function submit() {
     const r = options.find((x) => x.id === reasonId);
-    if (!r) return toast.error("Pick a reason");
+    if (!r) { toast.error("Pick a reason"); return; }
     await log.mutateAsync({
       unit_uid: unitUid, station_id: stationId, station_name: stationName, line_id: lineId,
       production_order_id: po?.id ?? null, lot_number: po?.lot_number ?? null,
@@ -413,9 +413,9 @@ function HoldPanel({
   stationId, openHolds, onOpen, onClose,
 }: {
   stationId: string;
-  openHolds: import("@/lib/hmi-db").StationHold[];
+  openHolds: import("@/lib/mes-disconnected").StationHold[];
   onOpen: (v: { station_id: string; hold_type: "qc" | "maintenance" | "other"; reason: string; evidence_urls?: string[] }) => Promise<unknown>;
-  onClose: (v: { id: string; resolution_notes?: string; evidence_urls?: string[] }) => Promise<unknown>;
+  onClose: (v: { id: string; resolution_notes?: string | undefined; evidence_urls?: string[] }) => Promise<unknown>;
 }) {
   const [type, setType] = useState<"qc" | "maintenance" | "other">("qc");
   const [reason, setReason] = useState("");
@@ -425,7 +425,7 @@ function HoldPanel({
   const [resEvidence, setResEvidence] = useState<string[]>([]);
 
   async function submit() {
-    if (!reason.trim()) return toast.error("Enter a reason");
+    if (!reason.trim()) { toast.error("Enter a reason"); return; }
     await onOpen({ station_id: stationId, hold_type: type, reason, evidence_urls: evidence });
     toast.warning(`Station on hold: ${type}`);
     setReason(""); setEvidence([]);
@@ -500,8 +500,8 @@ function ReasonsAdmin({
   stationId, allowed, all, onSave,
 }: {
   stationId: string;
-  allowed: import("@/lib/hmi-db").WasteReason[];
-  all: import("@/lib/hmi-db").WasteReason[];
+  allowed: import("@/lib/mes-disconnected").WasteReason[];
+  all: import("@/lib/mes-disconnected").WasteReason[];
   onSave: (v: { station_id: string; reason_ids: string[] }) => Promise<unknown>;
 }) {
   const [ids, setIds] = useState<string[]>([]);

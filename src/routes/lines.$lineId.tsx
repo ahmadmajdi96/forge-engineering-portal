@@ -375,7 +375,7 @@ function LineDetailPage() {
                         <StationCard
                           key={s.id}
                           station={s}
-                          operatorNames={operators.map((o) => o.name)}
+                          operatorNames={operators.map((o) => o?.name ?? "Operator")}
                           templates={(s.templateIds ?? []).map((id) => store.stepTemplates.find((t) => t.id === id)).filter(Boolean) as StepTemplate[]}
                           allTemplates={store.stepTemplates}
                           openDowntime={openByStation[s.id] ?? []}
@@ -483,24 +483,24 @@ function LineDetailPage() {
                     <td className="px-3 py-3 text-xs">
                       {s.machine ? (
                         <>
-                          <div>{s.machine.vendor} · {s.machine.model}</div>
-                          <div className="text-[11px] text-muted-foreground">{s.machine.firmware ?? "—"}</div>
+                          <div>{s.machine?.vendor} · {s.machine?.model}</div>
+                          <div className="text-[11px] text-muted-foreground">{s.machine?.firmware ?? "—"}</div>
                         </>
                       ) : <span className="text-muted-foreground">—</span>}
                     </td>
                     <td className="px-3 py-3 text-xs">
                       {s.machine ? (
                         <div className="flex flex-col gap-0.5">
-                          <span className="inline-flex items-center gap-1"><Network className="h-3 w-3 text-info" /> <span className="font-mono">{s.machine.ipAddress}:{s.machine.port}</span></span>
-                          <span className="inline-flex items-center gap-1"><Wifi className="h-3 w-3 text-primary" /> {s.machine.protocol}</span>
+                          <span className="inline-flex items-center gap-1"><Network className="h-3 w-3 text-info" /> <span className="font-mono">{s.machine?.ipAddress}:{s.machine?.port}</span></span>
+                          <span className="inline-flex items-center gap-1"><Wifi className="h-3 w-3 text-primary" /> {s.machine?.protocol}</span>
                         </div>
                       ) : <span className="text-muted-foreground">—</span>}
                     </td>
                     <td className="px-3 py-3 text-[11px]">
                       {s.machine ? (
                         <>
-                          <div><span className="text-success">↓ in:</span> {s.machine.receivedDataTypes}</div>
-                          <div className="mt-0.5"><span className="text-accent">↑ out:</span> {s.machine.sentDataTypes}</div>
+                          <div><span className="text-success">↓ in:</span> {s.machine?.receivedDataTypes}</div>
+                          <div className="mt-0.5"><span className="text-accent">↑ out:</span> {s.machine?.sentDataTypes}</div>
                         </>
                       ) : <span className="text-muted-foreground">—</span>}
                     </td>
@@ -511,8 +511,8 @@ function LineDetailPage() {
                         </span>
                       ) : (
                         operators.map((o) => (
-                          <div key={o.id} className="inline-flex items-center gap-1.5">
-                            <UserIcon className="h-3 w-3 text-muted-foreground" /> {o.name}
+                          <div key={o?.id} className="inline-flex items-center gap-1.5">
+                            <UserIcon className="h-3 w-3 text-muted-foreground" /> {o?.name}
                           </div>
                         ))
                       )}
@@ -604,7 +604,7 @@ function StationCard({
   onAddTemplate: (templateId: string) => void;
   onRemoveTemplate: (templateId: string) => void;
   onSendCommand: (kind: "accept" | "reject", outputId?: string) => void;
-  onUploadOutput: (file: { name: string; size: number; mime?: string; dataUrl: string }) => void;
+  onUploadOutput: (file: { name: string; size: number; mime?: string | undefined; dataUrl: string }) => void;
   onDeleteOutput: (outputId: string) => void;
   onLogDowntime: (reason: string, category: DowntimeEvent["category"], durationMin: number) => void;
 }) {
@@ -649,10 +649,10 @@ function StationCard({
       {hasOpenDowntime && (
         <div className="mt-2 rounded-md border border-destructive/40 bg-destructive/10 px-2 py-1 text-[11px] text-destructive">
           <div className="flex items-center gap-1 font-medium">
-            <AlertOctagon className="h-3 w-3" /> {openDowntime.length} open · {openDowntime[0].reasonCode}
+            <AlertOctagon className="h-3 w-3" /> {openDowntime.length} open · {openDowntime[0]?.reasonCode}
           </div>
           <div className="font-mono text-[10px] text-destructive/80">
-            since {openDowntime[0].startedAt} · {openDowntime.reduce((a, d) => a + d.durationMin, 0)}m total
+            since {openDowntime[0]?.startedAt} · {openDowntime.reduce((a, d) => a + d.durationMin, 0)}m total
           </div>
         </div>
       )}
@@ -732,31 +732,31 @@ function StationCard({
         <div className="mt-3 grid grid-cols-2 gap-2 text-[11px]">
           <div className="rounded-md border border-border/40 bg-background/40 p-2">
             <div className="text-[9px] uppercase tracking-wider text-muted-foreground">Protocol</div>
-            <div className="font-mono">{s.machine.protocol}</div>
+            <div className="font-mono">{s.machine?.protocol}</div>
           </div>
           <div className="rounded-md border border-border/40 bg-background/40 p-2">
             <div className="text-[9px] uppercase tracking-wider text-muted-foreground">IP : Port</div>
-            <div className="truncate font-mono">{s.machine.ipAddress}:{s.machine.port}</div>
+            <div className="truncate font-mono">{s.machine?.ipAddress}:{s.machine?.port}</div>
           </div>
         </div>
       )}
 
       {/* Output config + live send controls (automatic only) */}
-      {s.machine && s.machine.outputKind && s.machine.outputKind !== "none" && (
+      {s.machine && s.machine?.outputKind && s.machine?.outputKind !== "none" && (
         <div className="mt-3 rounded-lg border border-info/30 bg-info/5 p-2 text-[11px]">
           <div className="flex items-center justify-between text-[9px] uppercase tracking-wider text-info">
             <span>
-              Output · {s.machine.outputKind}
-              {s.machine.outputProtocol ? ` · via ${s.machine.outputProtocol}` : ""}
+              Output · {s.machine?.outputKind}
+              {s.machine?.outputProtocol ? ` · via ${s.machine?.outputProtocol}` : ""}
             </span>
-            {s.machine.outputKind === "file" && (
-              <UploadFileButton onUpload={onUploadOutput} label={s.machine.outputLabel} />
+            {s.machine?.outputKind === "file" && (
+              <UploadFileButton onUpload={onUploadOutput} label={s.machine?.outputLabel} />
             )}
           </div>
-          {s.machine.outputLabel && <div className="mt-0.5 truncate font-mono">{s.machine.outputLabel}</div>}
+          {s.machine?.outputLabel && <div className="mt-0.5 truncate font-mono">{s.machine?.outputLabel}</div>}
 
           {/* Uploaded output files (for outputKind=file) */}
-          {s.machine.outputKind === "file" && (
+          {s.machine?.outputKind === "file" && (
             <div className="mt-1.5">
               <div className="mb-1 flex items-center justify-between text-[9px] uppercase tracking-wider text-muted-foreground">
                 <span>Output history · {outputs.length}</span>
@@ -776,8 +776,8 @@ function StationCard({
                     <li key={o.id} className="rounded border border-border/40 bg-background/40 px-1.5 py-1">
                       <div className="flex items-center gap-1">
                         <FileText className="h-3 w-3 shrink-0 text-muted-foreground" />
-                        <a href={o.dataUrl} download={o.name} className="min-w-0 flex-1 truncate font-mono text-[10px] hover:text-primary" title={o.name}>
-                          {o.name}
+                        <a href={o.dataUrl} download={o?.name} className="min-w-0 flex-1 truncate font-mono text-[10px] hover:text-primary" title={o?.name}>
+                          {o?.name}
                         </a>
                         <span className="font-mono text-[9px] text-muted-foreground">{Math.round(o.size / 1024)}KB</span>
                         {o.decision ? (
@@ -787,7 +787,7 @@ function StationCard({
                         ) : (
                           <span className="rounded bg-muted/40 px-1 py-0 font-mono text-[9px] uppercase text-muted-foreground">pending</span>
                         )}
-                        <a href={o.dataUrl} download={o.name} className="text-muted-foreground hover:text-primary" title="Download">
+                        <a href={o.dataUrl} download={o?.name} className="text-muted-foreground hover:text-primary" title="Download">
                           <Download className="h-2.5 w-2.5" />
                         </a>
                         <button onClick={() => onDeleteOutput(o.id)} className="text-destructive/70 hover:text-destructive" title="Remove">
@@ -806,20 +806,20 @@ function StationCard({
 
           {/* Send accept/reject */}
           <div className="mt-1.5 flex gap-1">
-            {s.machine.acceptCommand && (
+            {s.machine?.acceptCommand && (
               <button
                 onClick={() => onSendCommand("accept", outputs[0]?.id)}
                 className="inline-flex items-center gap-1 rounded border border-success/40 bg-success/10 px-2 py-0.5 font-mono text-[10px] text-success hover:bg-success/20"
-                title={`Send ${s.machine.acceptCommand} via ${s.machine.outputProtocol ?? "protocol"}`}
+                title={`Send ${s.machine?.acceptCommand} via ${s.machine?.outputProtocol ?? "protocol"}`}
               >
                 <Check className="h-2.5 w-2.5" /> Send ACCEPT
               </button>
             )}
-            {s.machine.rejectCommand && (
+            {s.machine?.rejectCommand && (
               <button
                 onClick={() => onSendCommand("reject", outputs[0]?.id)}
                 className="inline-flex items-center gap-1 rounded border border-destructive/40 bg-destructive/10 px-2 py-0.5 font-mono text-[10px] text-destructive hover:bg-destructive/20"
-                title={`Send ${s.machine.rejectCommand} via ${s.machine.outputProtocol ?? "protocol"}`}
+                title={`Send ${s.machine?.rejectCommand} via ${s.machine?.outputProtocol ?? "protocol"}`}
               >
                 <Ban className="h-2.5 w-2.5" /> Send REJECT
               </button>
@@ -885,7 +885,7 @@ function StationCard({
   );
 }
 
-function UploadFileButton({ onUpload, label }: { onUpload: (f: { name: string; size: number; mime?: string; dataUrl: string }) => void; label?: string }) {
+function UploadFileButton({ onUpload, label }: { onUpload: (f: { name: string; size: number; mime?: string | undefined; dataUrl: string }) => void; label?: string }) {
   return (
     <label className="inline-flex cursor-pointer items-center gap-1 rounded border border-primary/40 bg-primary/10 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider text-primary hover:bg-primary/20">
       <FileUp className="h-2.5 w-2.5" />
