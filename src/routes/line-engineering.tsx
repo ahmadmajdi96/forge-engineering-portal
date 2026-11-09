@@ -1,4 +1,5 @@
 import type { Dict } from "@/lib/store";
+import { LineEngineeringPage } from "@/components/engineering/line-page";
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowDown, ArrowUp, X } from "lucide-react";
 import { EntityModule } from "@/components/EntityModule";
@@ -14,8 +15,7 @@ export const Route = createFileRoute("/line-engineering")({
     { property: "og:title", content: "Production Lines · Engineering Portal" },
     { property: "og:description", content: "Define production lines, workstation sequencing and buffer rules." },
   ] }),
-  component: () => <EntityModule kind="lines" title="Production Lines" subtitle="Line structure, workstation sequence and buffer rules"
-    defaults={{ area: "", taktSec: 60, bufferRule: "FIFO", bufferCap: 2, sequence: [] }} group={(e) => String(e.data.area || "Unassigned")} editor={(p) => <LineEditor {...p} />} />,
+  component: LineEngineeringPage,
 });
 
 function LineEditor({ data, set, disabled }: { data: Dict; set: (d: Dict) => void; disabled: boolean }) {
@@ -23,7 +23,7 @@ function LineEditor({ data, set, disabled }: { data: Dict; set: (d: Dict) => voi
   const ws = entities.filter((e) => e.kind === "workstations");
   const seq = (data.sequence as string[]) ?? [];
   const u = (k: string, v: unknown) => set({ ...data, [k]: v });
-  const move = (i: number, d: number) => { const s = [...seq]; [s[i], s[i + d]] = [s[i + d]!, s[i]!]; u("sequence", s); };
+  const move = (i: number, d: number) => { const s = [...seq]; const a=s[i], b=s[i+d]; if(!a||!b)return; s[i]=b;s[i+d]=a;u("sequence", s); };
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-4 gap-2">

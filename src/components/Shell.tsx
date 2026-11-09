@@ -1,5 +1,9 @@
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
+import { VerifiedSignIn } from "@/components/engineering/verified-sign-in";
 import { BarChart3, Boxes, ChevronRight, Cpu, FileText, GitBranch, LayoutDashboard, LayoutGrid, ListChecks, Loader2, LogOut, Mail, Moon, Network, Sun, UserCog, Workflow } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { useStore } from "@/lib/store";
@@ -10,16 +14,21 @@ import {
   SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger,
 } from "@/components/ui/sidebar";
 
-type NavItem = { title: string; url: "/" | "/lines" | "/stations" | "/live" | "/operator" | "/operator-apps" | "/step-templates" | "/workstations" | "/machines" | "/operator-app" | "/hmi" | "/changes" | "/analytics" | "/reports"; icon: typeof Boxes };
+type NavItem = { title: string; url: "/" | "/lines" | "/stations" | "/live" | "/operator" | "/operator-apps" | "/step-templates" | "/workstations" | "/machines" | "/operator-app" | "/hmi" | "/changes" | "/analytics" | "/reports" | "/line-engineering" | "/station-connectivity" | "/edge-app-studio" | "/release-readiness" | "/registry" | "/process-routes" | "/mes-integration" | "/edge-fleet" | "/diagnostics"; icon: typeof Boxes };
 const GROUPS: { label: string; items: NavItem[] }[] = [
   { label: "Overview", items: [{ title: "Overview", url: "/", icon: LayoutDashboard }] },
   { label: "Asset Engineering", items: [
+    { title: "Line Engineering", url: "/line-engineering", icon: Network },
+    { title: "Station Connectivity", url: "/station-connectivity", icon: Cpu },
+    { title: "Asset Registry", url: "/registry", icon: Boxes },
     { title: "Production Lines", url: "/lines", icon: Network },
     { title: "Stations", url: "/stations", icon: Boxes },
     { title: "Workstations", url: "/workstations", icon: Boxes },
     { title: "Machines", url: "/machines", icon: Cpu },
   ] },
   { label: "Process Design", items: [
+    { title: "Process & Routes", url: "/process-routes", icon: GitBranch },
+    { title: "Edge App Studio", url: "/edge-app-studio", icon: Workflow },
     { title: "Live Shopfloor", url: "/live", icon: LayoutDashboard },
     { title: "Operator Consoles", url: "/operator", icon: ListChecks },
     { title: "Operator App", url: "/operator-app", icon: ListChecks },
@@ -28,6 +37,10 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
     { title: "Step Templates", url: "/step-templates", icon: ListChecks },
   ] },
   { label: "Governance", items: [
+    { title: "Release & MES Readiness", url: "/release-readiness", icon: GitBranch },
+    { title: "Edge Fleet", url: "/edge-fleet", icon: Cpu },
+    { title: "MES Integration", url: "/mes-integration", icon: Network },
+    { title: "Diagnostics", url: "/diagnostics", icon: BarChart3 },
     { title: "Change Management", url: "/changes", icon: GitBranch },
     { title: "Analytics", url: "/analytics", icon: BarChart3 },
     { title: "Reports", url: "/reports", icon: FileText },
@@ -62,6 +75,7 @@ function SignIn() {
           <div><h1 className="font-display text-xl font-semibold tracking-tight">Engineering Portal</h1><p className="text-xs text-muted-foreground">MES asset & process engineering</p></div>
         </div>
         <div className="glass-panel rounded-2xl p-6">
+          <VerifiedSignIn />
           <form onSubmit={submit} className="space-y-3">
             <label className="block">
               <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Work email</span>
@@ -161,14 +175,15 @@ function TopBar() {
           <div className="grid h-6 w-6 place-items-center rounded-md bg-gradient-to-br from-primary to-info text-[10px] font-bold text-primary-foreground">{initials(name)}</div>
           <div className="hidden text-xs leading-tight sm:block"><div className="font-medium">{name}</div><div className="text-[10px] text-muted-foreground">{session.roles[0] ?? "Member"}</div></div>
         </div>
-        <button onClick={() => setSession(null)} title="Sign out" aria-label="Sign out" className={`${btn} hover:text-destructive`}><LogOut className="h-4 w-4" /></button>
+        <Button variant="ghost" onClick={() => {void supabase.auth.signOut();setSession(null);}} title="Sign out" aria-label="Sign out" className={`${btn} hover:text-destructive`}><LogOut className="h-4 w-4" /></Button>
       </div>
     </header>
   );
 }
 
 export function Shell() {
-  const { session } = useStore();
+  const { session, setSession } = useStore();
+  useEffect(() => { const {data:{subscription}}=supabase.auth.onAuthStateChange((event,s)=>{if(s&&(event==='SIGNED_IN'||event==='INITIAL_SESSION'))setSession({email:s.user.email??'Verified user',roles:['Viewer'],permissions:[],source:'hub'});if(event==='SIGNED_OUT')setSession(null);});return()=>subscription.unsubscribe();},[]);
   if (!session) return <SignIn />;
   return (
     <SidebarProvider>
