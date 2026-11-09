@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AccountRecoveryRouteImport } from './routes/account-recovery'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as ChangesRouteImport } from './routes/changes'
 import { Route as DiagnosticsRouteImport } from './routes/diagnostics'
@@ -49,6 +50,11 @@ import { Route as WorkOrdersWoIdRouteImport } from './routes/work-orders.$woId'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountRecoveryRoute = AccountRecoveryRouteImport.update({
+  id: '/account-recovery',
+  path: '/account-recovery',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AnalyticsRoute = AnalyticsRouteImport.update({
@@ -229,6 +235,7 @@ const WorkOrdersWoIdRoute = WorkOrdersWoIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/account-recovery': typeof AccountRecoveryRoute
   '/analytics': typeof AnalyticsRoute
   '/changes': typeof ChangesRoute
   '/diagnostics': typeof DiagnosticsRoute
@@ -267,6 +274,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/account-recovery': typeof AccountRecoveryRoute
   '/analytics': typeof AnalyticsRoute
   '/changes': typeof ChangesRoute
   '/diagnostics': typeof DiagnosticsRoute
@@ -302,6 +310,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/account-recovery': typeof AccountRecoveryRoute
   '/analytics': typeof AnalyticsRoute
   '/changes': typeof ChangesRoute
   '/diagnostics': typeof DiagnosticsRoute
@@ -342,6 +351,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/account-recovery'
     | '/analytics'
     | '/changes'
     | '/diagnostics'
@@ -380,6 +390,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/account-recovery'
     | '/analytics'
     | '/changes'
     | '/diagnostics'
@@ -414,6 +425,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/account-recovery'
     | '/analytics'
     | '/changes'
     | '/diagnostics'
@@ -453,6 +465,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AccountRecoveryRoute: typeof AccountRecoveryRoute
   AnalyticsRoute: typeof AnalyticsRoute
   ChangesRoute: typeof ChangesRoute
   DiagnosticsRoute: typeof DiagnosticsRoute
@@ -489,6 +502,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account-recovery': {
+      id: '/account-recovery'
+      path: '/account-recovery'
+      fullPath: '/account-recovery'
+      preLoaderRoute: typeof AccountRecoveryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/analytics': {
@@ -793,6 +813,7 @@ const StationsRouteWithChildren = StationsRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AccountRecoveryRoute: AccountRecoveryRoute,
   AnalyticsRoute: AnalyticsRoute,
   ChangesRoute: ChangesRoute,
   DiagnosticsRoute: DiagnosticsRoute,
