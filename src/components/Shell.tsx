@@ -31,8 +31,6 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
     { title: "Edge App Studio", url: "/edge-app-studio", icon: Workflow },
     { title: "Live Shopfloor", url: "/live", icon: LayoutDashboard },
     { title: "Operator Consoles", url: "/operator", icon: ListChecks },
-    { title: "Operator App", url: "/operator-app", icon: ListChecks },
-    { title: "Operator Apps", url: "/operator-apps", icon: ListChecks },
     { title: "HMI Runtime", url: "/hmi", icon: LayoutGrid },
     { title: "Step Templates", url: "/step-templates", icon: ListChecks },
   ] },
@@ -64,7 +62,7 @@ function SignIn() {
       if (r.mode === "unconfigured") { setDemo(true); setMsg("Command Access Hub isn't connected yet — choose a demo role."); }
       else if (r.mode === "error") setMsg(r.message);
       else if (!r.active) setMsg("This account is not active in Command Access Hub.");
-      else setSession({ email, name: r.name, roles: r.roles, permissions: r.permissions, source: "hub" });
+      else { setMsg("Hub permissions found. Sign in with a verified account above; email lookup alone does not verify identity."); }
     } finally { setBusy(false); }
   };
   return (
@@ -143,7 +141,7 @@ function AppSidebar() {
         <div className="rounded-xl border border-border/60 bg-card/60 p-3 group-data-[collapsible=icon]:hidden">
           <div className="flex items-center gap-2 text-xs">
             <span className={`status-dot animate-pulse-glow ${session?.source === "hub" ? "text-success" : "text-warning"}`} />
-            <span className="font-medium">{session?.source === "hub" ? "Access Hub verified" : "Demo access"}</span>
+            <span className="font-medium">{session?.source === "verified" ? "Verified sandbox account" : session?.source === "hub" ? "Legacy access session" : "Demo access"}</span>
           </div>
           <p className="mt-1 text-[10px] text-warning">MES preview · sample data · not connected</p>
         </div>
@@ -183,7 +181,7 @@ function TopBar() {
 
 export function Shell() {
   const { session, setSession } = useStore();
-  useEffect(() => { const {data:{subscription}}=supabase.auth.onAuthStateChange((event,s)=>{if(s&&(event==='SIGNED_IN'||event==='INITIAL_SESSION'))setSession({email:s.user.email??'Verified user',roles:['Viewer'],permissions:[],source:'hub'});if(event==='SIGNED_OUT')setSession(null);});return()=>subscription.unsubscribe();},[]);
+  useEffect(() => { const {data:{subscription}}=supabase.auth.onAuthStateChange((event,s)=>{if(s&&(event==='SIGNED_IN'||event==='INITIAL_SESSION'))setSession({email:s.user.email??'Verified user',roles:['Viewer'],permissions:[],source:'verified'});if(event==='SIGNED_OUT')setSession(null);});return()=>subscription.unsubscribe();},[]);
   if (!session) return <SignIn />;
   return (
     <SidebarProvider>
