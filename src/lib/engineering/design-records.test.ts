@@ -1,0 +1,11 @@
+import {describe,it,expect} from 'vitest';
+import {initialDesignRecords,upsertDesignRecord,archiveDesignRecord,activeRecords} from './design-records';
+import {makeModel,modelSchema,activationBlockers} from './model';
+describe('Engineering draft CRUD',()=>{
+ it('creates a record visible in its collection',()=>{const records=initialDesignRecords();const base=records[0];if(!base)throw Error('seed missing');const next=upsertDesignRecord(records,{...base,id:'EQ-NEW',name:'New detector'});expect(activeRecords(next,'equipment').some(r=>r.id==='EQ-NEW'&&r.name==='New detector')).toBe(true);expect(next.length).toBe(records.length+1);});
+ it('updates a stable record without mutating the original revision',()=>{const records=initialDesignRecords();const base=records[0];if(!base)throw Error('seed missing');const next=upsertDesignRecord(records,{...base,name:'Updated detector'});expect(next.find(r=>r.id===base.id)?.name).toBe('Updated detector');expect(records[0]?.name).toBe('Metal detector');expect(next.length).toBe(records.length);});
+ it('archives records while retaining them for historical revision payloads',()=>{const records=initialDesignRecords();const next=archiveDesignRecord(records,'SENSOR-104');expect(activeRecords(next,'equipment').some(r=>r.id==='SENSOR-104')).toBe(false);expect(next.find(r=>r.id==='SENSOR-104')?.archived).toBe(true);expect(records.find(r=>r.id==='SENSOR-104')?.archived).toBe(false);});
+ it('refuses archiving a parent with active child records',()=>{expect(()=>archiveDesignRecord(initialDesignRecords(),'APP-INTAKE')).toThrow('child records');});
+ it('normalizes older revision payloads with design records',()=>{const {records,...legacy}=makeModel();const parsed=modelSchema.parse(legacy);expect(parsed.records.some(r=>r.id==='SCREEN-INTAKE')).toBe(true);});
+ it('design edits cannot establish production authority',()=>{const m=makeModel();m.records=m.records.map(r=>({...r,description:'Approved'}));expect(activationBlockers(m)).toContain('MES business acknowledgement missing');expect(activationBlockers(m)).toContain('Edge actual manifest unconfirmed');expect(activationBlockers(m)).toContain('Plant commissioning sign-off missing');});
+});

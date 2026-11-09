@@ -1,4 +1,7 @@
 # Roadmap
+- [x] Add dynamic engineering draft CRUD controls across reference interfaces
+- [x] Build workflow, screen editor, HMI, fleet, rollout, mapping, commissioning, change-impact and approval reference screens
+- [x] Verify create/edit/archive, cross-page state, reference alignment and production-action blocking in sandbox; shared-save verification remains blocked by no confirmed account
 - [x] Rebuild all ten uploaded reference page layouts and verify their desktop alignment and sandbox controls without replacing the sidebar or changing production logic
 - [x] Copy MES Production Lines, Stations, Live Shopfloor, Operator Consoles, Operator App, HMI Runtime, Operator Apps and Step Templates screens
 - [x] Verify copied pages and their main interactions

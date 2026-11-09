@@ -14,7 +14,7 @@ import {
   SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger,
 } from "@/components/ui/sidebar";
 
-type NavItem = { title: string; url: "/" | "/lines" | "/stations" | "/live" | "/operator" | "/operator-apps" | "/step-templates" | "/workstations" | "/machines" | "/operator-app" | "/hmi" | "/changes" | "/analytics" | "/reports" | "/line-engineering" | "/station-connectivity" | "/edge-app-studio" | "/release-readiness" | "/registry" | "/process-routes" | "/mes-integration" | "/edge-fleet" | "/diagnostics"; icon: typeof Boxes };
+type NavItem = { title: string; url: "/" | "/lines" | "/stations" | "/live" | "/operator" | "/operator-apps" | "/step-templates" | "/workstations" | "/machines" | "/operator-app" | "/hmi" | "/changes" | "/analytics" | "/reports" | "/line-engineering" | "/station-connectivity" | "/edge-app-studio" | "/release-readiness" | "/registry" | "/process-routes" | "/mes-integration" | "/edge-fleet" | "/diagnostics" | "/screen-editor" | "/hmi-layouts" | "/deployments" | "/commissioning"; icon: typeof Boxes };
 const GROUPS: { label: string; items: NavItem[] }[] = [
   { label: "Overview", items: [{ title: "Overview", url: "/", icon: LayoutDashboard }] },
   { label: "Asset Engineering", items: [
@@ -29,6 +29,8 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
   { label: "Process Design", items: [
     { title: "Process & Routes", url: "/process-routes", icon: GitBranch },
     { title: "Edge App Studio", url: "/edge-app-studio", icon: Workflow },
+    { title: "Screen Editor", url: "/screen-editor", icon: LayoutGrid },
+    { title: "HMI Designer", url: "/hmi-layouts", icon: LayoutGrid },
     { title: "Live Shopfloor", url: "/live", icon: LayoutDashboard },
     { title: "Operator Consoles", url: "/operator", icon: ListChecks },
     { title: "HMI Runtime", url: "/hmi", icon: LayoutGrid },
@@ -37,6 +39,8 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
   { label: "Governance", items: [
     { title: "Release & MES Readiness", url: "/release-readiness", icon: GitBranch },
     { title: "Edge Fleet", url: "/edge-fleet", icon: Cpu },
+    { title: "Deployments", url: "/deployments", icon: GitBranch },
+    { title: "Commissioning", url: "/commissioning", icon: ListChecks },
     { title: "MES Integration", url: "/mes-integration", icon: Network },
     { title: "Diagnostics", url: "/diagnostics", icon: BarChart3 },
     { title: "Change Management", url: "/changes", icon: GitBranch },

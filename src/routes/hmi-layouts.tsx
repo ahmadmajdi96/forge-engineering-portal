@@ -1,3 +1,4 @@
+import {HmiDesigner} from '@/components/engineering/reference-studio';
 import type { Dict } from "@/lib/store";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
@@ -17,10 +18,7 @@ export const Route = createFileRoute("/hmi-layouts")({
     { property: "og:title", content: "HMI Runtime · Engineering Portal" },
     { property: "og:description", content: "Build touchscreen HMI layouts with tile bindings, action buttons and display settings." },
   ] }),
-  component: () => (
-    <EntityModule kind="hmi" title="HMI Runtime Layouts" subtitle="Touchscreen layout builder, tile bindings, action palette and display properties"
-      defaults={{ cols: 4, theme: "dark", fontScale: 1, tiles: [] }} editor={(p) => <Builder {...p} />} />
-  ),
+  component: HmiDesigner,
 });
 
 const PALETTE: Omit<Tile, "id">[] = [

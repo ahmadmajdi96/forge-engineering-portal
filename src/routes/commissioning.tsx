@@ -1,0 +1,3 @@
+import {createFileRoute} from '@tanstack/react-router';
+import {CommissioningValidation} from '@/components/engineering/reference-governance';
+export const Route=createFileRoute('/commissioning')({head:()=>({meta:[{title:'Commissioning validation · Engineering Portal'},{name:'description',content:'Manage test plans and evidence references without bypassing independent commissioning.'},{property:'og:title',content:'Commissioning validation · Engineering Portal'},{property:'og:description',content:'Manage test plans and evidence references without bypassing independent commissioning.'},{property:'og:type',content:'website'},{name:'twitter:card',content:'summary'}]}),component:CommissioningValidation});

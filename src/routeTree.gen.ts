@@ -14,6 +14,8 @@ import { Route as AccountRecoveryRouteImport } from './routes/account-recovery'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as ChangesRouteImport } from './routes/changes'
 import { Route as CommandPolicyRouteImport } from './routes/command-policy'
+import { Route as CommissioningRouteImport } from './routes/commissioning'
+import { Route as DeploymentsRouteImport } from './routes/deployments'
 import { Route as DiagnosticsRouteImport } from './routes/diagnostics'
 import { Route as EdgeAppStudioRouteImport } from './routes/edge-app-studio'
 import { Route as EdgeFleetRouteImport } from './routes/edge-fleet'
@@ -32,6 +34,7 @@ import { Route as ProcessRoutesRouteImport } from './routes/process-routes'
 import { Route as RegistryRouteImport } from './routes/registry'
 import { Route as ReleaseReadinessRouteImport } from './routes/release-readiness'
 import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as ScreenEditorRouteImport } from './routes/screen-editor'
 import { Route as StationConnectivityRouteImport } from './routes/station-connectivity'
 import { Route as StationsRouteImport } from './routes/stations'
 import { Route as StepTemplatesRouteImport } from './routes/step-templates'
@@ -72,6 +75,16 @@ const ChangesRoute = ChangesRouteImport.update({
 const CommandPolicyRoute = CommandPolicyRouteImport.update({
   id: '/command-policy',
   path: '/command-policy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommissioningRoute = CommissioningRouteImport.update({
+  id: '/commissioning',
+  path: '/commissioning',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DeploymentsRoute = DeploymentsRouteImport.update({
+  id: '/deployments',
+  path: '/deployments',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DiagnosticsRoute = DiagnosticsRouteImport.update({
@@ -164,6 +177,11 @@ const ReportsRoute = ReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ScreenEditorRoute = ScreenEditorRouteImport.update({
+  id: '/screen-editor',
+  path: '/screen-editor',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StationConnectivityRoute = StationConnectivityRouteImport.update({
   id: '/station-connectivity',
   path: '/station-connectivity',
@@ -251,6 +269,8 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AnalyticsRoute
   '/changes': typeof ChangesRoute
   '/command-policy': typeof CommandPolicyRoute
+  '/commissioning': typeof CommissioningRoute
+  '/deployments': typeof DeploymentsRoute
   '/diagnostics': typeof DiagnosticsRoute
   '/edge-app-studio': typeof EdgeAppStudioRoute
   '/edge-fleet': typeof EdgeFleetRoute
@@ -269,6 +289,7 @@ export interface FileRoutesByFullPath {
   '/registry': typeof RegistryRoute
   '/release-readiness': typeof ReleaseReadinessRoute
   '/reports': typeof ReportsRoute
+  '/screen-editor': typeof ScreenEditorRoute
   '/station-connectivity': typeof StationConnectivityRoute
   '/stations': typeof StationsRouteWithChildren
   '/step-templates': typeof StepTemplatesRoute
@@ -292,6 +313,8 @@ export interface FileRoutesByTo {
   '/analytics': typeof AnalyticsRoute
   '/changes': typeof ChangesRoute
   '/command-policy': typeof CommandPolicyRoute
+  '/commissioning': typeof CommissioningRoute
+  '/deployments': typeof DeploymentsRoute
   '/diagnostics': typeof DiagnosticsRoute
   '/edge-app-studio': typeof EdgeAppStudioRoute
   '/edge-fleet': typeof EdgeFleetRoute
@@ -307,6 +330,7 @@ export interface FileRoutesByTo {
   '/registry': typeof RegistryRoute
   '/release-readiness': typeof ReleaseReadinessRoute
   '/reports': typeof ReportsRoute
+  '/screen-editor': typeof ScreenEditorRoute
   '/station-connectivity': typeof StationConnectivityRoute
   '/step-templates': typeof StepTemplatesRoute
   '/terminals': typeof TerminalsRoute
@@ -330,6 +354,8 @@ export interface FileRoutesById {
   '/analytics': typeof AnalyticsRoute
   '/changes': typeof ChangesRoute
   '/command-policy': typeof CommandPolicyRoute
+  '/commissioning': typeof CommissioningRoute
+  '/deployments': typeof DeploymentsRoute
   '/diagnostics': typeof DiagnosticsRoute
   '/edge-app-studio': typeof EdgeAppStudioRoute
   '/edge-fleet': typeof EdgeFleetRoute
@@ -348,6 +374,7 @@ export interface FileRoutesById {
   '/registry': typeof RegistryRoute
   '/release-readiness': typeof ReleaseReadinessRoute
   '/reports': typeof ReportsRoute
+  '/screen-editor': typeof ScreenEditorRoute
   '/station-connectivity': typeof StationConnectivityRoute
   '/stations': typeof StationsRouteWithChildren
   '/step-templates': typeof StepTemplatesRoute
@@ -373,6 +400,8 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/changes'
     | '/command-policy'
+    | '/commissioning'
+    | '/deployments'
     | '/diagnostics'
     | '/edge-app-studio'
     | '/edge-fleet'
@@ -391,6 +420,7 @@ export interface FileRouteTypes {
     | '/registry'
     | '/release-readiness'
     | '/reports'
+    | '/screen-editor'
     | '/station-connectivity'
     | '/stations'
     | '/step-templates'
@@ -414,6 +444,8 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/changes'
     | '/command-policy'
+    | '/commissioning'
+    | '/deployments'
     | '/diagnostics'
     | '/edge-app-studio'
     | '/edge-fleet'
@@ -429,6 +461,7 @@ export interface FileRouteTypes {
     | '/registry'
     | '/release-readiness'
     | '/reports'
+    | '/screen-editor'
     | '/station-connectivity'
     | '/step-templates'
     | '/terminals'
@@ -451,6 +484,8 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/changes'
     | '/command-policy'
+    | '/commissioning'
+    | '/deployments'
     | '/diagnostics'
     | '/edge-app-studio'
     | '/edge-fleet'
@@ -469,6 +504,7 @@ export interface FileRouteTypes {
     | '/registry'
     | '/release-readiness'
     | '/reports'
+    | '/screen-editor'
     | '/station-connectivity'
     | '/stations'
     | '/step-templates'
@@ -493,6 +529,8 @@ export interface RootRouteChildren {
   AnalyticsRoute: typeof AnalyticsRoute
   ChangesRoute: typeof ChangesRoute
   CommandPolicyRoute: typeof CommandPolicyRoute
+  CommissioningRoute: typeof CommissioningRoute
+  DeploymentsRoute: typeof DeploymentsRoute
   DiagnosticsRoute: typeof DiagnosticsRoute
   EdgeAppStudioRoute: typeof EdgeAppStudioRoute
   EdgeFleetRoute: typeof EdgeFleetRoute
@@ -511,6 +549,7 @@ export interface RootRouteChildren {
   RegistryRoute: typeof RegistryRoute
   ReleaseReadinessRoute: typeof ReleaseReadinessRoute
   ReportsRoute: typeof ReportsRoute
+  ScreenEditorRoute: typeof ScreenEditorRoute
   StationConnectivityRoute: typeof StationConnectivityRoute
   StationsRoute: typeof StationsRouteWithChildren
   StepTemplatesRoute: typeof StepTemplatesRoute
@@ -556,6 +595,20 @@ declare module '@tanstack/react-router' {
       path: '/command-policy'
       fullPath: '/command-policy'
       preLoaderRoute: typeof CommandPolicyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/commissioning': {
+      id: '/commissioning'
+      path: '/commissioning'
+      fullPath: '/commissioning'
+      preLoaderRoute: typeof CommissioningRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/deployments': {
+      id: '/deployments'
+      path: '/deployments'
+      fullPath: '/deployments'
+      preLoaderRoute: typeof DeploymentsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/diagnostics': {
@@ -682,6 +735,13 @@ declare module '@tanstack/react-router' {
       path: '/reports'
       fullPath: '/reports'
       preLoaderRoute: typeof ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/screen-editor': {
+      id: '/screen-editor'
+      path: '/screen-editor'
+      fullPath: '/screen-editor'
+      preLoaderRoute: typeof ScreenEditorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/station-connectivity': {
@@ -857,6 +917,8 @@ const rootRouteChildren: RootRouteChildren = {
   AnalyticsRoute: AnalyticsRoute,
   ChangesRoute: ChangesRoute,
   CommandPolicyRoute: CommandPolicyRoute,
+  CommissioningRoute: CommissioningRoute,
+  DeploymentsRoute: DeploymentsRoute,
   DiagnosticsRoute: DiagnosticsRoute,
   EdgeAppStudioRoute: EdgeAppStudioRoute,
   EdgeFleetRoute: EdgeFleetRoute,
@@ -875,6 +937,7 @@ const rootRouteChildren: RootRouteChildren = {
   RegistryRoute: RegistryRoute,
   ReleaseReadinessRoute: ReleaseReadinessRoute,
   ReportsRoute: ReportsRoute,
+  ScreenEditorRoute: ScreenEditorRoute,
   StationConnectivityRoute: StationConnectivityRoute,
   StationsRoute: StationsRouteWithChildren,
   StepTemplatesRoute: StepTemplatesRoute,
