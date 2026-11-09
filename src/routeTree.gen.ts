@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as ChangesRouteImport } from './routes/changes'
+import { Route as EdgeAppStudioRouteImport } from './routes/edge-app-studio'
 import { Route as HmiRouteImport } from './routes/hmi'
 import { Route as HmiLayoutsRouteImport } from './routes/hmi-layouts'
 import { Route as LineEngineeringRouteImport } from './routes/line-engineering'
@@ -22,7 +23,9 @@ import { Route as OperatorRouteImport } from './routes/operator'
 import { Route as OperatorAppRouteImport } from './routes/operator-app'
 import { Route as OperatorAppsRouteImport } from './routes/operator-apps'
 import { Route as ProcedureDesignerRouteImport } from './routes/procedure-designer'
+import { Route as ReleaseReadinessRouteImport } from './routes/release-readiness'
 import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as StationConnectivityRouteImport } from './routes/station-connectivity'
 import { Route as StationsRouteImport } from './routes/stations'
 import { Route as StepTemplatesRouteImport } from './routes/step-templates'
 import { Route as WasteReasonsRouteImport } from './routes/waste-reasons'
@@ -51,6 +54,11 @@ const AnalyticsRoute = AnalyticsRouteImport.update({
 const ChangesRoute = ChangesRouteImport.update({
   id: '/changes',
   path: '/changes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EdgeAppStudioRoute = EdgeAppStudioRouteImport.update({
+  id: '/edge-app-studio',
+  path: '/edge-app-studio',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HmiRoute = HmiRouteImport.update({
@@ -103,9 +111,19 @@ const ProcedureDesignerRoute = ProcedureDesignerRouteImport.update({
   path: '/procedure-designer',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReleaseReadinessRoute = ReleaseReadinessRouteImport.update({
+  id: '/release-readiness',
+  path: '/release-readiness',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ReportsRoute = ReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StationConnectivityRoute = StationConnectivityRouteImport.update({
+  id: '/station-connectivity',
+  path: '/station-connectivity',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StationsRoute = StationsRouteImport.update({
@@ -183,6 +201,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/changes': typeof ChangesRoute
+  '/edge-app-studio': typeof EdgeAppStudioRoute
   '/hmi': typeof HmiRouteWithChildren
   '/hmi-layouts': typeof HmiLayoutsRoute
   '/line-engineering': typeof LineEngineeringRoute
@@ -193,7 +212,9 @@ export interface FileRoutesByFullPath {
   '/operator-app': typeof OperatorAppRoute
   '/operator-apps': typeof OperatorAppsRoute
   '/procedure-designer': typeof ProcedureDesignerRoute
+  '/release-readiness': typeof ReleaseReadinessRoute
   '/reports': typeof ReportsRoute
+  '/station-connectivity': typeof StationConnectivityRoute
   '/stations': typeof StationsRouteWithChildren
   '/step-templates': typeof StepTemplatesRoute
   '/waste-reasons': typeof WasteReasonsRoute
@@ -213,6 +234,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/changes': typeof ChangesRoute
+  '/edge-app-studio': typeof EdgeAppStudioRoute
   '/hmi-layouts': typeof HmiLayoutsRoute
   '/line-engineering': typeof LineEngineeringRoute
   '/live': typeof LiveRoute
@@ -220,7 +242,9 @@ export interface FileRoutesByTo {
   '/operator-app': typeof OperatorAppRoute
   '/operator-apps': typeof OperatorAppsRoute
   '/procedure-designer': typeof ProcedureDesignerRoute
+  '/release-readiness': typeof ReleaseReadinessRoute
   '/reports': typeof ReportsRoute
+  '/station-connectivity': typeof StationConnectivityRoute
   '/step-templates': typeof StepTemplatesRoute
   '/waste-reasons': typeof WasteReasonsRoute
   '/workstations': typeof WorkstationsRoute
@@ -240,6 +264,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/changes': typeof ChangesRoute
+  '/edge-app-studio': typeof EdgeAppStudioRoute
   '/hmi': typeof HmiRouteWithChildren
   '/hmi-layouts': typeof HmiLayoutsRoute
   '/line-engineering': typeof LineEngineeringRoute
@@ -250,7 +275,9 @@ export interface FileRoutesById {
   '/operator-app': typeof OperatorAppRoute
   '/operator-apps': typeof OperatorAppsRoute
   '/procedure-designer': typeof ProcedureDesignerRoute
+  '/release-readiness': typeof ReleaseReadinessRoute
   '/reports': typeof ReportsRoute
+  '/station-connectivity': typeof StationConnectivityRoute
   '/stations': typeof StationsRouteWithChildren
   '/step-templates': typeof StepTemplatesRoute
   '/waste-reasons': typeof WasteReasonsRoute
@@ -272,6 +299,7 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/changes'
+    | '/edge-app-studio'
     | '/hmi'
     | '/hmi-layouts'
     | '/line-engineering'
@@ -282,7 +310,9 @@ export interface FileRouteTypes {
     | '/operator-app'
     | '/operator-apps'
     | '/procedure-designer'
+    | '/release-readiness'
     | '/reports'
+    | '/station-connectivity'
     | '/stations'
     | '/step-templates'
     | '/waste-reasons'
@@ -302,6 +332,7 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/changes'
+    | '/edge-app-studio'
     | '/hmi-layouts'
     | '/line-engineering'
     | '/live'
@@ -309,7 +340,9 @@ export interface FileRouteTypes {
     | '/operator-app'
     | '/operator-apps'
     | '/procedure-designer'
+    | '/release-readiness'
     | '/reports'
+    | '/station-connectivity'
     | '/step-templates'
     | '/waste-reasons'
     | '/workstations'
@@ -328,6 +361,7 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/changes'
+    | '/edge-app-studio'
     | '/hmi'
     | '/hmi-layouts'
     | '/line-engineering'
@@ -338,7 +372,9 @@ export interface FileRouteTypes {
     | '/operator-app'
     | '/operator-apps'
     | '/procedure-designer'
+    | '/release-readiness'
     | '/reports'
+    | '/station-connectivity'
     | '/stations'
     | '/step-templates'
     | '/waste-reasons'
@@ -359,6 +395,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalyticsRoute: typeof AnalyticsRoute
   ChangesRoute: typeof ChangesRoute
+  EdgeAppStudioRoute: typeof EdgeAppStudioRoute
   HmiRoute: typeof HmiRouteWithChildren
   HmiLayoutsRoute: typeof HmiLayoutsRoute
   LineEngineeringRoute: typeof LineEngineeringRoute
@@ -369,7 +406,9 @@ export interface RootRouteChildren {
   OperatorAppRoute: typeof OperatorAppRoute
   OperatorAppsRoute: typeof OperatorAppsRoute
   ProcedureDesignerRoute: typeof ProcedureDesignerRoute
+  ReleaseReadinessRoute: typeof ReleaseReadinessRoute
   ReportsRoute: typeof ReportsRoute
+  StationConnectivityRoute: typeof StationConnectivityRoute
   StationsRoute: typeof StationsRouteWithChildren
   StepTemplatesRoute: typeof StepTemplatesRoute
   WasteReasonsRoute: typeof WasteReasonsRoute
@@ -399,6 +438,13 @@ declare module '@tanstack/react-router' {
       path: '/changes'
       fullPath: '/changes'
       preLoaderRoute: typeof ChangesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/edge-app-studio': {
+      id: '/edge-app-studio'
+      path: '/edge-app-studio'
+      fullPath: '/edge-app-studio'
+      preLoaderRoute: typeof EdgeAppStudioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/hmi': {
@@ -471,11 +517,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProcedureDesignerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/release-readiness': {
+      id: '/release-readiness'
+      path: '/release-readiness'
+      fullPath: '/release-readiness'
+      preLoaderRoute: typeof ReleaseReadinessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reports': {
       id: '/reports'
       path: '/reports'
       fullPath: '/reports'
       preLoaderRoute: typeof ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/station-connectivity': {
+      id: '/station-connectivity'
+      path: '/station-connectivity'
+      fullPath: '/station-connectivity'
+      preLoaderRoute: typeof StationConnectivityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stations': {
@@ -635,6 +695,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyticsRoute: AnalyticsRoute,
   ChangesRoute: ChangesRoute,
+  EdgeAppStudioRoute: EdgeAppStudioRoute,
   HmiRoute: HmiRouteWithChildren,
   HmiLayoutsRoute: HmiLayoutsRoute,
   LineEngineeringRoute: LineEngineeringRoute,
@@ -645,7 +706,9 @@ const rootRouteChildren: RootRouteChildren = {
   OperatorAppRoute: OperatorAppRoute,
   OperatorAppsRoute: OperatorAppsRoute,
   ProcedureDesignerRoute: ProcedureDesignerRoute,
+  ReleaseReadinessRoute: ReleaseReadinessRoute,
   ReportsRoute: ReportsRoute,
+  StationConnectivityRoute: StationConnectivityRoute,
   StationsRoute: StationsRouteWithChildren,
   StepTemplatesRoute: StepTemplatesRoute,
   WasteReasonsRoute: WasteReasonsRoute,

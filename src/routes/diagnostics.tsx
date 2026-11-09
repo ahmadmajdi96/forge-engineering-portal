@@ -1,0 +1,3 @@
+import {createFileRoute} from '@tanstack/react-router';
+import {DiagnosticsPage} from '@/components/engineering/support-pages';
+export const Route=createFileRoute('/diagnostics')({head:()=>({meta:[{title:'Diagnostics & reports · Engineering Portal'},{name:'description',content:'Release blockers, scoped inventory consistency and commissioning acceptance evidence.'},{property:'og:title',content:'Diagnostics & reports · Engineering Portal'},{property:'og:description',content:'Release blockers, scoped inventory consistency and commissioning acceptance evidence.'},{property:'og:type',content:'website'},{name:'twitter:card',content:'summary'}]}),component:DiagnosticsPage});
