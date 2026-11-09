@@ -1,3 +1,4 @@
+import { DiagnosticsPage } from '@/components/engineering/support-pages';
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useStore, STAGES } from "@/lib/store";
 import { Panel, StatusBadge, VersionBadge } from "@/components/ui-kit";
@@ -11,7 +12,7 @@ export const Route = createFileRoute("/")({
     { property: "og:title", content: "Overview · Engineering Portal" },
     { property: "og:description", content: "Asset hierarchy, lifecycle status and pending approvals for MES engineering." },
   ] }),
-  component: Overview,
+  component: DiagnosticsPage,
 });
 
 function Overview() {

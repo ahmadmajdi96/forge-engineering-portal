@@ -1,3 +1,4 @@
+import { RegistryPage } from '@/components/engineering/support-pages';
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Download } from "lucide-react";
@@ -16,7 +17,7 @@ export const Route = createFileRoute("/reports")({
     { property: "og:title", content: "Engineering Reports · Engineering Portal" },
     { property: "og:description", content: "Master data, calibration and change-history reports with CSV export." },
   ] }),
-  component: Reports,
+  component: RegistryPage,
 });
 
 type Tab = "inventory" | "calibration" | "changes";
