@@ -1,0 +1,6 @@
+import {createFileRoute} from '@tanstack/react-router';
+import {useState} from 'react';
+import {supabase} from '@/integrations/supabase/client';
+import {Button} from '@/components/ui/button';
+export const Route=createFileRoute('/account-recovery')({head:()=>({meta:[{title:'Account recovery · Engineering Portal'},{name:'description',content:'Securely update your engineering account password.'},{property:'og:title',content:'Account recovery · Engineering Portal'},{property:'og:description',content:'Secure account password recovery.'},{property:'og:type',content:'website'},{name:'twitter:card',content:'summary'}]}),component:Recovery});
+function Recovery(){const [password,setPassword]=useState(''),[message,setMessage]=useState('');return <div className="engineering-page max-w-md"><h1 className="text-xl mb-4">Update password</h1><input aria-label="New password" type="password" placeholder="New password" value={password} onChange={e=>setPassword(e.target.value)}/><Button disabled={password.length<8} onClick={async()=>{const {error}=await supabase.auth.updateUser({password});setMessage(error?'Password could not be updated. Open the secure recovery link again.':'Password updated.');}}>Update password</Button><p>{message}</p></div>;}
