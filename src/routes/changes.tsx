@@ -1,3 +1,4 @@
+import {ChangeImpact} from '@/components/engineering/reference-governance';
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useStore, STAGES, type Entity } from "@/lib/store";
@@ -14,7 +15,7 @@ export const Route = createFileRoute("/changes")({
     { property: "og:title", content: "Change Management · Engineering Portal" },
     { property: "og:description", content: "Lifecycle board, e-signature approvals and audit log for engineering revisions." },
   ] }),
-  component: WorkspaceHistory,
+  component: ChangeImpact,
 });
 
 function Changes() {

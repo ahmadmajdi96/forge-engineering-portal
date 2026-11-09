@@ -1,0 +1,3 @@
+import {createFileRoute} from '@tanstack/react-router';
+import {DeploymentRollout} from '@/components/engineering/reference-governance';
+export const Route=createFileRoute('/deployments')({head:()=>({meta:[{title:'Deployment rollout · Engineering Portal'},{name:'description',content:'Inspect release manifests, edge targets and independent activation prerequisites.'},{property:'og:title',content:'Deployment rollout · Engineering Portal'},{property:'og:description',content:'Inspect release manifests, edge targets and independent activation prerequisites.'},{property:'og:type',content:'website'},{name:'twitter:card',content:'summary'}]}),component:DeploymentRollout});
