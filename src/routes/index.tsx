@@ -8,9 +8,9 @@ export const Route = createFileRoute("/")({
     { name: "twitter:card", content: "summary" },
     { property: "og:type", content: "website" },
     { title: "Overview · Engineering Portal" },
-    { name: "description", content: "Asset hierarchy, lifecycle status and pending approvals for MES engineering." },
+    { name: "description", content: "Scoped engineering readiness, release blockers, stale signals and deployment evidence." },
     { property: "og:title", content: "Overview · Engineering Portal" },
-    { property: "og:description", content: "Asset hierarchy, lifecycle status and pending approvals for MES engineering." },
+    { property: "og:description", content: "Engineering readiness, release blockers and verified deployment evidence." },
   ] }),
   component: DiagnosticsPage,
 });

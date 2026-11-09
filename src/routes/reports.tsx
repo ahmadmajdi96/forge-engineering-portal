@@ -13,9 +13,9 @@ export const Route = createFileRoute("/reports")({
     { name: "twitter:card", content: "summary" },
     { property: "og:type", content: "website" },
     { title: "Engineering Reports · Engineering Portal" },
-    { name: "description", content: "Exportable reports for engineering master data, calibration due dates and signed change history." },
+    { name: "description", content: "Canonical station and equipment inventory, calibration evidence and legacy identity crosswalk reports." },
     { property: "og:title", content: "Engineering Reports · Engineering Portal" },
-    { property: "og:description", content: "Master data, calibration and change-history reports with CSV export." },
+    { property: "og:description", content: "Canonical engineering inventory and legacy identity crosswalk reports." },
   ] }),
   component: RegistryPage,
 });

@@ -10,9 +10,9 @@ export const Route = createFileRoute("/analytics")({
     { name: "twitter:card", content: "summary" },
     { property: "og:type", content: "website" },
     { title: "Engineering Analytics · Engineering Portal" },
-    { name: "description", content: "Lifecycle, revision and approval analytics across lines, workstations, machines and HMI configurations." },
+    { name: "description", content: "Actionable engineering readiness analytics for scoped assets, signals and release blockers." },
     { property: "og:title", content: "Engineering Analytics · Engineering Portal" },
-    { property: "og:description", content: "Lifecycle, revision and approval analytics for MES engineering data." },
+    { property: "og:description", content: "Scoped engineering readiness analytics and release blockers." },
   ] }),
   component: DiagnosticsPage,
 });
