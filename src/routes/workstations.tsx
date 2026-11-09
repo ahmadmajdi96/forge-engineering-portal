@@ -1,3 +1,4 @@
+import { StationComposition } from '@/components/engineering/reference-assets';
 import { createFileRoute } from "@tanstack/react-router";
 import { EntityModule } from "@/components/EntityModule";
 import { Field, Input, Select } from "@/components/ui-kit";
@@ -12,7 +13,7 @@ export const Route = createFileRoute("/workstations")({
     { property: "og:title", content: "Workstations · Engineering Portal" },
     { property: "og:description", content: "Configure workstations, operating parameters, hardware bindings and line assignment." },
   ] }),
-  component: WS,
+  component: StationComposition,
 });
 
 function WS() {

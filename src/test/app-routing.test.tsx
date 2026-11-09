@@ -14,7 +14,7 @@ describe("App routing", () => {
 
     expect(matches.at(-1)?.routeId).not.toBe(rootRouteId);
   });
-  it.each(["/lines", "/stations", "/live", "/operator", "/operator-app", "/operator-apps", "/hmi", "/step-templates", "/lines/L-01", "/stations/ST-101", "/operator/ST-101", "/hmi/ST-101", "/line-engineering", "/station-connectivity", "/edge-app-studio", "/release-readiness", "/registry", "/process-routes", "/mes-integration", "/edge-fleet", "/diagnostics"])("matches the engineering or MES page %s", (path) => {
+  it.each(["/lines", "/stations", "/live", "/operator", "/operator-app", "/operator-apps", "/hmi", "/step-templates", "/lines/L-01", "/stations/ST-101", "/operator/ST-101", "/hmi/ST-101", "/line-engineering", "/station-connectivity", "/edge-app-studio", "/release-readiness", "/registry", "/process-routes", "/mes-integration", "/edge-fleet", "/diagnostics", "/terminals", "/command-policy", "/machines", "/workstations"])("matches the engineering or MES page %s", (path) => {
     const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
     const matches = router.matchRoutes(path);
     expect(matches.at(-1)?.routeId).not.toBe(rootRouteId);

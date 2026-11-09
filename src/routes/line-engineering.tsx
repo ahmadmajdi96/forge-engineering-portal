@@ -1,3 +1,4 @@
+import { LineTopology } from '@/components/engineering/reference-process';
 import type { Dict } from "@/lib/store";
 import { LineEngineeringPage } from "@/components/engineering/line-page";
 import { createFileRoute } from "@tanstack/react-router";
@@ -15,7 +16,7 @@ export const Route = createFileRoute("/line-engineering")({
     { property: "og:title", content: "Production Lines · Engineering Portal" },
     { property: "og:description", content: "Define production lines, workstation sequencing and buffer rules." },
   ] }),
-  component: LineEngineeringPage,
+  component: LineTopology,
 });
 
 function LineEditor({ data, set, disabled }: { data: Dict; set: (d: Dict) => void; disabled: boolean }) {

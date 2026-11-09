@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Rebuild all ten uploaded reference page layouts and verify their desktop alignment and sandbox controls without replacing the sidebar or changing production logic
 - [x] Copy MES Production Lines, Stations, Live Shopfloor, Operator Consoles, Operator App, HMI Runtime, Operator Apps and Step Templates screens
 - [x] Verify copied pages and their main interactions
 - [x] Engineering modules (lines, workstations, machines, operator app, HMI, change mgmt)

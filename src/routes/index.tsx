@@ -1,3 +1,4 @@
+import { EngineeringOverview } from '@/components/engineering/reference-assets';
 import { DiagnosticsPage } from '@/components/engineering/support-pages';
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useStore, STAGES } from "@/lib/store";
@@ -12,7 +13,7 @@ export const Route = createFileRoute("/")({
     { property: "og:title", content: "Overview · Engineering Portal" },
     { property: "og:description", content: "Engineering readiness, release blockers and verified deployment evidence." },
   ] }),
-  component: DiagnosticsPage,
+  component: EngineeringOverview,
 });
 
 function Overview() {

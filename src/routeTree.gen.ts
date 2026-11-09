@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AccountRecoveryRouteImport } from './routes/account-recovery'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as ChangesRouteImport } from './routes/changes'
+import { Route as CommandPolicyRouteImport } from './routes/command-policy'
 import { Route as DiagnosticsRouteImport } from './routes/diagnostics'
 import { Route as EdgeAppStudioRouteImport } from './routes/edge-app-studio'
 import { Route as EdgeFleetRouteImport } from './routes/edge-fleet'
@@ -34,6 +35,7 @@ import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as StationConnectivityRouteImport } from './routes/station-connectivity'
 import { Route as StationsRouteImport } from './routes/stations'
 import { Route as StepTemplatesRouteImport } from './routes/step-templates'
+import { Route as TerminalsRouteImport } from './routes/terminals'
 import { Route as WasteReasonsRouteImport } from './routes/waste-reasons'
 import { Route as WorkstationsRouteImport } from './routes/workstations'
 import { Route as HmiIndexRouteImport } from './routes/hmi.index'
@@ -65,6 +67,11 @@ const AnalyticsRoute = AnalyticsRouteImport.update({
 const ChangesRoute = ChangesRouteImport.update({
   id: '/changes',
   path: '/changes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommandPolicyRoute = CommandPolicyRouteImport.update({
+  id: '/command-policy',
+  path: '/command-policy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DiagnosticsRoute = DiagnosticsRouteImport.update({
@@ -172,6 +179,11 @@ const StepTemplatesRoute = StepTemplatesRouteImport.update({
   path: '/step-templates',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TerminalsRoute = TerminalsRouteImport.update({
+  id: '/terminals',
+  path: '/terminals',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WasteReasonsRoute = WasteReasonsRouteImport.update({
   id: '/waste-reasons',
   path: '/waste-reasons',
@@ -238,6 +250,7 @@ export interface FileRoutesByFullPath {
   '/account-recovery': typeof AccountRecoveryRoute
   '/analytics': typeof AnalyticsRoute
   '/changes': typeof ChangesRoute
+  '/command-policy': typeof CommandPolicyRoute
   '/diagnostics': typeof DiagnosticsRoute
   '/edge-app-studio': typeof EdgeAppStudioRoute
   '/edge-fleet': typeof EdgeFleetRoute
@@ -259,6 +272,7 @@ export interface FileRoutesByFullPath {
   '/station-connectivity': typeof StationConnectivityRoute
   '/stations': typeof StationsRouteWithChildren
   '/step-templates': typeof StepTemplatesRoute
+  '/terminals': typeof TerminalsRoute
   '/waste-reasons': typeof WasteReasonsRoute
   '/workstations': typeof WorkstationsRoute
   '/hmi/$stationId': typeof HmiStationIdRoute
@@ -277,6 +291,7 @@ export interface FileRoutesByTo {
   '/account-recovery': typeof AccountRecoveryRoute
   '/analytics': typeof AnalyticsRoute
   '/changes': typeof ChangesRoute
+  '/command-policy': typeof CommandPolicyRoute
   '/diagnostics': typeof DiagnosticsRoute
   '/edge-app-studio': typeof EdgeAppStudioRoute
   '/edge-fleet': typeof EdgeFleetRoute
@@ -294,6 +309,7 @@ export interface FileRoutesByTo {
   '/reports': typeof ReportsRoute
   '/station-connectivity': typeof StationConnectivityRoute
   '/step-templates': typeof StepTemplatesRoute
+  '/terminals': typeof TerminalsRoute
   '/waste-reasons': typeof WasteReasonsRoute
   '/workstations': typeof WorkstationsRoute
   '/hmi/$stationId': typeof HmiStationIdRoute
@@ -313,6 +329,7 @@ export interface FileRoutesById {
   '/account-recovery': typeof AccountRecoveryRoute
   '/analytics': typeof AnalyticsRoute
   '/changes': typeof ChangesRoute
+  '/command-policy': typeof CommandPolicyRoute
   '/diagnostics': typeof DiagnosticsRoute
   '/edge-app-studio': typeof EdgeAppStudioRoute
   '/edge-fleet': typeof EdgeFleetRoute
@@ -334,6 +351,7 @@ export interface FileRoutesById {
   '/station-connectivity': typeof StationConnectivityRoute
   '/stations': typeof StationsRouteWithChildren
   '/step-templates': typeof StepTemplatesRoute
+  '/terminals': typeof TerminalsRoute
   '/waste-reasons': typeof WasteReasonsRoute
   '/workstations': typeof WorkstationsRoute
   '/hmi/$stationId': typeof HmiStationIdRoute
@@ -354,6 +372,7 @@ export interface FileRouteTypes {
     | '/account-recovery'
     | '/analytics'
     | '/changes'
+    | '/command-policy'
     | '/diagnostics'
     | '/edge-app-studio'
     | '/edge-fleet'
@@ -375,6 +394,7 @@ export interface FileRouteTypes {
     | '/station-connectivity'
     | '/stations'
     | '/step-templates'
+    | '/terminals'
     | '/waste-reasons'
     | '/workstations'
     | '/hmi/$stationId'
@@ -393,6 +413,7 @@ export interface FileRouteTypes {
     | '/account-recovery'
     | '/analytics'
     | '/changes'
+    | '/command-policy'
     | '/diagnostics'
     | '/edge-app-studio'
     | '/edge-fleet'
@@ -410,6 +431,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/station-connectivity'
     | '/step-templates'
+    | '/terminals'
     | '/waste-reasons'
     | '/workstations'
     | '/hmi/$stationId'
@@ -428,6 +450,7 @@ export interface FileRouteTypes {
     | '/account-recovery'
     | '/analytics'
     | '/changes'
+    | '/command-policy'
     | '/diagnostics'
     | '/edge-app-studio'
     | '/edge-fleet'
@@ -449,6 +472,7 @@ export interface FileRouteTypes {
     | '/station-connectivity'
     | '/stations'
     | '/step-templates'
+    | '/terminals'
     | '/waste-reasons'
     | '/workstations'
     | '/hmi/$stationId'
@@ -468,6 +492,7 @@ export interface RootRouteChildren {
   AccountRecoveryRoute: typeof AccountRecoveryRoute
   AnalyticsRoute: typeof AnalyticsRoute
   ChangesRoute: typeof ChangesRoute
+  CommandPolicyRoute: typeof CommandPolicyRoute
   DiagnosticsRoute: typeof DiagnosticsRoute
   EdgeAppStudioRoute: typeof EdgeAppStudioRoute
   EdgeFleetRoute: typeof EdgeFleetRoute
@@ -489,6 +514,7 @@ export interface RootRouteChildren {
   StationConnectivityRoute: typeof StationConnectivityRoute
   StationsRoute: typeof StationsRouteWithChildren
   StepTemplatesRoute: typeof StepTemplatesRoute
+  TerminalsRoute: typeof TerminalsRoute
   WasteReasonsRoute: typeof WasteReasonsRoute
   WorkstationsRoute: typeof WorkstationsRoute
   UnitsUidRoute: typeof UnitsUidRoute
@@ -523,6 +549,13 @@ declare module '@tanstack/react-router' {
       path: '/changes'
       fullPath: '/changes'
       preLoaderRoute: typeof ChangesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/command-policy': {
+      id: '/command-policy'
+      path: '/command-policy'
+      fullPath: '/command-policy'
+      preLoaderRoute: typeof CommandPolicyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/diagnostics': {
@@ -672,6 +705,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StepTemplatesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/terminals': {
+      id: '/terminals'
+      path: '/terminals'
+      fullPath: '/terminals'
+      preLoaderRoute: typeof TerminalsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/waste-reasons': {
       id: '/waste-reasons'
       path: '/waste-reasons'
@@ -816,6 +856,7 @@ const rootRouteChildren: RootRouteChildren = {
   AccountRecoveryRoute: AccountRecoveryRoute,
   AnalyticsRoute: AnalyticsRoute,
   ChangesRoute: ChangesRoute,
+  CommandPolicyRoute: CommandPolicyRoute,
   DiagnosticsRoute: DiagnosticsRoute,
   EdgeAppStudioRoute: EdgeAppStudioRoute,
   EdgeFleetRoute: EdgeFleetRoute,
@@ -837,6 +878,7 @@ const rootRouteChildren: RootRouteChildren = {
   StationConnectivityRoute: StationConnectivityRoute,
   StationsRoute: StationsRouteWithChildren,
   StepTemplatesRoute: StepTemplatesRoute,
+  TerminalsRoute: TerminalsRoute,
   WasteReasonsRoute: WasteReasonsRoute,
   WorkstationsRoute: WorkstationsRoute,
   UnitsUidRoute: UnitsUidRoute,
