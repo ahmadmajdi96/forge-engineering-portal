@@ -1,0 +1,3 @@
+import {createFileRoute} from '@tanstack/react-router';
+import {TerminalsPeripherals} from '@/components/engineering/reference-assets';
+export const Route=createFileRoute('/terminals')({head:()=>({meta:[{title:'Terminals & peripherals · Engineering Portal'},{name:'description',content:'Station terminal, peripheral and driver configuration with isolated sandbox read testing.'},{property:'og:title',content:'Terminals & peripherals · Engineering Portal'},{property:'og:description',content:'Station terminals, peripherals and driver configuration.'},{property:'og:type',content:'website'},{name:'twitter:card',content:'summary'}]}),component:TerminalsPeripherals});

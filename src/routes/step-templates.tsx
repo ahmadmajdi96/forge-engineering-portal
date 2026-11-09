@@ -1,3 +1,4 @@
+import { StepTemplateLibrary } from '@/components/engineering/reference-process';
 import { useListControls } from "@/components/list-controls";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
@@ -22,7 +23,7 @@ export const Route = createFileRoute("/step-templates")({
       { name: "description", content: "Reusable step definitions with defaults, CCP rules and sensor bindings." },
     ],
   }),
-  component: StepTemplatesPage,
+  component: StepTemplateLibrary,
 });
 
 const categoryStyles: Record<StepTemplate["category"], { label: string; cls: string; icon: any }> = {

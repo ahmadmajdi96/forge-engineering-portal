@@ -1,0 +1,3 @@
+import {createFileRoute} from '@tanstack/react-router';
+import {CommandPolicy} from '@/components/engineering/reference-process';
+export const Route=createFileRoute('/command-policy')({head:()=>({meta:[{title:'Command policy · Engineering Portal'},{name:'description',content:'Engineering command policy, bounded commissioning requests and simulated command timelines.'},{property:'og:title',content:'Command policy · Engineering Portal'},{property:'og:description',content:'Engineering command policy and isolated sandbox simulation.'},{property:'og:type',content:'website'},{name:'twitter:card',content:'summary'}]}),component:CommandPolicy});
