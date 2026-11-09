@@ -7,3 +7,6 @@
 - [x] Verify build passes
 - [x] Adopt MES Command Center design (colors, fonts, layout feel)
 - [ ] Live MES integration blocked by authorized API credentials and supported write endpoints
+- [ ] Implement uploaded engineering readiness report and four reference pages, preserving the existing sidebar
+- [ ] Verify shared identity, revision/release gates, authoring and integration diagnostics
+- [ ] Commission real MES/edge/equipment flows (requires authorized services, hardware and site acceptance)
