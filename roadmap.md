@@ -1,6 +1,6 @@
 # Roadmap
-- [ ] Add dynamic engineering draft CRUD controls across reference interfaces
-- [ ] Build workflow, screen editor, HMI, fleet, rollout, mapping, commissioning, change-impact and approval reference screens
+- [x] Add dynamic engineering draft CRUD controls across reference interfaces
+- [x] Build workflow, screen editor, HMI, fleet, rollout, mapping, commissioning, change-impact and approval reference screens
 - [ ] Verify create/edit/delete, cross-page state, reference alignment and production-action blocking
 - [x] Rebuild all ten uploaded reference page layouts and verify their desktop alignment and sandbox controls without replacing the sidebar or changing production logic
 - [x] Copy MES Production Lines, Stations, Live Shopfloor, Operator Consoles, Operator App, HMI Runtime, Operator Apps and Step Templates screens
