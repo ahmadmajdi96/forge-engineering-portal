@@ -14,13 +14,137 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      engineering_audit: {
+        Row: {
+          action: string
+          actor_id: string
+          before_revision: number | null
+          created_at: string
+          id: string
+          reason: string
+          revision_id: string
+          workspace_id: string
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          before_revision?: number | null
+          created_at?: string
+          id?: string
+          reason: string
+          revision_id: string
+          workspace_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          before_revision?: number | null
+          created_at?: string
+          id?: string
+          reason?: string
+          revision_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "engineering_audit_revision_id_fkey"
+            columns: ["revision_id"]
+            isOneToOne: false
+            referencedRelation: "engineering_revisions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "engineering_audit_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "engineering_workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      engineering_revisions: {
+        Row: {
+          actor_id: string
+          created_at: string
+          id: string
+          lifecycle: string
+          payload: Json
+          reason: string
+          revision: number
+          workspace_id: string
+        }
+        Insert: {
+          actor_id: string
+          created_at?: string
+          id?: string
+          lifecycle?: string
+          payload: Json
+          reason: string
+          revision: number
+          workspace_id: string
+        }
+        Update: {
+          actor_id?: string
+          created_at?: string
+          id?: string
+          lifecycle?: string
+          payload?: Json
+          reason?: string
+          revision?: number
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "engineering_revisions_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "engineering_workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      engineering_workspaces: {
+        Row: {
+          created_at: string
+          environment: string
+          id: string
+          name: string
+          owner_id: string
+          scope: string
+        }
+        Insert: {
+          created_at?: string
+          environment?: string
+          id?: string
+          name: string
+          owner_id: string
+          scope: string
+        }
+        Update: {
+          created_at?: string
+          environment?: string
+          id?: string
+          name?: string
+          owner_id?: string
+          scope?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      save_engineering_revision: {
+        Args: {
+          p_expected: number
+          p_lifecycle?: string
+          p_payload: Json
+          p_reason: string
+          p_workspace: string
+        }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
