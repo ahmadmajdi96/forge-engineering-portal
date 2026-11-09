@@ -1,0 +1,13 @@
+services:
+  engineering-portal:
+    build: .
+    image: engineering-portal:latest
+    ports:
+      - "${PORT:-3000}:3000"
+    env_file:
+      - .env
+    environment:
+      # Optional: Command Access Hub sign-in. Leave empty to run in demo mode.
+      ACCESS_HUB_URL: ${ACCESS_HUB_URL:-}
+      ACCESS_HUB_API_KEY: ${ACCESS_HUB_API_KEY:-}
+    restart: unless-stopped
