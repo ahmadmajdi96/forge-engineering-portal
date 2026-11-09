@@ -20,3 +20,4 @@
 - Reference-screen presentation lives in reference-ui, reference-assets and reference-process modules and reads engineering sandbox context; keep presentation-only edits separate from production authority and copied MES preview state.
 
 - Engineering design records are schema-validated revision payloads with stable IDs and archive semantics; snapshot saving preserves history and cannot confer MES acknowledgement, edge activation or approval authority.
+- Docker builds use vite.docker.config.ts (nitro node-server preset) via Dockerfile/docker-compose.yml; why: run anywhere with `docker compose up --build` without changing Lovable's Cloudflare build.

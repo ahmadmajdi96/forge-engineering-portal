@@ -39,3 +39,12 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+
+## Run with Docker
+
+```
+docker compose up --build
+```
+
+Open http://localhost:3000. It connects to the existing Lovable Cloud database using the keys in `.env`.
+For Command Access Hub sign-in, set `ACCESS_HUB_URL` and `ACCESS_HUB_API_KEY` in your shell or a `.env` before starting.
