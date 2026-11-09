@@ -6,7 +6,7 @@ import { useEngineering } from '@/lib/engineering/context';
 import { Badge } from './common';
 
 export { Badge };
-export function Surface({title,sub,children,actions,className=''}:{title?:ReactNode;sub?:string;children:ReactNode;actions?:ReactNode;className?:string}) {
+export function Surface({title,sub,children,actions,className=''}:{title?:ReactNode;sub?:string|undefined;children:ReactNode;actions?:ReactNode;className?:string}) {
   return <section className={`ref-surface ${className}`}>{title&&<header className="ref-surface-head"><div><h2>{title}</h2>{sub&&<p>{sub}</p>}</div>{actions}</header>}<div className="ref-surface-body">{children}</div></section>;
 }
 export function ReferencePage({children,title,sub,crumb,actions}:{children:ReactNode;title:string;sub?:string;crumb?:string;actions?:ReactNode}){

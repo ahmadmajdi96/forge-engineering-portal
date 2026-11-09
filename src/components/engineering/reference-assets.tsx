@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import {Link} from '@tanstack/react-router';
-import {Layers,Network,Server,AlertTriangle,CheckCircle2,FileText,ExternalLink,Search,Box,Settings2,Monitor,ShieldCheck,Pencil,ArrowRight,Radio,Lock,Save,Plus,Barcode,Printer,Weight,Activity,Copy,Check} from 'lucide-react';
+import {Layers,Network,Server,AlertTriangle,CheckCircle2,FileText,ExternalLink,Search,Box,Settings2,Monitor,ShieldCheck,Pencil,ArrowRight,Radio,Lock,Save,Plus,Barcode,Printer,Weight,Activity,Copy,Check,ChevronDown} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {useEngineering} from '@/lib/engineering/context';
 import {Surface,ReferencePage,ScopeSelectors,RefTabs,RefTable,KeyValues,Notice,StationList,Badge,DetailLinks,DraftDialog} from './reference-ui';
