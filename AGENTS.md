@@ -14,3 +14,5 @@
 - Copied MES runtime UI binds to `src/lib/mes-disconnected.ts` until a real MES integration is authorized and verified; unavailable writes must refuse rather than simulate operational success.
 - Role→module rules live in `src/lib/permissions.ts` (tested); hub "module:action" permissions override.
 - App chrome (sidebar, top bar, sign-in) lives in src/components/Shell.tsx and mirrors MES Command Center's layout using shadcn ui/sidebar; why: one consistent look across MES apps.
+- Canonical engineering sandbox projections use src/lib/engineering; immutable Cloud revisions and append-only audit are separate from legacy assembly fixtures and MES execution previews to prevent unsafe data promotion.
+- Engineering production approval and activation require server-verified Hub scope permissions and external MES/edge commissioning evidence; sandbox owner authentication never grants production authority.

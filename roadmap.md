@@ -7,6 +7,8 @@
 - [x] Verify build passes
 - [x] Adopt MES Command Center design (colors, fonts, layout feel)
 - [ ] Live MES integration blocked by authorized API credentials and supported write endpoints
-- [ ] Implement uploaded engineering readiness report and four reference pages, preserving the existing sidebar
-- [ ] Verify shared identity, revision/release gates, authoring and integration diagnostics
+- [x] Add four reference-inspired pages with shared sandbox registry, draft edits, workflow authoring, validation, and release blockers; preserve sidebar styling
+- [x] Verify page routes, workflow edits, narrow-screen alignment and engineering rule tests
+- [ ] Verify authenticated Cloud save/read/review flow (no confirmed app account available)
+- [ ] Complete report production services: multi-user scoped approval, deployed edge runtime, real inbox/outbox transport and commissioning (requires Hub/MES/edge contracts and site infrastructure)
 - [ ] Commission real MES/edge/equipment flows (requires authorized services, hardware and site acceptance)

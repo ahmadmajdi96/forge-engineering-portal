@@ -1,3 +1,4 @@
+import { DiagnosticsPage } from '@/components/engineering/support-pages';
 import { createFileRoute } from "@tanstack/react-router";
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, XAxis, YAxis } from "recharts";
 import { useStore, STAGES } from "@/lib/store";
@@ -9,11 +10,11 @@ export const Route = createFileRoute("/analytics")({
     { name: "twitter:card", content: "summary" },
     { property: "og:type", content: "website" },
     { title: "Engineering Analytics · Engineering Portal" },
-    { name: "description", content: "Lifecycle, revision and approval analytics across lines, workstations, machines and HMI configurations." },
+    { name: "description", content: "Actionable engineering readiness analytics for scoped assets, signals and release blockers." },
     { property: "og:title", content: "Engineering Analytics · Engineering Portal" },
-    { property: "og:description", content: "Lifecycle, revision and approval analytics for MES engineering data." },
+    { property: "og:description", content: "Scoped engineering readiness analytics and release blockers." },
   ] }),
-  component: Analytics,
+  component: DiagnosticsPage,
 });
 
 const KINDS = ["lines", "workstations", "machines", "operator-app", "hmi"] as const;

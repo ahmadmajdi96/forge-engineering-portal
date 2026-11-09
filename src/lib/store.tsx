@@ -19,7 +19,7 @@ export type LogEntry = {
   id: string; entityId: string; entityName: string; kind: string; at: string;
   user: string; action: string; note?: string | undefined; signature?: string | undefined; version: number;
 };
-export type Session = { email: string; name?: string | undefined; roles: string[]; permissions: string[]; source: "hub" | "demo" };
+export type Session = { email: string; name?: string | undefined; roles: string[]; permissions: string[]; source: "hub" | "demo" | "verified" };
 
 type State = { entities: Entity[]; log: LogEntry[] };
 const uid = () => Math.random().toString(36).slice(2, 10);

@@ -1,0 +1,3 @@
+import {createFileRoute} from '@tanstack/react-router';
+import {IntegrationPage} from '@/components/engineering/support-pages';
+export const Route=createFileRoute('/mes-integration')({head:()=>({meta:[{title:'MES integration · Engineering Portal'},{name:'description',content:'Engineering, deployment and execution streams with independent acknowledgement.'},{property:'og:title',content:'MES integration · Engineering Portal'},{property:'og:description',content:'Engineering, deployment and execution streams with independent acknowledgement.'},{property:'og:type',content:'website'},{name:'twitter:card',content:'summary'}]}),component:IntegrationPage});

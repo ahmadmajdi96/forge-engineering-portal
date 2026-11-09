@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1794214675185,
+      "tag": "0000_engineering_workspaces_and_immutable_revisions",
+      "breakpoints": true
+    }
+  ]
+}

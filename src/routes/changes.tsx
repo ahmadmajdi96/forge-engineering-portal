@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useStore, STAGES, type Entity } from "@/lib/store";
 import { LifecycleBar, Panel, Select, StatusBadge, VersionBadge } from "@/components/ui-kit";
 import type { Module } from "@/lib/permissions";
+import { WorkspaceHistory } from "@/components/engineering/workspace-history";
 
 export const Route = createFileRoute("/changes")({
   head: () => ({ meta: [
@@ -13,7 +14,7 @@ export const Route = createFileRoute("/changes")({
     { property: "og:title", content: "Change Management · Engineering Portal" },
     { property: "og:description", content: "Lifecycle board, e-signature approvals and audit log for engineering revisions." },
   ] }),
-  component: Changes,
+  component: WorkspaceHistory,
 });
 
 function Changes() {
