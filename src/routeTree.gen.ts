@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AccountRecoveryRouteImport } from './routes/account-recovery'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
+import { Route as AssetStepsRouteImport } from './routes/asset-steps'
 import { Route as ChangesRouteImport } from './routes/changes'
 import { Route as CommandPolicyRouteImport } from './routes/command-policy'
 import { Route as CommissioningRouteImport } from './routes/commissioning'
@@ -65,6 +66,11 @@ const AccountRecoveryRoute = AccountRecoveryRouteImport.update({
 const AnalyticsRoute = AnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AssetStepsRoute = AssetStepsRouteImport.update({
+  id: '/asset-steps',
+  path: '/asset-steps',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChangesRoute = ChangesRouteImport.update({
@@ -267,6 +273,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/account-recovery': typeof AccountRecoveryRoute
   '/analytics': typeof AnalyticsRoute
+  '/asset-steps': typeof AssetStepsRoute
   '/changes': typeof ChangesRoute
   '/command-policy': typeof CommandPolicyRoute
   '/commissioning': typeof CommissioningRoute
@@ -311,6 +318,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/account-recovery': typeof AccountRecoveryRoute
   '/analytics': typeof AnalyticsRoute
+  '/asset-steps': typeof AssetStepsRoute
   '/changes': typeof ChangesRoute
   '/command-policy': typeof CommandPolicyRoute
   '/commissioning': typeof CommissioningRoute
@@ -352,6 +360,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/account-recovery': typeof AccountRecoveryRoute
   '/analytics': typeof AnalyticsRoute
+  '/asset-steps': typeof AssetStepsRoute
   '/changes': typeof ChangesRoute
   '/command-policy': typeof CommandPolicyRoute
   '/commissioning': typeof CommissioningRoute
@@ -398,6 +407,7 @@ export interface FileRouteTypes {
     | '/'
     | '/account-recovery'
     | '/analytics'
+    | '/asset-steps'
     | '/changes'
     | '/command-policy'
     | '/commissioning'
@@ -442,6 +452,7 @@ export interface FileRouteTypes {
     | '/'
     | '/account-recovery'
     | '/analytics'
+    | '/asset-steps'
     | '/changes'
     | '/command-policy'
     | '/commissioning'
@@ -482,6 +493,7 @@ export interface FileRouteTypes {
     | '/'
     | '/account-recovery'
     | '/analytics'
+    | '/asset-steps'
     | '/changes'
     | '/command-policy'
     | '/commissioning'
@@ -527,6 +539,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccountRecoveryRoute: typeof AccountRecoveryRoute
   AnalyticsRoute: typeof AnalyticsRoute
+  AssetStepsRoute: typeof AssetStepsRoute
   ChangesRoute: typeof ChangesRoute
   CommandPolicyRoute: typeof CommandPolicyRoute
   CommissioningRoute: typeof CommissioningRoute
@@ -581,6 +594,13 @@ declare module '@tanstack/react-router' {
       path: '/analytics'
       fullPath: '/analytics'
       preLoaderRoute: typeof AnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/asset-steps': {
+      id: '/asset-steps'
+      path: '/asset-steps'
+      fullPath: '/asset-steps'
+      preLoaderRoute: typeof AssetStepsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/changes': {
@@ -915,6 +935,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccountRecoveryRoute: AccountRecoveryRoute,
   AnalyticsRoute: AnalyticsRoute,
+  AssetStepsRoute: AssetStepsRoute,
   ChangesRoute: ChangesRoute,
   CommandPolicyRoute: CommandPolicyRoute,
   CommissioningRoute: CommissioningRoute,
