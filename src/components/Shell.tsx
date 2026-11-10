@@ -14,11 +14,12 @@ import {
   SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger,
 } from "@/components/ui/sidebar";
 
-type NavItem = { title: string; url: "/" | "/lines" | "/stations" | "/live" | "/operator" | "/operator-apps" | "/step-templates" | "/workstations" | "/machines" | "/operator-app" | "/hmi" | "/changes" | "/analytics" | "/reports" | "/line-engineering" | "/station-connectivity" | "/edge-app-studio" | "/release-readiness" | "/registry" | "/process-routes" | "/mes-integration" | "/edge-fleet" | "/diagnostics" | "/screen-editor" | "/hmi-layouts" | "/deployments" | "/commissioning"; icon: typeof Boxes };
+type NavItem = { title: string; url: "/" | "/lines" | "/stations" | "/live" | "/operator" | "/operator-apps" | "/step-templates" | "/workstations" | "/machines" | "/operator-app" | "/hmi" | "/changes" | "/analytics" | "/reports" | "/line-engineering" | "/asset-steps" | "/station-connectivity" | "/edge-app-studio" | "/release-readiness" | "/registry" | "/process-routes" | "/mes-integration" | "/edge-fleet" | "/diagnostics" | "/screen-editor" | "/hmi-layouts" | "/deployments" | "/commissioning"; icon: typeof Boxes };
 const GROUPS: { label: string; items: NavItem[] }[] = [
   { label: "Overview", items: [{ title: "Overview", url: "/", icon: LayoutDashboard }] },
   { label: "Asset Engineering", items: [
     { title: "Line Engineering", url: "/line-engineering", icon: Network },
+    { title: "Production Steps", url: "/asset-steps", icon: ListChecks },
     { title: "Station Connectivity", url: "/station-connectivity", icon: Cpu },
     { title: "Asset Registry", url: "/registry", icon: Boxes },
     { title: "Production Lines", url: "/lines", icon: Network },

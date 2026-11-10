@@ -5,13 +5,16 @@ import { Button } from '@/components/ui/button';
 import { useEngineering } from '@/lib/engineering/context';
 import { Badge } from './common';
 import {EngineeringDataDrawer} from './record-editor';
+import {AssetFlowNav} from './asset-flow-nav';
+import {AssetLineMetrics,AssetStationConfiguration} from './asset-context-panel';
 
 export { Badge };
 export function Surface({title,sub,children,actions,className=''}:{title?:ReactNode;sub?:string|undefined;children:ReactNode;actions?:ReactNode;className?:string}) {
   return <section className={`ref-surface ${className}`}>{title&&<header className="ref-surface-head"><div><h2>{title}</h2>{sub&&<p>{sub}</p>}</div>{actions}</header>}<div className="ref-surface-body">{children}</div></section>;
 }
 export function ReferencePage({children,title,sub,crumb,actions}:{children:ReactNode;title:string;sub?:string;crumb?:string;actions?:ReactNode}){
-  return <div className="reference-page"><div className="ref-crumb"><Network size={14}/>Engineering<ChevronRight size={12}/>{crumb??title}<span className="ref-concept">DESIGN CONCEPT · SIMULATED DATA</span><EngineeringDataDrawer/></div><header className="ref-page-head"><div><h1>{title}</h1>{sub&&<p>{sub}</p>}</div><div className="ref-actions">{actions}</div></header>{children}</div>;
+  const assetPage=['Line Topology Designer','Production Steps','Station Composition Editor','Asset Model / Hierarchy','Terminals & Peripherals','Command Policy Editor'].includes(title)||title.startsWith('Signal bindings')||title.startsWith('MD-104');
+  return <div className="reference-page"><div className="ref-crumb"><Network size={14}/>Engineering<ChevronRight size={12}/>{crumb??title}<span className="ref-concept">DESIGN CONCEPT · SIMULATED DATA</span><EngineeringDataDrawer/></div><header className="ref-page-head"><div><h1>{title}</h1>{sub&&<p>{sub}</p>}</div><div className="ref-actions">{actions}</div></header>{assetPage&&<AssetFlowNav/>}{title==='Line Topology Designer'&&<AssetLineMetrics/>}{(title==='Station Composition Editor'||title.startsWith('Signal bindings'))&&<AssetStationConfiguration/>}{children}</div>;
 }
 export function ScopeSelectors(){return <div className="ref-scope"><label><Building2 size={16}/><select aria-label="Plant"><option>Plant 01 Riyadh</option></select></label><label><Network size={16}/><select aria-label="Production line"><option>L-01 MixerLineA</option></select></label></div>;}
 export function RefTabs({items,value,onChange}:{items:string[];value:string;onChange:(t:string)=>void}){return <nav className="ref-tabs">{items.map(t=><Button variant="ghost" size="sm" key={t} className={t===value?'is-active':''} onClick={()=>onChange(t)}>{t}</Button>)}</nav>;}
