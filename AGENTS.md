@@ -21,3 +21,4 @@
 
 - Engineering design records are schema-validated revision payloads with stable IDs and archive semantics; snapshot saving preserves history and cannot confer MES acknowledgement, edge activation or approval authority.
 - Docker builds use vite.docker.config.ts (nitro node-server preset) via Dockerfile/docker-compose.yml; why: run anywhere with `docker compose up --build` without changing Lovable's Cloudflare build.
+- Asset Engineering flow projects existing operation records as production steps and existing station identities as their assignments; why: organize the design journey without creating a second asset store or changing production authority.

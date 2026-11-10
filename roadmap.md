@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Organize Asset Engineering into production line → steps → station composition → station connectivity, preserving all existing editors and actions
 - [x] Add dynamic engineering draft CRUD controls across reference interfaces
 - [x] Build workflow, screen editor, HMI, fleet, rollout, mapping, commissioning, change-impact and approval reference screens
 - [x] Verify create/edit/archive, cross-page state, reference alignment and production-action blocking in sandbox; shared-save verification remains blocked by no confirmed account
