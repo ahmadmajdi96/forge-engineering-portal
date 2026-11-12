@@ -11,12 +11,12 @@ import { Plus, Pencil, Search, Cpu, Hand, Network, Wifi, ArrowRight, Copy } from
 export const Route = createFileRoute("/stations/")({
   head: () => ({
     meta: [
+      { title: "Stations · Engineering Portal" },
+      { name: "description", content: "Shared station definitions, equipment configuration and process assignments." },
       { property: "og:title", content: "Stations · Engineering Portal" },
-      { property: "og:description", content: "MES Stations configuration and station monitoring in the Engineering Portal." },
+      { property: "og:description", content: "Shared station definitions, equipment configuration and process assignments." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Stations · Cortanex MES" },
-      { name: "description", content: "All stations across every line — manual or automatic, with machine details, comms and operator assignments." },
     ],
   }),
   component: StationsPage,

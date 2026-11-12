@@ -16,12 +16,12 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/stations/$stationId")({
   head: ({ params }) => ({
     meta: [
-      { property: "og:title", content: "Stations · Engineering Portal" },
-      { property: "og:description", content: "MES Stations configuration and station monitoring in the Engineering Portal." },
+      { title: `Station ${params.stationId} · Engineering Portal` },
+      { name: "description", content: "Shared station profile, machine configuration and engineering assignments." },
+      { property: "og:title", content: `Station ${params.stationId} · Engineering Portal` },
+      { property: "og:description", content: "Shared station profile, machine configuration and engineering assignments." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: `Station ${params.stationId} · Profile · Cortanex MES` },
-      { name: "description", content: "Full station profile — machine details, operator, telemetry, downtime history and step templates." },
     ],
   }),
   component: StationProfile,

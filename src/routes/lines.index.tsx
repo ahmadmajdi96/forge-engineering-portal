@@ -15,14 +15,10 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/lines/")({
   head: () => ({
     meta: [
-      { property: "og:title", content: "Lines · Engineering Portal" },
-      { property: "og:description", content: "MES Lines configuration and station monitoring in the Engineering Portal." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { title: "Production Lines · Cortanex MES" },
-      { name: "description", content: "Create, search, export and monitor production lines, stations, work orders and assigned operators." },
-      { property: "og:title", content: "Production Lines · Cortanex MES" },
-      { property: "og:description", content: "Create, search, export and monitor production lines, stations, work orders and assigned operators." },
+      { title: "Production Lines · Engineering Portal" },
+      { name: "description", content: "Shared production line definitions, stations and process assignments." },
+      { property: "og:title", content: "Production Lines · Engineering Portal" },
+      { property: "og:description", content: "Shared production line definitions, stations and process assignments." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

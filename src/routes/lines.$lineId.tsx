@@ -21,12 +21,12 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/lines/$lineId")({
   head: ({ params }) => ({
     meta: [
-      { property: "og:title", content: "Lines · Engineering Portal" },
-      { property: "og:description", content: "MES Lines configuration and station monitoring in the Engineering Portal." },
+      { title: `Line ${params.lineId} · Engineering Portal` },
+      { name: "description", content: "Shared line configuration, station topology and engineering draft dependencies." },
+      { property: "og:title", content: `Line ${params.lineId} · Engineering Portal` },
+      { property: "og:description", content: "Shared line configuration, station topology and engineering draft dependencies." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: `Line ${params.lineId} · Live View · Cortanex MES` },
-      { name: "description", content: "Live production line view with stations, machines and assigned operators." },
     ],
   }),
   component: LineDetailPage,
