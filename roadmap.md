@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Connect production line/station collections and details, machines, asset engineering and process design to one revision-backed asset model; test cross-page edits and retain disconnected production safeguards
 - [x] Organize Asset Engineering into production line → steps → station composition → station connectivity, preserving all existing editors and actions; verify draft CRUD, multi-station assignments, retained settings and mobile layout
 - [x] Add dynamic engineering draft CRUD controls across reference interfaces
 - [x] Build workflow, screen editor, HMI, fleet, rollout, mapping, commissioning, change-impact and approval reference screens

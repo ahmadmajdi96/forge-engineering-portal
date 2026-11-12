@@ -1,7 +1,8 @@
 import {z} from 'zod';
+import {machineConfigSchema} from './asset-schema';
 export const recordKinds=['equipment','terminal','buffer','command','operation','template','app','screen','widget','node','release','mapping','test','evidence','change','review'] as const;
 export type RecordKind=typeof recordKinds[number];
-export const designRecordSchema=z.object({id:z.string().min(1),kind:z.enum(recordKinds),name:z.string().min(1),parent:z.string(),version:z.string(),description:z.string(),binding:z.string(),unit:z.string(),value:z.string(),required:z.boolean(),archived:z.boolean().default(false)});
+export const designRecordSchema=z.object({id:z.string().min(1),kind:z.enum(recordKinds),name:z.string().min(1),parent:z.string(),version:z.string(),description:z.string(),binding:z.string(),unit:z.string(),value:z.string(),required:z.boolean(),archived:z.boolean().default(false),machine:machineConfigSchema.optional()});
 export type DesignRecord=z.infer<typeof designRecordSchema>;
 export function initialDesignRecords():DesignRecord[]{
  const records:DesignRecord[]=[];
