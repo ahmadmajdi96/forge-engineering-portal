@@ -18,7 +18,7 @@ export function AssetStationConfiguration() {
   if (!station) return null;
   const profile=projectAssets(model).stations.find(s=>s.id===station.id);
   const machine=profile?.machine;
-  function configure(key:string,value:string){if(!profile)return;const base=machine??{model:station.name,vendor:'',ipAddress:'',port:4840,protocol:'OPC-UA' as const,receivedDataTypes:'',sentDataTypes:''};setModel(putStation(model,{...profile,machine:{...base,[key]:value}}));}
+  function configure(key:string,value:string){if(!profile)return;const base=machine??{model:profile.name,vendor:'',ipAddress:'',port:4840,protocol:'OPC-UA' as const,receivedDataTypes:'',sentDataTypes:''};setModel(putStation(model,{...profile,machine:{...base,[key]:value}}));}
   return <section className="asset-station-config" aria-label="Station configuration">
     <header className="asset-section-header"><div><small>{station.id} · Engineering draft</small><h2>Station configuration</h2></div><EngineeringDataDrawer initialKind="station" label="Manage stations"/></header>
     <div className="asset-step-fields">
