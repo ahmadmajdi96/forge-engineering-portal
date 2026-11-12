@@ -1,3 +1,4 @@
+import { AssetPageLinks } from '@/components/engineering/asset-page-links';
 import { useListControls } from "@/components/list-controls";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
@@ -179,6 +180,7 @@ function StationsPage() {
   const lc = useListControls(filtered, { exportName: "stations", dateKey: "updated_at" as never });
   return (
     <div className="space-y-6">
+      <AssetPageLinks/>
       {lc.toolbar}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>

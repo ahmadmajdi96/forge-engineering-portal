@@ -1,3 +1,4 @@
+import { AssetPageLinks } from '@/components/engineering/asset-page-links';
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useAssetStore as useMes } from "@/lib/engineering/asset-store";
@@ -67,6 +68,7 @@ function LinesPage() {
 
   return (
     <div className="space-y-6">
+      <AssetPageLinks/>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-semibold tracking-tight">Production Lines</h1>
