@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useMes } from "@/lib/mes-store";
+import { useAssetStore as useMes } from "@/lib/engineering/asset-store";
 import type { LineStatus, ProductionLine } from "@/lib/mes-data";
 import { StatusPill } from "@/components/status-pill";
 import { ResponsiveContainer, RadialBar, RadialBarChart, PolarAngleAxis } from "recharts";
@@ -70,11 +70,11 @@ function LinesPage() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-semibold tracking-tight">Production Lines</h1>
-          <p className="text-sm text-muted-foreground">{store.lines.length} lines · {store.stations.length} stations monitored · {lc.filtered.length} shown</p>
+          <p className="text-sm text-muted-foreground">{store.lines.length} lines · {store.stations.length} stations configured · {lc.filtered.length} shown</p>
         </div>
         <EntityFormDialog<ProductionLine>
           title="New Production Line"
-          description="Live performance values are populated by the connected external service."
+          description="Engineering draft; production telemetry is not connected."
           fields={createFields}
           initial={{ status: "idle", target: 0 } as any}
           onSubmit={(values) => store.createLine({
@@ -146,7 +146,7 @@ function LinesPage() {
               <LineOperatorAssignments lineId={line.id} compact />
 
               <div className="mt-3 flex items-center justify-between gap-2">
-                <Button asChild size="sm" variant="outline"><Link to="/lines/$lineId" params={{ lineId: line.id }}>Open live view <ArrowRight /></Link></Button>
+                <Button asChild size="sm" variant="outline"><Link to="/lines/$lineId" params={{ lineId: line.id }}>Open line <ArrowRight /></Link></Button>
                 <div className="flex gap-1.5">
                   <EntityFormDialog<ProductionLine> title="Edit Line" fields={editFields} initial={line} onSubmit={(values) => store.updateLine(line.id, values)} trigger={<Button size="icon" variant="outline" title={`Edit ${line.name}`}><Pencil /></Button>} />
                   <ConfirmDelete label={`Delete ${line.id}`} onConfirm={() => store.deleteLine(line.id)} />

@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Plus, UserRound, X } from "lucide-react";
 import { EntityFormDialog, type Field } from "@/components/crud/entity-form-dialog";
 import { Button } from "@/components/ui/button";
-import { useMes } from "@/lib/mes-store";
+import { useAssetStore as useMes } from "@/lib/engineering/asset-store";
 
 export function LineOperatorAssignments({ lineId, compact = false }: { lineId: string; compact?: boolean }) {
   const store = useMes();

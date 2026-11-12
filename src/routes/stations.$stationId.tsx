@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useState } from "react";
-import { useMes } from "@/lib/mes-store";
+import { useAssetStore as useMes } from "@/lib/engineering/asset-store";
 import type { StepTemplate, StationCommand } from "@/lib/mes-data";
 import { useOpenStationVisits, useUnitsRealtime } from "@/lib/mes-disconnected";
 import {

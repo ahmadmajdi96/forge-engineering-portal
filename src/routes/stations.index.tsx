@@ -1,7 +1,7 @@
 import { useListControls } from "@/components/list-controls";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useMes } from "@/lib/mes-store";
+import { useAssetStore as useMes } from "@/lib/engineering/asset-store";
 import type { Station, CommProtocol, StationStatus, StationType } from "@/lib/mes-data";
 import { EntityFormDialog, type Field } from "@/components/crud/entity-form-dialog";
 import { ConfirmDelete } from "@/components/crud/confirm-delete";
