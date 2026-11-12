@@ -12,7 +12,7 @@ export function useAssetStore(){
   const assets=projectAssets(model);
   const apply=(change:()=>typeof model)=>{try{setModel(change());}catch(e){toast.error(e instanceof Error?e.message:'Draft edit refused');throw e;}};
   const nextId=(prefix:string,ids:string[])=>{let n=1;while(ids.includes(prefix+String(n).padStart(3,'0')))n++;return prefix+String(n).padStart(3,'0');};
-  const refuse=()=>{toast.error(MES_CONNECTION_MESSAGE);throw Error(MES_CONNECTION_MESSAGE);};
+  const refuse=(..._args:unknown[])=>{toast.error(MES_CONNECTION_MESSAGE);throw Error(MES_CONNECTION_MESSAGE);};
   const bind=(id:string,templateId:string,remove=false)=>{const s=assets.stations.find(s=>s.id===id);if(s)apply(()=>putStation(model,{...s,templateIds:remove?(s.templateIds??[]).filter(t=>t!==templateId):Array.from(new Set([...(s.templateIds??[]),templateId]))}));};
   return {...preview,...assets,workOrders:[] as WorkOrder[],downtime:[] as DowntimeEvent[],assignments:[] as Assignment[],audit:[] as AuditEntry[],commands:[] as StationCommand[],outputs:[] as StationOutputFile[],
     createLine:(l:Parameters<typeof preview.createLine>[0])=>{const id=l.id??nextId('L-',model.lines.map(l=>l.id));if(model.lines.some(l=>l.id===id))throw Error('Line ID already exists.');apply(()=>putLine(model,{...l,id}));},
