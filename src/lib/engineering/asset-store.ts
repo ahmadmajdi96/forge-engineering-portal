@@ -3,6 +3,7 @@ import { useMes } from '../mes-store';
 import { projectAssets,putLine,putStation,removeLine,removeStation } from './asset-registry';
 import { MES_CONNECTION_MESSAGE } from '../mes-disconnected';
 import { toast } from 'sonner';
+import type { WorkOrder,DowntimeEvent,Assignment,AuditEntry,StationCommand,StationOutputFile } from '../mes-data';
 
 /** Compatibility projection for copied asset screens; never merges operational fixtures. */
 export function useAssetStore(){
@@ -13,7 +14,7 @@ export function useAssetStore(){
   const nextId=(prefix:string,ids:string[])=>{let n=1;while(ids.includes(prefix+String(n).padStart(3,'0')))n++;return prefix+String(n).padStart(3,'0');};
   const refuse=()=>{toast.error(MES_CONNECTION_MESSAGE);throw Error(MES_CONNECTION_MESSAGE);};
   const bind=(id:string,templateId:string,remove=false)=>{const s=assets.stations.find(s=>s.id===id);if(s)apply(()=>putStation(model,{...s,templateIds:remove?(s.templateIds??[]).filter(t=>t!==templateId):Array.from(new Set([...(s.templateIds??[]),templateId]))}));};
-  return {...preview,...assets,workOrders:[],downtime:[],assignments:[],audit:[],commands:[],outputs:[],
+  return {...preview,...assets,workOrders:[] as WorkOrder[],downtime:[] as DowntimeEvent[],assignments:[] as Assignment[],audit:[] as AuditEntry[],commands:[] as StationCommand[],outputs:[] as StationOutputFile[],
     createLine:(l:Parameters<typeof preview.createLine>[0])=>{const id=l.id??nextId('L-',model.lines.map(l=>l.id));if(model.lines.some(l=>l.id===id))throw Error('Line ID already exists.');apply(()=>putLine(model,{...l,id}));},
     updateLine:(id:string,p:Parameters<typeof preview.updateLine>[1])=>{const l=assets.lines.find(l=>l.id===id);if(l)apply(()=>putLine(model,{...l,...p,id}));},
     deleteLine:(id:string)=>apply(()=>removeLine(model,id)),
