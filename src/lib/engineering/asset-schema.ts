@@ -1,0 +1,5 @@
+import { z } from 'zod';
+
+export const machineConfigSchema = z.object({model:z.string(),vendor:z.string(),ipAddress:z.string(),port:z.number(),protocol:z.enum(['OPC-UA','MQTT','Modbus-TCP','EtherNet/IP','Profinet','REST']),receivedDataTypes:z.string(),sentDataTypes:z.string(),firmware:z.string().optional(),outputKind:z.enum(['text','file','none']).optional(),outputLabel:z.string().optional(),outputProtocol:z.enum(['OPC-UA','MQTT','Modbus-TCP','EtherNet/IP','Profinet','REST']).optional(),acceptCommand:z.string().optional(),rejectCommand:z.string().optional()});
+export const lineSchema = z.object({id:z.string().min(1),name:z.string().min(1),plant:z.string(),status:z.enum(['running','idle','down','changeover']).default('idle'),target:z.number().default(0),archived:z.boolean().default(false)});
+export const stationConfigSchema = z.object({sequence:z.number(),status:z.enum(['running','idle','down','maintenance']),cycleTimeSec:z.number(),currentStep:z.string().optional(),currentValue:z.string().optional(),target:z.string().optional(),oee:z.number().optional(),templateIds:z.array(z.string()).optional(),machine:machineConfigSchema.optional()});

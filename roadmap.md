@@ -1,8 +1,9 @@
 # Roadmap
+- [x] Connect production line/station collections and details, machines, asset engineering and process design to one revision-backed asset model; authenticated cross-page edits, Cloud save/reload, mobile layout and 33 tests verified
 - [x] Organize Asset Engineering into production line → steps → station composition → station connectivity, preserving all existing editors and actions; verify draft CRUD, multi-station assignments, retained settings and mobile layout
 - [x] Add dynamic engineering draft CRUD controls across reference interfaces
 - [x] Build workflow, screen editor, HMI, fleet, rollout, mapping, commissioning, change-impact and approval reference screens
-- [x] Verify create/edit/archive, cross-page state, reference alignment and production-action blocking in sandbox; shared-save verification remains blocked by no confirmed account
+- [x] Verify create/edit/archive, cross-page state, reference alignment, production-action blocking and authenticated shared sandbox saving
 - [x] Rebuild all ten uploaded reference page layouts and verify their desktop alignment and sandbox controls without replacing the sidebar or changing production logic
 - [x] Copy MES Production Lines, Stations, Live Shopfloor, Operator Consoles, Operator App, HMI Runtime, Operator Apps and Step Templates screens
 - [x] Verify copied pages and their main interactions
@@ -14,6 +15,7 @@
 - [ ] Live MES integration blocked by authorized API credentials and supported write endpoints
 - [x] Add four reference-inspired pages with shared sandbox registry, draft edits, workflow authoring, validation, and release blockers; preserve sidebar styling
 - [x] Verify page routes, workflow edits, narrow-screen alignment and engineering rule tests
-- [ ] Verify authenticated Cloud save/read/review flow (no confirmed app account available)
+- [x] Verify authenticated Cloud save/read flow
+- [ ] Verify engineering review submission after resolving required configuration/evidence validation blockers
 - [ ] Complete report production services: multi-user scoped approval, deployed edge runtime, real inbox/outbox transport and commissioning (requires Hub/MES/edge contracts and site infrastructure)
 - [ ] Commission real MES/edge/equipment flows (requires authorized services, hardware and site acceptance)

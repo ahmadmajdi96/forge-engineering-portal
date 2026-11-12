@@ -1,6 +1,7 @@
+import { AssetPageLinks } from '@/components/engineering/asset-page-links';
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useMes } from "@/lib/mes-store";
+import { useAssetStore as useMes } from "@/lib/engineering/asset-store";
 import type { LineStatus, ProductionLine } from "@/lib/mes-data";
 import { StatusPill } from "@/components/status-pill";
 import { ResponsiveContainer, RadialBar, RadialBarChart, PolarAngleAxis } from "recharts";
@@ -14,14 +15,10 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/lines/")({
   head: () => ({
     meta: [
-      { property: "og:title", content: "Lines · Engineering Portal" },
-      { property: "og:description", content: "MES Lines configuration and station monitoring in the Engineering Portal." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { title: "Production Lines · Cortanex MES" },
-      { name: "description", content: "Create, search, export and monitor production lines, stations, work orders and assigned operators." },
-      { property: "og:title", content: "Production Lines · Cortanex MES" },
-      { property: "og:description", content: "Create, search, export and monitor production lines, stations, work orders and assigned operators." },
+      { title: "Production Lines · Engineering Portal" },
+      { name: "description", content: "Shared production line definitions, stations and process assignments." },
+      { property: "og:title", content: "Production Lines · Engineering Portal" },
+      { property: "og:description", content: "Shared production line definitions, stations and process assignments." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -67,14 +64,15 @@ function LinesPage() {
 
   return (
     <div className="space-y-6">
+      <AssetPageLinks/>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-semibold tracking-tight">Production Lines</h1>
-          <p className="text-sm text-muted-foreground">{store.lines.length} lines · {store.stations.length} stations monitored · {lc.filtered.length} shown</p>
+          <p className="text-sm text-muted-foreground">{store.lines.length} lines · {store.stations.length} stations configured · {lc.filtered.length} shown</p>
         </div>
         <EntityFormDialog<ProductionLine>
           title="New Production Line"
-          description="Live performance values are populated by the connected external service."
+          description="Engineering draft; production telemetry is not connected."
           fields={createFields}
           initial={{ status: "idle", target: 0 } as any}
           onSubmit={(values) => store.createLine({
@@ -146,7 +144,7 @@ function LinesPage() {
               <LineOperatorAssignments lineId={line.id} compact />
 
               <div className="mt-3 flex items-center justify-between gap-2">
-                <Button asChild size="sm" variant="outline"><Link to="/lines/$lineId" params={{ lineId: line.id }}>Open live view <ArrowRight /></Link></Button>
+                <Button asChild size="sm" variant="outline"><Link to="/lines/$lineId" params={{ lineId: line.id }}>Open line <ArrowRight /></Link></Button>
                 <div className="flex gap-1.5">
                   <EntityFormDialog<ProductionLine> title="Edit Line" fields={editFields} initial={line} onSubmit={(values) => store.updateLine(line.id, values)} trigger={<Button size="icon" variant="outline" title={`Edit ${line.name}`}><Pencil /></Button>} />
                   <ConfirmDelete label={`Delete ${line.id}`} onConfirm={() => store.deleteLine(line.id)} />

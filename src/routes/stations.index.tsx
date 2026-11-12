@@ -1,7 +1,8 @@
+import { AssetPageLinks } from '@/components/engineering/asset-page-links';
 import { useListControls } from "@/components/list-controls";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useMes } from "@/lib/mes-store";
+import { useAssetStore as useMes } from "@/lib/engineering/asset-store";
 import type { Station, CommProtocol, StationStatus, StationType } from "@/lib/mes-data";
 import { EntityFormDialog, type Field } from "@/components/crud/entity-form-dialog";
 import { ConfirmDelete } from "@/components/crud/confirm-delete";
@@ -10,12 +11,12 @@ import { Plus, Pencil, Search, Cpu, Hand, Network, Wifi, ArrowRight, Copy } from
 export const Route = createFileRoute("/stations/")({
   head: () => ({
     meta: [
+      { title: "Stations · Engineering Portal" },
+      { name: "description", content: "Shared station definitions, equipment configuration and process assignments." },
       { property: "og:title", content: "Stations · Engineering Portal" },
-      { property: "og:description", content: "MES Stations configuration and station monitoring in the Engineering Portal." },
+      { property: "og:description", content: "Shared station definitions, equipment configuration and process assignments." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Stations · Cortanex MES" },
-      { name: "description", content: "All stations across every line — manual or automatic, with machine details, comms and operator assignments." },
     ],
   }),
   component: StationsPage,
@@ -179,6 +180,7 @@ function StationsPage() {
   const lc = useListControls(filtered, { exportName: "stations", dateKey: "updated_at" as never });
   return (
     <div className="space-y-6">
+      <AssetPageLinks/>
       {lc.toolbar}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>

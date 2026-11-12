@@ -306,7 +306,10 @@ main:has(>.reference-page) { padding:0; background:var(--engineering-canvas); }
 .ref-actions { display:flex; align-items:center; justify-content:flex-end; gap:9px; flex-wrap:wrap; }
 .ref-actions button { min-height:31px; }.ref-actions svg { flex-shrink:0; }
 .ref-scope { display:flex; gap:12px; margin-bottom:14px; }.ref-scope label { width:220px; display:flex; align-items:center; gap:10px; padding:0 12px; border:1px solid var(--engineering-line); border-radius:6px; }
-.ref-scope select { border:0; background:transparent; margin:0; padding:7px 0; }
+.ref-scope select { border:0; background:transparent; margin:0; padding:7px 0; min-width:0; width:100%; text-overflow:ellipsis; }
+.ref-scope label>svg { flex-shrink:0; }
+.ref-scope { max-width:100%; flex-wrap:wrap; }
+.ref-scope label { min-width:0; max-width:100%; }
 .ref-surface { border:1px solid var(--engineering-line); border-radius:8px; background:var(--engineering-surface); overflow:hidden; min-width:0; }
 .ref-surface-head { padding:10px 13px 8px; display:flex; gap:10px; align-items:center; justify-content:space-between; border-bottom:1px solid var(--engineering-line); }
 .ref-surface-head h2 { font-size:13px; font-weight:650; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }

@@ -1,6 +1,8 @@
+import { useEngineering } from '@/lib/engineering/context';
+import { AssetPageLinks } from '@/components/engineering/asset-page-links';
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { useMes } from "@/lib/mes-store";
+import { useAssetStore as useMes } from "@/lib/engineering/asset-store";
 import type { Station, CommProtocol, StationStatus, StationType, DowntimeEvent, StepTemplate, StationOutputFile, StationCommand } from "@/lib/mes-data";
 import { StatusPill } from "@/components/status-pill";
 import {
@@ -19,12 +21,12 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/lines/$lineId")({
   head: ({ params }) => ({
     meta: [
-      { property: "og:title", content: "Lines · Engineering Portal" },
-      { property: "og:description", content: "MES Lines configuration and station monitoring in the Engineering Portal." },
+      { title: `Line ${params.lineId} · Engineering Portal` },
+      { name: "description", content: "Shared line configuration, station topology and engineering draft dependencies." },
+      { property: "og:title", content: `Line ${params.lineId} · Engineering Portal` },
+      { property: "og:description", content: "Shared line configuration, station topology and engineering draft dependencies." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: `Line ${params.lineId} · Live View · Cortanex MES` },
-      { name: "description", content: "Live production line view with stations, machines and assigned operators." },
     ],
   }),
   component: LineDetailPage,
@@ -164,6 +166,8 @@ function fromFlat(v: any, lineId: string): Station {
 
 function LineDetailPage() {
   const { lineId } = Route.useParams();
+  const {selectLine}=useEngineering();
+  useEffect(()=>selectLine(lineId),[lineId]);
   const store = useMes();
   const line = store.lines.find((l) => l.id === lineId);
   if (!line) throw notFound();
@@ -238,6 +242,7 @@ function LineDetailPage() {
 
   return (
     <div className="space-y-6">
+      <AssetPageLinks lineId={lineId}/>
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
@@ -260,10 +265,10 @@ function LineDetailPage() {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => { store.refreshLive(); toast.success("Live view refreshed"); }}
+            onClick={() => { store.refreshLive(); toast.success("Draft view refreshed"); }}
             className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-card/60 px-3 py-1.5 text-xs hover:border-primary/40 hover:text-primary"
           >
-            <RefreshCw className="h-3.5 w-3.5" /> Refresh live view
+            <RefreshCw className="h-3.5 w-3.5" /> Refresh draft view
           </button>
           <EntityFormDialog<Station>
             title={`Add Station to ${line.name}`}

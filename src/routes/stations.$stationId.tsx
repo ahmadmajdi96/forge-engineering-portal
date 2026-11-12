@@ -1,6 +1,9 @@
+import { useEffect } from 'react';
+import { useEngineering } from '@/lib/engineering/context';
+import { AssetPageLinks } from '@/components/engineering/asset-page-links';
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useState } from "react";
-import { useMes } from "@/lib/mes-store";
+import { useAssetStore as useMes } from "@/lib/engineering/asset-store";
 import type { StepTemplate, StationCommand } from "@/lib/mes-data";
 import { useOpenStationVisits, useUnitsRealtime } from "@/lib/mes-disconnected";
 import {
@@ -13,12 +16,12 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/stations/$stationId")({
   head: ({ params }) => ({
     meta: [
-      { property: "og:title", content: "Stations · Engineering Portal" },
-      { property: "og:description", content: "MES Stations configuration and station monitoring in the Engineering Portal." },
+      { title: `Station ${params.stationId} · Engineering Portal` },
+      { name: "description", content: "Shared station profile, machine configuration and engineering assignments." },
+      { property: "og:title", content: `Station ${params.stationId} · Engineering Portal` },
+      { property: "og:description", content: "Shared station profile, machine configuration and engineering assignments." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: `Station ${params.stationId} · Profile · Cortanex MES` },
-      { name: "description", content: "Full station profile — machine details, operator, telemetry, downtime history and step templates." },
     ],
   }),
   component: StationProfile,
@@ -29,6 +32,8 @@ export const Route = createFileRoute("/stations/$stationId")({
 
 function StationProfile() {
   const { stationId } = Route.useParams();
+  const {select}=useEngineering();
+  useEffect(()=>select(stationId),[stationId]);
   const store = useMes();
   const station = store.stations.find((s) => s.id === stationId);
   useUnitsRealtime();
@@ -67,6 +72,7 @@ function StationProfile() {
 
   return (
     <div className="space-y-6">
+      <AssetPageLinks stationId={stationId}/>
       <div>
         <Link to="/stations" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-3 w-3" /> All stations
