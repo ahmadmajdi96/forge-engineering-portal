@@ -52,6 +52,7 @@ import { Route as StationsIndexRouteImport } from './routes/stations.index'
 import { Route as StationsStationIdRouteImport } from './routes/stations.$stationId'
 import { Route as UnitsUidRouteImport } from './routes/units.$uid'
 import { Route as WorkOrdersWoIdRouteImport } from './routes/work-orders.$woId'
+import { Route as ApiPublicIntegrationsAckRouteImport } from './routes/api/public/integrations/ack'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -268,6 +269,12 @@ const WorkOrdersWoIdRoute = WorkOrdersWoIdRouteImport.update({
   path: '/work-orders/$woId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicIntegrationsAckRoute =
+  ApiPublicIntegrationsAckRouteImport.update({
+    id: '/api/public/integrations/ack',
+    path: '/api/public/integrations/ack',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -313,6 +320,7 @@ export interface FileRoutesByFullPath {
   '/lines/': typeof LinesIndexRoute
   '/operator/': typeof OperatorIndexRoute
   '/stations/': typeof StationsIndexRoute
+  '/api/public/integrations/ack': typeof ApiPublicIntegrationsAckRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -354,6 +362,7 @@ export interface FileRoutesByTo {
   '/lines': typeof LinesIndexRoute
   '/operator': typeof OperatorIndexRoute
   '/stations': typeof StationsIndexRoute
+  '/api/public/integrations/ack': typeof ApiPublicIntegrationsAckRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -400,6 +409,7 @@ export interface FileRoutesById {
   '/lines/': typeof LinesIndexRoute
   '/operator/': typeof OperatorIndexRoute
   '/stations/': typeof StationsIndexRoute
+  '/api/public/integrations/ack': typeof ApiPublicIntegrationsAckRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -447,6 +457,7 @@ export interface FileRouteTypes {
     | '/lines/'
     | '/operator/'
     | '/stations/'
+    | '/api/public/integrations/ack'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -488,6 +499,7 @@ export interface FileRouteTypes {
     | '/lines'
     | '/operator'
     | '/stations'
+    | '/api/public/integrations/ack'
   id:
     | '__root__'
     | '/'
@@ -533,6 +545,7 @@ export interface FileRouteTypes {
     | '/lines/'
     | '/operator/'
     | '/stations/'
+    | '/api/public/integrations/ack'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -571,6 +584,7 @@ export interface RootRouteChildren {
   WorkstationsRoute: typeof WorkstationsRoute
   UnitsUidRoute: typeof UnitsUidRoute
   WorkOrdersWoIdRoute: typeof WorkOrdersWoIdRoute
+  ApiPublicIntegrationsAckRoute: typeof ApiPublicIntegrationsAckRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -876,6 +890,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkOrdersWoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/integrations/ack': {
+      id: '/api/public/integrations/ack'
+      path: '/api/public/integrations/ack'
+      fullPath: '/api/public/integrations/ack'
+      preLoaderRoute: typeof ApiPublicIntegrationsAckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -967,6 +988,7 @@ const rootRouteChildren: RootRouteChildren = {
   WorkstationsRoute: WorkstationsRoute,
   UnitsUidRoute: UnitsUidRoute,
   WorkOrdersWoIdRoute: WorkOrdersWoIdRoute,
+  ApiPublicIntegrationsAckRoute: ApiPublicIntegrationsAckRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

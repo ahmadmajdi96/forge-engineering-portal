@@ -19,3 +19,7 @@
 - [ ] Verify engineering review submission after resolving required configuration/evidence validation blockers
 - [ ] Complete report production services: multi-user scoped approval, deployed edge runtime, real inbox/outbox transport and commissioning (requires Hub/MES/edge contracts and site infrastructure)
 - [ ] Commission real MES/edge/equipment flows (requires authorized services, hardware and site acceptance)
+
+- [x] Integration outbox/inbox with PLMS & MES, signed acknowledgement receiver, system status page
+- [ ] Brief WP1–WP7, WP9 (revisioned resources, PLMS inbox, release/approve, RMS/QMS refs) — not started (budget)
+- [ ] Configure PLMS/MES/RMS/QMS URLs + API keys and INTEGRATION_WEBHOOK_SECRET — needs credentials

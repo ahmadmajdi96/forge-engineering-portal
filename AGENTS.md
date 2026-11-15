@@ -24,3 +24,4 @@
 - Asset Engineering flow projects existing operation records as production steps and existing station identities as their assignments; why: organize the design journey without creating a second asset store or changing production authority.
 
 - Engineering workspace revisions contain line identities and station machine configuration; scoped selectors preserve unrelated line records, and equipment records project into station profiles so all asset/process pages share one draft authority.
+- Cross-system messages use integration_outbox/inbox: per-consumer delivery + business status, ack only via HMAC-signed /api/public/integrations/ack bound to content hash; why: spec §12, no faked acknowledgements.
