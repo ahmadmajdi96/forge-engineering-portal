@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AccountRecoveryRouteImport } from './routes/account-recovery'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
+import { Route as ApprovalsRouteImport } from './routes/approvals'
 import { Route as AssetStepsRouteImport } from './routes/asset-steps'
 import { Route as ChangesRouteImport } from './routes/changes'
 import { Route as CommandPolicyRouteImport } from './routes/command-policy'
@@ -68,6 +69,11 @@ const AccountRecoveryRoute = AccountRecoveryRouteImport.update({
 const AnalyticsRoute = AnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApprovalsRoute = ApprovalsRouteImport.update({
+  id: '/approvals',
+  path: '/approvals',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AssetStepsRoute = AssetStepsRouteImport.update({
@@ -286,6 +292,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/account-recovery': typeof AccountRecoveryRoute
   '/analytics': typeof AnalyticsRoute
+  '/approvals': typeof ApprovalsRoute
   '/asset-steps': typeof AssetStepsRoute
   '/changes': typeof ChangesRoute
   '/command-policy': typeof CommandPolicyRoute
@@ -333,6 +340,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/account-recovery': typeof AccountRecoveryRoute
   '/analytics': typeof AnalyticsRoute
+  '/approvals': typeof ApprovalsRoute
   '/asset-steps': typeof AssetStepsRoute
   '/changes': typeof ChangesRoute
   '/command-policy': typeof CommandPolicyRoute
@@ -377,6 +385,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/account-recovery': typeof AccountRecoveryRoute
   '/analytics': typeof AnalyticsRoute
+  '/approvals': typeof ApprovalsRoute
   '/asset-steps': typeof AssetStepsRoute
   '/changes': typeof ChangesRoute
   '/command-policy': typeof CommandPolicyRoute
@@ -426,6 +435,7 @@ export interface FileRouteTypes {
     | '/'
     | '/account-recovery'
     | '/analytics'
+    | '/approvals'
     | '/asset-steps'
     | '/changes'
     | '/command-policy'
@@ -473,6 +483,7 @@ export interface FileRouteTypes {
     | '/'
     | '/account-recovery'
     | '/analytics'
+    | '/approvals'
     | '/asset-steps'
     | '/changes'
     | '/command-policy'
@@ -516,6 +527,7 @@ export interface FileRouteTypes {
     | '/'
     | '/account-recovery'
     | '/analytics'
+    | '/approvals'
     | '/asset-steps'
     | '/changes'
     | '/command-policy'
@@ -564,6 +576,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccountRecoveryRoute: typeof AccountRecoveryRoute
   AnalyticsRoute: typeof AnalyticsRoute
+  ApprovalsRoute: typeof ApprovalsRoute
   AssetStepsRoute: typeof AssetStepsRoute
   ChangesRoute: typeof ChangesRoute
   CommandPolicyRoute: typeof CommandPolicyRoute
@@ -621,6 +634,13 @@ declare module '@tanstack/react-router' {
       path: '/analytics'
       fullPath: '/analytics'
       preLoaderRoute: typeof AnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/approvals': {
+      id: '/approvals'
+      path: '/approvals'
+      fullPath: '/approvals'
+      preLoaderRoute: typeof ApprovalsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/asset-steps': {
@@ -976,6 +996,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccountRecoveryRoute: AccountRecoveryRoute,
   AnalyticsRoute: AnalyticsRoute,
+  ApprovalsRoute: ApprovalsRoute,
   AssetStepsRoute: AssetStepsRoute,
   ChangesRoute: ChangesRoute,
   CommandPolicyRoute: CommandPolicyRoute,

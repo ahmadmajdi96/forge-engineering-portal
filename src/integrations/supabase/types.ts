@@ -103,6 +103,47 @@ export type Database = {
           },
         ]
       }
+      engineering_signatures: {
+        Row: {
+          created_at: string
+          id: string
+          meaning: string
+          reason: string
+          revision_id: string
+          signer_email: string
+          signer_id: string
+          stage: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          meaning: string
+          reason: string
+          revision_id: string
+          signer_email: string
+          signer_id: string
+          stage: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          meaning?: string
+          reason?: string
+          revision_id?: string
+          signer_email?: string
+          signer_id?: string
+          stage?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "engineering_signatures_revision_id_fkey"
+            columns: ["revision_id"]
+            isOneToOne: false
+            referencedRelation: "engineering_revisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       engineering_workspaces: {
         Row: {
           created_at: string
@@ -240,11 +281,36 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       save_engineering_revision: {
         Args: {
           p_expected: number
@@ -255,9 +321,18 @@ export type Database = {
         }
         Returns: number
       }
+      sign_engineering_revision: {
+        Args: {
+          p_meaning: string
+          p_reason: string
+          p_revision: string
+          p_stage: string
+        }
+        Returns: string
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "engineering_approver" | "release_manager"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -384,6 +459,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["engineering_approver", "release_manager"],
+    },
   },
 } as const
