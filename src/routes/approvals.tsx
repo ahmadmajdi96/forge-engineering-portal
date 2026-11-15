@@ -65,7 +65,7 @@ function ApprovalsPage() {
             <h2 className="text-sm font-semibold">Sign next step</h2>
             <Input placeholder="Signature meaning (e.g. I approve this configuration)" value={meaning} onChange={(e) => setMeaning(e.target.value)} />
             <Input placeholder="Reason" value={reason} onChange={(e) => setReason(e.target.value)} />
-            <div className="flex gap-2">{NEXT[rev.stage].map((n) => <Button key={n.stage} size="sm" variant={n.stage === 'Rejected' ? 'destructive' : 'default'} disabled={meaning.trim().length < 3 || reason.trim().length < 3} onClick={() => act(n.stage)}>{n.label}</Button>)}</div>
+            <div className="flex gap-2">{(NEXT[rev.stage] ?? []).map((n) => <Button key={n.stage} size="sm" variant={n.stage === 'Rejected' ? 'destructive' : 'default'} disabled={meaning.trim().length < 3 || reason.trim().length < 3} onClick={() => act(n.stage)}>{n.label}</Button>)}</div>
           </div> : <p className="text-xs text-muted-foreground">Chain complete.</p>}
         </div>}
       </div>

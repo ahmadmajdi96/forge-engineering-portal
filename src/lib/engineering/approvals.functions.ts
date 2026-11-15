@@ -16,7 +16,7 @@ export const listApprovals = createServerFn({ method: 'POST' }).middleware([requ
     roles: (roles ?? []).map((r) => r.role as string),
     revisions: (revs ?? []).map((r) => {
       const s = (sigs ?? []).filter((x) => x.revision_id === r.id);
-      const stage = s.length ? s[s.length - 1].stage : r.lifecycle === 'In Review' ? 'In Review' : 'Draft';
+      const stage = s.length ? s[s.length - 1]!.stage : r.lifecycle === 'In Review' ? 'In Review' : 'Draft';
       return { ...r, stage, signatures: s };
     }),
   };
