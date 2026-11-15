@@ -12,7 +12,7 @@ export const READINESS_BLOCKING:ConnectionState[]=['Unknown','Unavailable'];
 export async function sha256Hex(text:string){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');}
 // Deterministic JSON so hashes are stable regardless of key order.
 export function canonical(v:unknown):string{if(v===null||typeof v!=='object')return JSON.stringify(v);if(Array.isArray(v))return `[${v.map(canonical).join(',')}]`;return `{${Object.keys(v as object).sort().map(k=>`${JSON.stringify(k)}:${canonical((v as Record<string,unknown>)[k])}`).join(',')}}`;}
-export type AckDecision={eventId:string;consumer:SystemId;decision:'Accepted'|'Rejected';contentHash:string;reason?:string};
+export type AckDecision={eventId:string;consumer:SystemId;decision:'Accepted'|'Rejected';contentHash:string;reason?:string|undefined};
 /** Pure rule: an acknowledgement only applies if it binds to the exact hash and is not stale. */
 export function evaluateAck(row:{content_hash:string;business_status:string}|null,ack:AckDecision):{ok:true}|{ok:false;quarantine:string}{
   if(!row)return {ok:false,quarantine:'Unknown event for consumer'};
