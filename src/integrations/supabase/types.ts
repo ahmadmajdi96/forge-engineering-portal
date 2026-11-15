@@ -130,6 +130,116 @@ export type Database = {
         }
         Relationships: []
       }
+      integration_inbox: {
+        Row: {
+          content_hash: string | null
+          correlation_id: string | null
+          event_id: string
+          event_type: string
+          id: string
+          payload: Json
+          quarantine_reason: string | null
+          received_at: string
+          source_module: string
+          status: string
+        }
+        Insert: {
+          content_hash?: string | null
+          correlation_id?: string | null
+          event_id: string
+          event_type: string
+          id?: string
+          payload: Json
+          quarantine_reason?: string | null
+          received_at?: string
+          source_module: string
+          status?: string
+        }
+        Update: {
+          content_hash?: string | null
+          correlation_id?: string | null
+          event_id?: string
+          event_type?: string
+          id?: string
+          payload?: Json
+          quarantine_reason?: string | null
+          received_at?: string
+          source_module?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      integration_outbox: {
+        Row: {
+          attempts: number
+          business_reason: string | null
+          business_status: string
+          consumer: string
+          content_hash: string
+          correlation_id: string
+          created_at: string
+          event_id: string
+          event_type: string
+          id: string
+          last_error: string | null
+          owner_id: string
+          payload: Json
+          revision: number
+          schema_version: string
+          technical_status: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          attempts?: number
+          business_reason?: string | null
+          business_status?: string
+          consumer: string
+          content_hash: string
+          correlation_id?: string
+          created_at?: string
+          event_id?: string
+          event_type: string
+          id?: string
+          last_error?: string | null
+          owner_id: string
+          payload: Json
+          revision: number
+          schema_version?: string
+          technical_status?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          attempts?: number
+          business_reason?: string | null
+          business_status?: string
+          consumer?: string
+          content_hash?: string
+          correlation_id?: string
+          created_at?: string
+          event_id?: string
+          event_type?: string
+          id?: string
+          last_error?: string | null
+          owner_id?: string
+          payload?: Json
+          revision?: number
+          schema_version?: string
+          technical_status?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_outbox_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "engineering_workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

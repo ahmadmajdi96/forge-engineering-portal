@@ -22,6 +22,7 @@ import { Route as EdgeAppStudioRouteImport } from './routes/edge-app-studio'
 import { Route as EdgeFleetRouteImport } from './routes/edge-fleet'
 import { Route as HmiRouteImport } from './routes/hmi'
 import { Route as HmiLayoutsRouteImport } from './routes/hmi-layouts'
+import { Route as IntegrationsRouteImport } from './routes/integrations'
 import { Route as LineEngineeringRouteImport } from './routes/line-engineering'
 import { Route as LinesRouteImport } from './routes/lines'
 import { Route as LiveRouteImport } from './routes/live'
@@ -52,6 +53,7 @@ import { Route as StationsIndexRouteImport } from './routes/stations.index'
 import { Route as StationsStationIdRouteImport } from './routes/stations.$stationId'
 import { Route as UnitsUidRouteImport } from './routes/units.$uid'
 import { Route as WorkOrdersWoIdRouteImport } from './routes/work-orders.$woId'
+import { Route as ApiPublicIntegrationsAckRouteImport } from './routes/api/public/integrations/ack'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -116,6 +118,11 @@ const HmiRoute = HmiRouteImport.update({
 const HmiLayoutsRoute = HmiLayoutsRouteImport.update({
   id: '/hmi-layouts',
   path: '/hmi-layouts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IntegrationsRoute = IntegrationsRouteImport.update({
+  id: '/integrations',
+  path: '/integrations',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LineEngineeringRoute = LineEngineeringRouteImport.update({
@@ -268,6 +275,12 @@ const WorkOrdersWoIdRoute = WorkOrdersWoIdRouteImport.update({
   path: '/work-orders/$woId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicIntegrationsAckRoute =
+  ApiPublicIntegrationsAckRouteImport.update({
+    id: '/api/public/integrations/ack',
+    path: '/api/public/integrations/ack',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -283,6 +296,7 @@ export interface FileRoutesByFullPath {
   '/edge-fleet': typeof EdgeFleetRoute
   '/hmi': typeof HmiRouteWithChildren
   '/hmi-layouts': typeof HmiLayoutsRoute
+  '/integrations': typeof IntegrationsRoute
   '/line-engineering': typeof LineEngineeringRoute
   '/lines': typeof LinesRouteWithChildren
   '/live': typeof LiveRoute
@@ -313,6 +327,7 @@ export interface FileRoutesByFullPath {
   '/lines/': typeof LinesIndexRoute
   '/operator/': typeof OperatorIndexRoute
   '/stations/': typeof StationsIndexRoute
+  '/api/public/integrations/ack': typeof ApiPublicIntegrationsAckRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -327,6 +342,7 @@ export interface FileRoutesByTo {
   '/edge-app-studio': typeof EdgeAppStudioRoute
   '/edge-fleet': typeof EdgeFleetRoute
   '/hmi-layouts': typeof HmiLayoutsRoute
+  '/integrations': typeof IntegrationsRoute
   '/line-engineering': typeof LineEngineeringRoute
   '/live': typeof LiveRoute
   '/machines': typeof MachinesRoute
@@ -354,6 +370,7 @@ export interface FileRoutesByTo {
   '/lines': typeof LinesIndexRoute
   '/operator': typeof OperatorIndexRoute
   '/stations': typeof StationsIndexRoute
+  '/api/public/integrations/ack': typeof ApiPublicIntegrationsAckRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -370,6 +387,7 @@ export interface FileRoutesById {
   '/edge-fleet': typeof EdgeFleetRoute
   '/hmi': typeof HmiRouteWithChildren
   '/hmi-layouts': typeof HmiLayoutsRoute
+  '/integrations': typeof IntegrationsRoute
   '/line-engineering': typeof LineEngineeringRoute
   '/lines': typeof LinesRouteWithChildren
   '/live': typeof LiveRoute
@@ -400,6 +418,7 @@ export interface FileRoutesById {
   '/lines/': typeof LinesIndexRoute
   '/operator/': typeof OperatorIndexRoute
   '/stations/': typeof StationsIndexRoute
+  '/api/public/integrations/ack': typeof ApiPublicIntegrationsAckRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -417,6 +436,7 @@ export interface FileRouteTypes {
     | '/edge-fleet'
     | '/hmi'
     | '/hmi-layouts'
+    | '/integrations'
     | '/line-engineering'
     | '/lines'
     | '/live'
@@ -447,6 +467,7 @@ export interface FileRouteTypes {
     | '/lines/'
     | '/operator/'
     | '/stations/'
+    | '/api/public/integrations/ack'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -461,6 +482,7 @@ export interface FileRouteTypes {
     | '/edge-app-studio'
     | '/edge-fleet'
     | '/hmi-layouts'
+    | '/integrations'
     | '/line-engineering'
     | '/live'
     | '/machines'
@@ -488,6 +510,7 @@ export interface FileRouteTypes {
     | '/lines'
     | '/operator'
     | '/stations'
+    | '/api/public/integrations/ack'
   id:
     | '__root__'
     | '/'
@@ -503,6 +526,7 @@ export interface FileRouteTypes {
     | '/edge-fleet'
     | '/hmi'
     | '/hmi-layouts'
+    | '/integrations'
     | '/line-engineering'
     | '/lines'
     | '/live'
@@ -533,6 +557,7 @@ export interface FileRouteTypes {
     | '/lines/'
     | '/operator/'
     | '/stations/'
+    | '/api/public/integrations/ack'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -549,6 +574,7 @@ export interface RootRouteChildren {
   EdgeFleetRoute: typeof EdgeFleetRoute
   HmiRoute: typeof HmiRouteWithChildren
   HmiLayoutsRoute: typeof HmiLayoutsRoute
+  IntegrationsRoute: typeof IntegrationsRoute
   LineEngineeringRoute: typeof LineEngineeringRoute
   LinesRoute: typeof LinesRouteWithChildren
   LiveRoute: typeof LiveRoute
@@ -571,6 +597,7 @@ export interface RootRouteChildren {
   WorkstationsRoute: typeof WorkstationsRoute
   UnitsUidRoute: typeof UnitsUidRoute
   WorkOrdersWoIdRoute: typeof WorkOrdersWoIdRoute
+  ApiPublicIntegrationsAckRoute: typeof ApiPublicIntegrationsAckRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -664,6 +691,13 @@ declare module '@tanstack/react-router' {
       path: '/hmi-layouts'
       fullPath: '/hmi-layouts'
       preLoaderRoute: typeof HmiLayoutsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/integrations': {
+      id: '/integrations'
+      path: '/integrations'
+      fullPath: '/integrations'
+      preLoaderRoute: typeof IntegrationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/line-engineering': {
@@ -876,6 +910,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkOrdersWoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/integrations/ack': {
+      id: '/api/public/integrations/ack'
+      path: '/api/public/integrations/ack'
+      fullPath: '/api/public/integrations/ack'
+      preLoaderRoute: typeof ApiPublicIntegrationsAckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -945,6 +986,7 @@ const rootRouteChildren: RootRouteChildren = {
   EdgeFleetRoute: EdgeFleetRoute,
   HmiRoute: HmiRouteWithChildren,
   HmiLayoutsRoute: HmiLayoutsRoute,
+  IntegrationsRoute: IntegrationsRoute,
   LineEngineeringRoute: LineEngineeringRoute,
   LinesRoute: LinesRouteWithChildren,
   LiveRoute: LiveRoute,
@@ -967,6 +1009,7 @@ const rootRouteChildren: RootRouteChildren = {
   WorkstationsRoute: WorkstationsRoute,
   UnitsUidRoute: UnitsUidRoute,
   WorkOrdersWoIdRoute: WorkOrdersWoIdRoute,
+  ApiPublicIntegrationsAckRoute: ApiPublicIntegrationsAckRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
