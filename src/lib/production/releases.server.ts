@@ -1,3 +1,4 @@
+import { processLinkProblems } from "./process-links";
 import { createPrivateKey, randomUUID } from "node:crypto";
 import {
   compileApplication,
@@ -131,12 +132,29 @@ export async function submitRelease(
     const spatial = baselines.find((baseline) => baseline.object === "spatial")?.details;
     const processDesign = baselines.find((baseline) => baseline.object === "process")?.details;
     if (processDesign) {
+      const process = processDocumentSchema.parse(processDesign);
+      if (
+        process.routes.some((route) => route.lineId || route.steps.some((step) => step.operationId))
+      ) {
+        const [engineering] = await tx<(BaselineRef & { details: unknown })[]>`
+          select r.workspace as object, r.revision::text, r.digest, r.payload->'model' as details
+          from ems.revisions r join ems.workspaces w on w.site = r.site and w.key = r.workspace and w.head = r.revision
+          where r.site = ${input.site} and r.workspace = 'engineering'`;
+        if (!engineering)
+          throw new EmsError(409, "The linked engineering revision is unavailable.");
+        const { modelSchema } = await import("@/lib/engineering/model");
+        const model = modelSchema.parse(engineering.details);
+        const issues = processLinkProblems(process, model, Array.isArray(spatial) ? spatial : []);
+        const [problem] = issues.values();
+        if (problem) throw new EmsError(409, problem);
+        baselines.push(engineering);
+      }
       const stations = new Set<string>();
       if (Array.isArray(spatial)) {
         for (const item of spatial)
           if (item?.kind === "station" && typeof item.id === "string") stations.add(item.id);
       }
-      for (const route of processDocumentSchema.parse(processDesign).routes) {
+      for (const route of process.routes) {
         const issue = validateRoute(route)[0];
         if (issue) throw new EmsError(409, `Process ${route.name} needs revision. ${issue}`);
         if (route.steps.some((step) => step.stationIds.some((station) => !stations.has(station))))

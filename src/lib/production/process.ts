@@ -10,6 +10,7 @@ const stepSchema = z
   .object({
     id: key,
     name: z.string().trim().min(1).max(160),
+    operationId: key.optional(),
     stationIds: z.array(key).max(25),
     capabilities: z.array(key).max(25),
     evidence: z.array(key).max(25),
@@ -36,6 +37,8 @@ const routeSchema = z
   .object({
     id: key,
     name: z.string().trim().min(1).max(160),
+    lineId: key.optional(),
+    quality: reference.nullable().optional(),
     product: reference.nullable(),
     recipe: reference.nullable(),
     start: z.union([key, z.literal("")]),

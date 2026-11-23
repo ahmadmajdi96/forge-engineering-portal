@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { DraftDialog } from './reference-ui';
 
 export function AssetPageLinks({stationId,lineId}:{stationId?:string;lineId?:string}){
-  const {select,selectLine}=useEngineering();const [saving,setSaving]=useState(false);
-  const choose=()=>{if(stationId)select(stationId);else if(lineId)selectLine(lineId);};
-  return <section className="space-y-3" aria-label="Shared engineering context"><Notice>Shared engineering draft · MES telemetry, operator assignments and machine execution are not connected.</Notice><div className="flex flex-wrap items-center justify-between gap-3"><ScopeSelectors/><div className="flex flex-wrap gap-2"><Button variant="outline" asChild onClick={choose}><Link to="/line-engineering"><Network size={15}/>Line engineering</Link></Button><Button variant="outline" asChild onClick={choose}><Link to="/asset-steps"><Workflow size={15}/>Production steps</Link></Button><Button onClick={()=>setSaving(true)}><Save size={15}/>Save draft</Button></div></div><div onClick={choose}><DetailLinks/></div><DraftDialog open={saving} onClose={()=>setSaving(false)}/></section>;
+  const {site,revision,workspaceModel}=useEngineering();const [saving,setSaving]=useState(false);
+  const scope={site,engLine:lineId??workspaceModel.stations.find(s=>s.id===stationId)?.lineId,engStation:stationId};
+  return <section className="space-y-3" aria-label="Shared engineering context"><Notice>{site??'Engineering sandbox'} · Engineering draft {revision ? `r${revision}` : 'awaiting first save'}</Notice><div className="flex flex-wrap items-center justify-between gap-3"><ScopeSelectors/><div className="flex flex-wrap gap-2"><Button variant="outline" asChild><Link to="/line-engineering" search={scope}><Network size={15}/>Line engineering</Link></Button><Button variant="outline" asChild><Link to="/asset-steps" search={scope}><Workflow size={15}/>Production steps</Link></Button><Button onClick={()=>setSaving(true)}><Save size={15}/>Save draft</Button></div></div><div><DetailLinks/></div><DraftDialog open={saving} onClose={()=>setSaving(false)}/></section>;
 }

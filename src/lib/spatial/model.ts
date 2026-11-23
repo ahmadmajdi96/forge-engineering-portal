@@ -148,6 +148,7 @@ const space = z
     label: text,
     kind: z.enum(spaceKinds),
     parentId: id.nullable(),
+    engineeringId: z.string().trim().min(1).max(180).optional(),
     floor: z
       .object({
         origin: vectorSchema,
@@ -180,7 +181,15 @@ const occurrence = z
     group: id.nullable(),
     locked: z.boolean(),
     hidden: z.boolean(),
-    asset: z.object({ system: text, id, exclusive: z.boolean() }).strict().nullable(),
+    asset: z
+      .object({
+        system: text,
+        id,
+        kind: z.enum(["equipment", "terminal"]).optional(),
+        exclusive: z.boolean(),
+      })
+      .strict()
+      .nullable(),
     processStepIds: z.array(id).max(32),
     notes: z.string().max(1024),
     documents: z.array(text).max(12),

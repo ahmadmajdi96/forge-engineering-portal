@@ -8,6 +8,7 @@ import {
   useReducer,
   useRef,
   useState,
+  type CSSProperties,
   type FormEvent,
 } from "react";
 import { useBlocker } from "@tanstack/react-router";
@@ -61,9 +62,17 @@ import {
   TemplateEditor,
   TerminalContext,
 } from "./editor-controls";
+import { useEngineering } from "@/lib/engineering/context";
+import {
+  engineeringLinks,
+  invalidEngineeringLinks,
+  resolveLayoutTarget,
+  type LayoutTarget,
+} from "@/lib/spatial/engineering-links";
+import { EngineeringPlacement } from "./engineering-placement";
 import { SpatialProjection } from "./projections";
 import { connectionColors } from "./palette";
-import type { ViewportHandle, VisualRecord } from "./scene";
+import type { CameraDirection, ViewportHandle, VisualRecord } from "./scene";
 
 const Scene = lazy(() => import("./scene"));
 type Snapshot = { revision: number; document: SpatialDocument };
@@ -94,14 +103,14 @@ function download(document: SpatialDocument, revision: number) {
   setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 
-function treePath(spaces: ReadonlyMap<string, SpaceNode>, id: string) {
+function spaceTrail(spaces: ReadonlyMap<string, SpaceNode>, id: string) {
   let node = spaces.get(id);
-  const path: string[] = [];
+  const path: SpaceNode[] = [];
   while (node && path.length < 7) {
-    path.unshift(node.label);
+    path.unshift(node);
     node = node.parentId ? spaces.get(node.parentId) : undefined;
   }
-  return path.join(" / ");
+  return path;
 }
 
 function isWithin(spaces: ReadonlyMap<string, SpaceNode>, nodeId: string, scope: string) {
@@ -114,7 +123,15 @@ function isWithin(spaces: ReadonlyMap<string, SpaceNode>, nodeId: string, scope:
   return false;
 }
 
-export function FactoryWorkspace({ site }: { site: string }) {
+export function FactoryWorkspace({
+  site,
+  target = {},
+  canEdit,
+}: {
+  site: string;
+  target?: LayoutTarget;
+  canEdit: boolean;
+}) {
   const [snapshot, setSnapshot] = useState<Snapshot>();
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
@@ -149,10 +166,27 @@ export function FactoryWorkspace({ site }: { site: string }) {
       </div>
     );
   if (!snapshot) return <WorkspaceLoading message="Loading factory layout…" />;
-  return <LayoutEditor key={site} site={site} initial={snapshot} />;
+  return <LayoutEditor canEdit={canEdit} site={site} initial={snapshot} target={target} />;
 }
 
-function LayoutEditor({ site, initial }: { site: string; initial: Snapshot }) {
+function LayoutEditor({
+  canEdit,
+  site,
+  initial,
+  target,
+}: {
+  site: string;
+  canEdit: boolean;
+  initial: Snapshot;
+  target: LayoutTarget;
+}) {
+  const initialTarget = useMemo(
+    () => resolveLayoutTarget(initial.document, target),
+    [initial, target],
+  );
+  const [hierarchyQuery, setHierarchyQuery] = useState("");
+  const [inspectorWidth, setInspectorWidth] = useState(272);
+  const boundWidth = (value: number) => Math.min(420, Math.max(216, value));
   const [baseline, setBaseline] = useState(initial);
   const [draft, dispatch] = useReducer(draftReducer, initial.document, startDraft);
   const [pendingHead, setPendingHead] = useState<Snapshot | null>(null);
@@ -168,15 +202,18 @@ function LayoutEditor({ site, initial }: { site: string; initial: Snapshot }) {
   const [transparent, setTransparent] = useState(false);
   const [exploded, setExploded] = useState(false);
   const [axis, setAxis] = useState<keyof Vector>("x");
-  const [showHidden, setShowHidden] = useState(false);
+  const [showHidden, setShowHidden] = useState(Boolean(initialTarget.occurrence?.hidden));
   const [layer, setLayer] = useState("");
   const [isolate, setIsolate] = useState(false);
   const [overlay, setOverlay] = useState<"all" | "none" | Connection["kind"]>("all");
-  const [selection, setSelection] = useState<string[]>([]);
-  const [scopeId, setScopeId] = useState("");
+  const [selection, setSelection] = useState<string[]>(
+    initialTarget.occurrence ? [initialTarget.occurrence.id] : [],
+  );
+  const [scopeId, setScopeId] = useState(initialTarget.scope ?? "");
   const [catalogQuery, setCatalogQuery] = useState("");
   const [templateId, setTemplateId] = useState("machine@1");
-  const [readonlyView, setReadonlyView] = useState(false);
+  const [savedView, setReadonlyView] = useState(false);
+  const readonlyView = !canEdit || savedView;
   const [showTable, setShowTable] = useState(false);
   const [tableFilter, setTableFilter] = useState("");
   const [tablePage, setTablePage] = useState(1);
@@ -202,14 +239,13 @@ function LayoutEditor({ site, initial }: { site: string; initial: Snapshot }) {
   const [compactPanel, setCompactPanel] = useState<"library" | "scene" | "properties">(
     floor ? "scene" : "library",
   );
+  const [placementStationId, setPlacementStationId] = useState("");
   const stations = document.spaces.filter(
     (node) =>
-      node.kind === "station" && selectedFloor && isWithin(spaces, node.id, selectedFloor.id),
+      node.kind === "station" && selectedFloor && scope && isWithin(spaces, node.id, scope.id),
   );
   const targetStation =
-    (scope?.kind === "station"
-      ? scope
-      : stations.find((node) => scope && isWithin(spaces, node.id, scope.id))) ?? stations[0];
+    stations.length === 1 ? stations[0] : stations.find((node) => node.id === placementStationId);
 
   const floorRecords = useMemo(
     () =>
@@ -228,15 +264,16 @@ function LayoutEditor({ site, initial }: { site: string; initial: Snapshot }) {
       floorRecords.filter(({ record }) => scope && isWithin(spaces, record.stationId, scope.id)),
     [floorRecords, scope, spaces],
   );
+  const isolatedIds = isolate ? selection : undefined;
   const visibleRecords = useMemo(
     () =>
       scopedRecords.filter(
         ({ record }) =>
           (showHidden || !record.hidden) &&
           (!layer || record.layer === layer) &&
-          (!isolate || selection.includes(record.id)),
+          (!isolatedIds || isolatedIds.includes(record.id)),
       ),
-    [scopedRecords, showHidden, layer, isolate, selection],
+    [scopedRecords, showHidden, layer, isolatedIds],
   );
   const presentIds = useMemo(
     () => new Set(floorRecords.map(({ record }) => record.id)),
@@ -254,7 +291,7 @@ function LayoutEditor({ site, initial }: { site: string; initial: Snapshot }) {
     [floorLinks, overlay],
   );
   const activeSelection = floorRecords.filter(({ record }) => selection.includes(record.id));
-  const selectedRecord = activeSelection.at(-1);
+  const selectedRecord = activeSelection.find(({ record }) => record.id === selection.at(-1));
   const distinctLayers = [...new Set(scopedRecords.map(({ record }) => record.layer))].sort();
   const catalog = document.catalog.filter(
     (entry) =>
@@ -263,9 +300,31 @@ function LayoutEditor({ site, initial }: { site: string; initial: Snapshot }) {
         term.toLowerCase().includes(catalogQuery.toLowerCase()),
       ),
   );
+  const engineering = useEngineering();
+  const savedEngineering =
+    engineering.authenticated &&
+    engineering.site === site &&
+    engineering.loadState === "ready" &&
+    !engineering.dirty &&
+    engineering.revision
+      ? engineering.workspaceModel
+      : undefined;
   const issues = useMemo(
-    () => [...validateSpatialRelationships(document), ...validateSpatialGeometry(document)],
-    [document],
+    () => [
+      ...validateSpatialRelationships(document),
+      ...validateSpatialGeometry(document),
+      ...(savedEngineering
+        ? invalidEngineeringLinks(engineeringLinks(document), savedEngineering).map((link) => ({
+            rule: "engineering-reference@1",
+            severity: "warning" as const,
+            ids: [link.layoutId],
+            toleranceM: null,
+            message: `Engineering ${link.kind} ${link.engineeringId} is unavailable in this parent`,
+            guidance: "Review the saved record and its station or line assignment.",
+          }))
+        : []),
+    ],
+    [document, savedEngineering],
   );
   const diffTarget = pendingHead?.document ?? baseline.document;
   const unsavedDocument = draft.current;
@@ -294,9 +353,15 @@ function LayoutEditor({ site, initial }: { site: string; initial: Snapshot }) {
   }, []);
   const jumpTo = (id: string) => {
     const item = document.occurrences.find((record) => record.id === id);
-    if (!item) return;
-    const nextFloor = floorOf(spaces, item.stationId);
-    if (nextFloor) setScopeId(nextFloor.id);
+    if (!item) {
+      if (spaces.has(id)) {
+        selectSpace(id);
+        setCompactPanel("library");
+      }
+      return;
+    }
+    setScopeId(item.stationId);
+    setCompactPanel("properties");
     setLayer("");
     setIsolate(false);
     if (item.hidden) setShowHidden(true);
@@ -383,6 +448,7 @@ function LayoutEditor({ site, initial }: { site: string; initial: Snapshot }) {
   }
 
   function selectSpace(id: string) {
+    setPlacementStationId("");
     setScopeId(id);
     setSelection([]);
     setLayer("");
@@ -541,27 +607,46 @@ function LayoutEditor({ site, initial }: { site: string; initial: Snapshot }) {
     list.push(node);
     childrenOf.set(node.parentId, list);
   }
+  const matchingNodes = new Set<string>();
+  const searchTerm = hierarchyQuery.trim().toLowerCase();
+  if (searchTerm) {
+    for (const node of document.spaces) {
+      if (
+        ![node.label, node.id, node.kind, node.engineeringId].some((value) =>
+          value?.toLowerCase().includes(searchTerm),
+        )
+      )
+        continue;
+      let current: SpaceNode | undefined = node;
+      while (current && !matchingNodes.has(current.id)) {
+        matchingNodes.add(current.id);
+        current = spaces.get(current.parentId ?? "");
+      }
+    }
+  }
   const tree = (parent: string | null, depth: number) =>
     depth > 7 ? null : (
       <ul className={depth ? "ml-1 border-l border-border pl-1" : "space-y-1"}>
-        {(childrenOf.get(parent) ?? []).map((node) => (
-          <li key={node.id} className="min-w-0">
-            <button
-              type="button"
-              title={node.label}
-              aria-pressed={node.id === scope?.id}
-              className={`flex min-h-8 w-full min-w-0 items-center gap-1 rounded px-1 py-1 text-left text-xs hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring ${node.id === scope?.id ? "bg-accent font-semibold text-foreground" : "text-muted-foreground"}`}
-              onClick={() => selectSpace(node.id)}
-            >
-              <ChevronRight aria-hidden="true" size={12} className="shrink-0" />
-              <span className="truncate">{node.label}</span>
-              <span className="ml-auto shrink-0 text-[10px] capitalize opacity-75">
-                {node.kind}
-              </span>
-            </button>
-            {childrenOf.has(node.id) && tree(node.id, depth + 1)}
-          </li>
-        ))}
+        {(childrenOf.get(parent) ?? [])
+          .filter((node) => !searchTerm || matchingNodes.has(node.id))
+          .map((node) => (
+            <li key={node.id} className="min-w-0">
+              <button
+                type="button"
+                title={node.label}
+                aria-pressed={node.id === scope?.id}
+                className={`flex min-h-8 w-full min-w-0 items-center gap-1 rounded px-1 py-1 text-left text-xs hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring ${node.id === scope?.id ? "bg-accent font-semibold text-foreground" : "text-muted-foreground"}`}
+                onClick={() => selectSpace(node.id)}
+              >
+                <ChevronRight aria-hidden="true" size={12} className="shrink-0" />
+                <span className="truncate">{node.label}</span>
+                <span className="ml-auto shrink-0 text-[10px] capitalize opacity-75">
+                  {node.kind}
+                </span>
+              </button>
+              {childrenOf.has(node.id) && tree(node.id, depth + 1)}
+            </li>
+          ))}
       </ul>
     );
   const filtered = scopedRecords.filter(({ record, template }) =>
@@ -572,6 +657,7 @@ function LayoutEditor({ site, initial }: { site: string; initial: Snapshot }) {
   const rowsPerPage = 25;
   const pages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
   const page = Math.min(pages, tablePage);
+  const unresolvedTarget = resolveLayoutTarget(document, target).missing;
   const floorCameras = document.cameras.filter((camera) => camera.floorId === selectedFloor?.id);
 
   return (
@@ -600,8 +686,31 @@ function LayoutEditor({ site, initial }: { site: string; initial: Snapshot }) {
       )}
       <div className={panel + " flex flex-wrap items-start justify-between gap-3"}>
         <div>
+          {scope && (
+            <nav
+              aria-label="Layout location"
+              className="mb-1 flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground"
+            >
+              {spaceTrail(spaces, scope.id)
+                .filter((node) => node.kind !== "organization")
+                .map((node, index) => (
+                  <span key={node.id} className="inline-flex items-center gap-1">
+                    {index > 0 && <ChevronRight size={12} aria-hidden="true" />}
+                    <button
+                      type="button"
+                      className="rounded hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+                      aria-current={node.id === scope.id ? "location" : undefined}
+                      onClick={() => selectSpace(node.id)}
+                    >
+                      {node.label}
+                    </button>
+                  </span>
+                ))}
+            </nav>
+          )}
           <div className="text-sm font-medium">
-            {readonlyView ? "Saved design" : "Authoring draft"} · revision {baseline.revision}
+            {canEdit ? (readonlyView ? "Saved design" : "Authoring draft") : "View-only access"} ·
+            revision {baseline.revision}
           </div>
           <div className="mt-1 text-xs text-muted-foreground">
             {dirty
@@ -612,95 +721,108 @@ function LayoutEditor({ site, initial }: { site: string; initial: Snapshot }) {
             · {document.occurrences.length} placements · {issueTotal} findings
           </div>
         </div>
-        <button
-          type="button"
-          className={button + " sm:hidden"}
-          aria-expanded={revisionTools}
-          aria-controls="layout-revision-tools"
-          onClick={() => setRevisionTools((value) => !value)}
-        >
-          Save &amp; revisions
-        </button>
-        <div
-          id="layout-revision-tools"
-          className={revisionTools ? "contents" : "hidden sm:contents"}
-        >
-          <div className="flex flex-wrap gap-2">
-            <button
-              className={button}
-              type="button"
-              aria-pressed={readonlyView}
-              onClick={() => setReadonlyView((value) => !value)}
-            >
-              {readonlyView ? "Edit draft" : "View saved design"}
-            </button>
-            <button
-              className={button}
-              type="button"
-              disabled={readonlyView || !draft.before.length}
-              onClick={() => dispatch({ type: "undo" })}
-            >
-              <Undo2 size={15} /> Undo
-            </button>
-            <button
-              className={button}
-              type="button"
-              disabled={readonlyView || !draft.after.length}
-              onClick={() => dispatch({ type: "redo" })}
-            >
-              <Redo2 size={15} /> Redo
-            </button>
-            <button
-              className={button}
-              type="button"
-              onClick={() => download(document, baseline.revision)}
-            >
-              Download JSON
-            </button>
-            <label
-              className={
-                button + " cursor-pointer focus-within:outline-2 focus-within:outline-ring"
-              }
-            >
-              Recover draft
-              <input
-                type="file"
-                accept=".json,application/json"
-                className="sr-only"
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (file) void recover(file);
-                  event.target.value = "";
-                }}
-              />
-            </label>
-          </div>
-          <form
-            onSubmit={(event) => {
-              void save(event);
-            }}
-            className="flex w-full flex-wrap items-end gap-2"
+        {!canEdit && baseline.revision > 0 && (
+          <button
+            type="button"
+            className={button}
+            onClick={() => download(baseline.document, baseline.revision)}
           >
-            <Field name="Revision reason">
-              <input
-                className={control + " w-60 max-w-full"}
-                disabled={readonlyView || busy}
-                required
-                minLength={3}
-                maxLength={500}
-                value={reason}
-                onChange={(event) => setReason(event.target.value)}
-              />
-            </Field>
+            Download saved layout
+          </button>
+        )}
+        {canEdit && (
+          <>
             <button
-              type="submit"
-              className={primary}
-              disabled={readonlyView || !dirty || !!pendingHead || busy}
+              type="button"
+              className={button + " xl:hidden"}
+              aria-expanded={revisionTools}
+              aria-controls="layout-revision-tools"
+              onClick={() => setRevisionTools((value) => !value)}
             >
-              {busy ? "Saving…" : "Save workspace"}
+              Save &amp; revisions
             </button>
-          </form>
-        </div>
+            <div
+              id="layout-revision-tools"
+              className={revisionTools ? "contents" : "hidden xl:contents"}
+            >
+              <div className="flex flex-wrap gap-2">
+                <button
+                  className={button}
+                  type="button"
+                  aria-pressed={readonlyView}
+                  onClick={() => setReadonlyView((value) => !value)}
+                >
+                  {readonlyView ? "Edit draft" : "View saved design"}
+                </button>
+                <button
+                  className={button}
+                  type="button"
+                  disabled={readonlyView || !draft.before.length}
+                  onClick={() => dispatch({ type: "undo" })}
+                >
+                  <Undo2 size={15} /> Undo
+                </button>
+                <button
+                  className={button}
+                  type="button"
+                  disabled={readonlyView || !draft.after.length}
+                  onClick={() => dispatch({ type: "redo" })}
+                >
+                  <Redo2 size={15} /> Redo
+                </button>
+                <button
+                  className={button}
+                  type="button"
+                  onClick={() => download(document, baseline.revision)}
+                >
+                  Download JSON
+                </button>
+                <label
+                  className={
+                    button + " cursor-pointer focus-within:outline-2 focus-within:outline-ring"
+                  }
+                >
+                  Recover draft
+                  <input
+                    type="file"
+                    accept=".json,application/json"
+                    className="sr-only"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) void recover(file);
+                      event.target.value = "";
+                    }}
+                  />
+                </label>
+              </div>
+              <form
+                onSubmit={(event) => {
+                  void save(event);
+                }}
+                className="flex w-full flex-wrap items-end gap-2"
+              >
+                <Field name="Revision reason">
+                  <input
+                    className={control + " w-60 max-w-full"}
+                    disabled={readonlyView || busy}
+                    required
+                    minLength={3}
+                    maxLength={500}
+                    value={reason}
+                    onChange={(event) => setReason(event.target.value)}
+                  />
+                </Field>
+                <button
+                  type="submit"
+                  className={primary}
+                  disabled={readonlyView || !dirty || !!pendingHead || busy}
+                >
+                  {busy ? "Saving…" : "Save workspace"}
+                </button>
+              </form>
+            </div>
+          </>
+        )}
         {feedback && (
           <p
             role={feedback.error ? "alert" : "status"}
@@ -730,6 +852,12 @@ function LayoutEditor({ site, initial }: { site: string; initial: Snapshot }) {
         )}
       </div>
 
+      {unresolvedTarget && (
+        <p role="status" className={panel + " text-sm"}>
+          No layout placement matches <strong>{unresolvedTarget}</strong>. Select an area, line, or
+          station in the hierarchy to link a saved engineering record.
+        </p>
+      )}
       <nav
         aria-label="Layout workspace panels"
         className="grid grid-cols-3 gap-1 rounded-lg border border-border bg-card p-1 xl:hidden"
@@ -747,7 +875,10 @@ function LayoutEditor({ site, initial }: { site: string; initial: Snapshot }) {
           </button>
         ))}
       </nav>
-      <div className="grid min-w-0 gap-3 xl:grid-cols-[13.5rem_minmax(0,1fr)_17rem]">
+      <div
+        style={{ "--inspector-width": inspectorWidth + "px" } as CSSProperties}
+        className="grid min-w-0 gap-3 xl:grid-cols-[12rem_minmax(0,1fr)_8px_var(--inspector-width)] xl:gap-x-1.5"
+      >
         <aside
           id="layout-library"
           aria-label="Spatial hierarchy and library"
@@ -757,7 +888,20 @@ function LayoutEditor({ site, initial }: { site: string; initial: Snapshot }) {
             <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
               <Layers3 aria-hidden="true" size={16} /> Factory hierarchy
             </h2>
-            <div className="max-h-72 overflow-auto">{tree(null, 0)}</div>
+            <input
+              aria-label="Search factory hierarchy"
+              placeholder="Find a space or ID"
+              type="search"
+              className={control + " mb-2 w-full"}
+              value={hierarchyQuery}
+              onChange={(e) => setHierarchyQuery(e.target.value)}
+            />
+            <div className="max-h-72 overflow-auto">
+              {tree(null, 0)}
+              {searchTerm && !matchingNodes.size && (
+                <p className="text-xs text-muted-foreground">No matching spaces.</p>
+              )}
+            </div>
             {!readonlyView && scope && childKind[scope.kind] && (
               <form onSubmit={addSpace} className="mt-3 space-y-2">
                 <Field name={`New ${childKind[scope.kind]} name`}>
@@ -810,6 +954,22 @@ function LayoutEditor({ site, initial }: { site: string; initial: Snapshot }) {
                     <p className="text-xs text-muted-foreground">No matching templates.</p>
                   )}
                 </div>
+                {stations.length > 1 && (
+                  <Field name="Placement station">
+                    <select
+                      className={control + " mb-2 w-full"}
+                      value={targetStation?.id ?? ""}
+                      onChange={(event) => setPlacementStationId(event.target.value)}
+                    >
+                      <option value="">Choose a station</option>
+                      {stations.map((node) => (
+                        <option key={node.id} value={node.id}>
+                          {node.label}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                )}
                 <button
                   type="button"
                   className={button}
@@ -818,11 +978,11 @@ function LayoutEditor({ site, initial }: { site: string; initial: Snapshot }) {
                 >
                   Place on floor
                 </button>
-                {targetStation && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Destination · {targetStation.label}
-                  </p>
-                )}
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {targetStation
+                    ? "Destination · " + targetStation.label
+                    : "Add or select a station in this scope to place equipment."}
+                </p>
               </div>
               <TemplateEditor selected={selectedTemplate} document={document} apply={edited} />
             </>
@@ -850,9 +1010,25 @@ function LayoutEditor({ site, initial }: { site: string; initial: Snapshot }) {
                     <option value="perspective">Perspective</option>
                     <option value="orthographic">Orthographic</option>
                   </select>
+                  <select
+                    className={control}
+                    aria-label="Camera direction"
+                    value=""
+                    onChange={(event) =>
+                      viewport.current?.fit(event.target.value as CameraDirection)
+                    }
+                  >
+                    <option value="" disabled>
+                      Camera direction
+                    </option>
+                    <option value="isometric">Isometric</option>
+                    <option value="top">Top</option>
+                    <option value="front">Front</option>
+                    <option value="side">Right side</option>
+                  </select>
                   <button
                     type="button"
-                    className={button + " sm:hidden"}
+                    className={button}
                     aria-expanded={viewTools}
                     aria-controls="layout-view-tools"
                     onClick={() => setViewTools((value) => !value)}
@@ -860,10 +1036,7 @@ function LayoutEditor({ site, initial }: { site: string; initial: Snapshot }) {
                     View tools
                   </button>
                 </div>
-                <div
-                  id="layout-view-tools"
-                  className={viewTools ? "space-y-2" : "hidden space-y-2 sm:block"}
-                >
+                <div id="layout-view-tools" className={viewTools ? "space-y-2" : "hidden"}>
                   <div className="flex flex-wrap items-center gap-2">
                     <select
                       className={control}
@@ -1068,11 +1241,59 @@ function LayoutEditor({ site, initial }: { site: string; initial: Snapshot }) {
           )}
         </section>
 
+        <div
+          role="separator"
+          tabIndex={0}
+          aria-orientation="vertical"
+          aria-label="Resize properties panel"
+          aria-controls="layout-properties"
+          aria-valuenow={inspectorWidth}
+          aria-valuemin={216}
+          aria-valuemax={420}
+          aria-valuetext={inspectorWidth + " pixels"}
+          title="Drag to resize, or use the left and right arrow keys"
+          className="hidden cursor-col-resize touch-none rounded bg-border/50 hover:bg-primary/60 focus-visible:outline-2 focus-visible:outline-ring xl:block"
+          onPointerDown={(event) => {
+            event.currentTarget.setPointerCapture(event.pointerId);
+          }}
+          onPointerMove={(event) => {
+            if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+              const right = event.currentTarget.parentElement?.getBoundingClientRect().right;
+              if (right !== undefined)
+                setInspectorWidth(boundWidth(Math.round(right - event.clientX)));
+            }
+          }}
+          onKeyDown={(event) => {
+            if (["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
+              event.preventDefault();
+              setInspectorWidth((value) =>
+                event.key === "Home"
+                  ? 216
+                  : event.key === "End"
+                    ? 420
+                    : boundWidth(value + (event.key === "ArrowLeft" ? 16 : -16)),
+              );
+            }
+          }}
+        />
         <aside
           id="layout-properties"
           aria-label="Placement properties"
           className={`min-w-0 space-y-3 ${compactPanel === "properties" ? "" : "hidden xl:block"}`}
         >
+          {scope && (
+            <EngineeringPlacement
+              key={scope.id + "/" + (selectedRecord?.record.id ?? "")}
+              site={site}
+              scope={scope}
+              placed={selectedRecord?.record}
+              document={document}
+              readonly={readonlyView}
+              target={target}
+              apply={edited}
+              selectSpace={selectSpace}
+            />
+          )}
           <div className={panel}>
             <h2 className="text-sm font-semibold">Placements · {scopedRecords.length}</h2>
             <div className="mt-2 max-h-48 space-y-1 overflow-auto">
@@ -1112,10 +1333,19 @@ function LayoutEditor({ site, initial }: { site: string; initial: Snapshot }) {
               <OccurrenceInspector
                 key={JSON.stringify(selectedRecord.record)}
                 item={selectedRecord}
-                stationPath={treePath(spaces, selectedRecord.record.stationId)}
+                stationPath={spaceTrail(spaces, selectedRecord.record.stationId)
+                  .map((node) => node.label)
+                  .join(" / ")}
                 site={site}
                 origin={floor.origin}
                 onApply={updateRecord}
+                connectionCount={
+                  document.connections.filter(
+                    (link) =>
+                      link.from.occurrenceId === selectedRecord.record.id ||
+                      link.to.occurrenceId === selectedRecord.record.id,
+                  ).length
+                }
                 onRemove={() => remove(selectedRecord.record.id)}
                 onState={(change) => updateRecord({ ...selectedRecord.record, ...change })}
               />
@@ -1123,7 +1353,9 @@ function LayoutEditor({ site, initial }: { site: string; initial: Snapshot }) {
               <div className={panel}>
                 <h2 className="font-semibold">{selectedRecord.record.label}</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {treePath(spaces, selectedRecord.record.stationId)}
+                  {spaceTrail(spaces, selectedRecord.record.stationId)
+                    .map((node) => node.label)
+                    .join(" / ")}
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Position{" "}
@@ -1140,6 +1372,12 @@ function LayoutEditor({ site, initial }: { site: string; initial: Snapshot }) {
                   selectedRecord.template.kind === "hmi") && (
                   <TerminalContext
                     site={site}
+                    engineeringId={
+                      selectedRecord.record.asset?.system === "EMS" &&
+                      selectedRecord.record.asset.kind === "terminal"
+                        ? selectedRecord.record.asset.id
+                        : undefined
+                    }
                     terminalId={selectedRecord.record.terminalId}
                     appId={selectedRecord.record.authoringAppId}
                     kind={selectedRecord.template.kind === "hmi" ? "hmi" : "operator"}
@@ -1390,7 +1628,8 @@ function LayoutEditor({ site, initial }: { site: string; initial: Snapshot }) {
             </p>
             <div className="mt-1 flex flex-wrap gap-1">
               {[...new Set(issue.ids)].flatMap((id) => {
-                const record = document.occurrences.find((item) => item.id === id);
+                const record =
+                  document.occurrences.find((item) => item.id === id) ?? spaces.get(id);
                 return record
                   ? [
                       <button type="button" key={id} className={button} onClick={() => jumpTo(id)}>

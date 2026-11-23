@@ -1,3 +1,5 @@
+import { useProcessCatalog } from "@/lib/engineering/process-catalog";
+import { RouteGraph, StepRelationships } from "@/components/engineering/process-relationships";
 import { WorkspaceLoading } from "@/components/engineering/workspace-loading";
 import { createFileRoute, useBlocker } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -57,6 +59,8 @@ function FactoryProcess() {
   return (
     <ProcessEditor
       key={site}
+      permissions={ems.identity?.sites.find((item) => item.key === site)?.actions ?? []}
+      lineContext={search.engLine}
       site={site}
       initial={load.data}
       reload={async () => {
@@ -79,13 +83,18 @@ type ProcessSnapshot = { revision: number; document: ProcessDocument };
 
 function ProcessEditor({
   site,
+  permissions,
+  lineContext,
   initial,
   reload,
 }: {
   site: string;
+  permissions: string[];
+  lineContext?: string | undefined;
   initial: ProcessSnapshot;
   reload: () => Promise<ProcessSnapshot>;
 }) {
+  const catalog = useProcessCatalog(site, permissions);
   const [draft, setDraft] = useState(initial.document);
   const [selection, select] = useState<string | null>(initial.document.routes[0]?.id ?? null);
   const [baseline, setBaseline] = useState(initial);
@@ -102,7 +111,15 @@ function ProcessEditor({
       !window.confirm("Discard the unsaved process draft and leave this factory?"),
   });
   const [issues, setIssues] = useState<string[] | null>(null);
-  const route = draft.routes.find((item) => item.id === selection);
+  const visibleRoutes = draft.routes.filter(
+    (item) => !lineContext || !item.lineId || item.lineId === lineContext,
+  );
+  const route = visibleRoutes.find((item) => item.id === selection) ?? visibleRoutes[0];
+  const [focus, setFocus] = useState("");
+  const activeStep =
+    route?.steps.find((step) => step.id === focus) ??
+    route?.steps.find((step) => step.id === route.start) ??
+    route?.steps[0];
   const save = useMutation({
     mutationFn: (document: ProcessDocument) =>
       saveFactoryWorkspace({
@@ -141,7 +158,7 @@ function ProcessEditor({
     setIssues(null);
     setDraft({
       ...draft,
-      routes: draft.routes.map((item) => (item.id === selection ? { ...item, ...update } : item)),
+      routes: draft.routes.map((item) => (item.id === route?.id ? { ...item, ...update } : item)),
     });
   }
   function addRoute() {
@@ -153,6 +170,7 @@ function ProcessEditor({
         {
           id: routeId,
           name: "New process route",
+          ...(lineContext ? { lineId: lineContext } : {}),
           start: "",
           product: null,
           recipe: null,
@@ -188,7 +206,7 @@ function ProcessEditor({
           <select
             aria-label="Process route"
             className={input}
-            value={selection ?? ""}
+            value={route?.id ?? ""}
             onChange={(event) => {
               select(event.target.value);
               setIssues(null);
@@ -197,7 +215,7 @@ function ProcessEditor({
             <option value="" disabled>
               Choose a route
             </option>
-            {draft.routes.map((item) => (
+            {visibleRoutes.map((item) => (
               <option key={item.id} value={item.id}>
                 {item.name}
               </option>
@@ -278,7 +296,22 @@ function ProcessEditor({
           {issues.length ? (
             <ul className="list-disc space-y-1 pl-5">
               {issues.map((issue) => (
-                <li key={issue}>{issue}</li>
+                <li key={issue}>
+                  {route?.steps.some((step) => issue.startsWith(step.name + " ")) ? (
+                    <a
+                      className="ref-issue-link"
+                      onClick={() => {
+                        const step = route.steps.find((step) => issue.startsWith(step.name + " "));
+                        if (step) setFocus(step.id);
+                      }}
+                      href={`#process-step-${route.steps.find((step) => issue.startsWith(step.name + " "))?.id}`}
+                    >
+                      {issue}
+                    </a>
+                  ) : (
+                    issue
+                  )}
+                </li>
               ))}
             </ul>
           ) : (
@@ -292,7 +325,11 @@ function ProcessEditor({
           aria-label="Process route definition"
           className="min-w-0 space-y-4"
         >
-          <div key={formVersion} className="glass-panel grid gap-3 rounded-lg p-4 md:grid-cols-2">
+          <RouteGraph route={route} current={activeStep} visit={setFocus} />
+          <div
+            key={route.id + "-" + formVersion}
+            className="glass-panel grid gap-3 rounded-lg p-4 md:grid-cols-2"
+          >
             <label className="grid gap-1 text-sm">
               Route name
               <input
@@ -316,7 +353,32 @@ function ProcessEditor({
                 ))}
               </select>
             </label>
-            {(["product", "recipe"] as const).map((kind) => (
+            <label className="grid gap-1 text-sm">
+              Production line
+              <select
+                className={input}
+                value={route.lineId ?? ""}
+                onChange={(e) => change({ lineId: e.target.value || undefined })}
+              >
+                <option value="">Factory-wide</option>
+                {route.lineId &&
+                  !catalog.design?.lines.some((l) => l.id === route.lineId && !l.archived) && (
+                    <option value={route.lineId}>{route.lineId} · unresolved</option>
+                  )}
+                {catalog.design?.lines
+                  .filter((l) => !l.archived && (!lineContext || l.id === lineContext))
+                  .map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.name} · {l.id}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <p className="text-sm text-muted-foreground">
+              External references identify exact revisions. Their upstream resolution is unavailable
+              here.
+            </p>
+            {(["product", "recipe", "quality"] as const).map((kind) => (
               <fieldset key={kind} className="grid gap-2 rounded border p-2">
                 <legend className="px-1 capitalize">{kind} reference</legend>
                 <label className="grid gap-1 text-sm">
@@ -355,124 +417,127 @@ function ProcessEditor({
                 ({route.steps.length})
               </span>
             </h2>
-            {route.steps.map((step) => {
-              const put = (patch: Partial<typeof step>) =>
-                change({
-                  steps: route.steps.map((item) =>
-                    item.id === step.id ? { ...item, ...patch } : item,
-                  ),
-                });
-              return (
-                <fieldset
-                  key={`${selection}-${formVersion}-${step.id}`}
-                  className="grid gap-2 rounded-lg border p-3 sm:grid-cols-2 lg:grid-cols-3"
-                >
-                  <legend className="px-1 text-sm">{step.name}</legend>
-                  <label className="grid gap-1 text-sm">
-                    Name
-                    <input
-                      className={input}
-                      value={step.name}
-                      onChange={(event) => put({ name: event.target.value })}
-                    />
-                  </label>
-                  <label className="grid gap-1 text-sm">
-                    Type
-                    <select
-                      className={input}
-                      value={step.outcome}
-                      onChange={(event) =>
-                        put({ outcome: event.target.value as typeof step.outcome })
-                      }
-                    >
-                      <option value="operation">Operation</option>
-                      <option value="complete">Complete</option>
-                      <option value="failed">Failed</option>
-                    </select>
-                  </label>
-                  <label className="grid gap-1 text-sm">
-                    Station IDs
-                    <input
-                      className={input}
-                      defaultValue={step.stationIds.join(", ")}
-                      onChange={(event) => put({ stationIds: identifiers(event.target.value) })}
-                    />
-                  </label>
-                  <label className="grid gap-1 text-sm">
-                    Required capabilities
-                    <input
-                      className={input}
-                      defaultValue={step.capabilities.join(", ")}
-                      onChange={(event) => put({ capabilities: identifiers(event.target.value) })}
-                    />
-                  </label>
-                  <label className="grid gap-1 text-sm">
-                    Evidence requirements
-                    <input
-                      className={input}
-                      defaultValue={step.evidence.join(", ")}
-                      onChange={(event) => put({ evidence: identifiers(event.target.value) })}
-                    />
-                  </label>
-                  <label className="grid gap-1 text-sm">
-                    Expected duration (seconds)
-                    <input
-                      className={input}
-                      type="number"
-                      min={0}
-                      value={step.expectedSeconds}
-                      onChange={(event) => put({ expectedSeconds: Number(event.target.value) })}
-                    />
-                  </label>
-                  <label className="grid gap-1 text-sm">
-                    Wait timeout (seconds)
-                    <input
-                      className={input}
-                      type="number"
-                      min={1}
-                      value={step.waitTimeoutSeconds ?? ""}
-                      onChange={(event) =>
-                        put({
-                          waitTimeoutSeconds: event.target.value
-                            ? Number(event.target.value)
-                            : null,
-                        })
-                      }
-                    />
-                  </label>
-                  <Button
-                    variant="outline"
-                    type="button"
-                    onClick={() => {
-                      const links = route.transitions.filter(
-                        (edge) => edge.from === step.id || edge.to === step.id,
-                      ).length;
-                      if (
-                        !window.confirm(
-                          `Remove "${step.name}"${links ? ` and ${links} connected transition${links === 1 ? "" : "s"}` : ""} from this draft?`,
-                        )
-                      )
-                        return;
-                      change({
-                        steps: route.steps.filter((item) => item.id !== step.id),
-                        transitions: route.transitions.filter(
-                          (edge) => edge.from !== step.id && edge.to !== step.id,
-                        ),
-                        start: route.start === step.id ? "" : route.start,
-                      });
-                    }}
+            {route.steps
+              .filter((step) => step.id === activeStep?.id)
+              .map((step) => {
+                const put = (patch: Partial<typeof step>) =>
+                  change({
+                    steps: route.steps.map((item) =>
+                      item.id === step.id ? { ...item, ...patch } : item,
+                    ),
+                  });
+                return (
+                  <fieldset
+                    key={`${route.id}-${formVersion}-${step.id}`}
+                    id={`process-step-${step.id}`}
+                    tabIndex={-1}
+                    className="grid gap-2 rounded-lg border p-3 sm:grid-cols-2 lg:grid-cols-3"
                   >
-                    Remove step
-                  </Button>
-                </fieldset>
-              );
-            })}
+                    <legend className="px-1 text-sm">{step.name}</legend>
+                    <label className="grid gap-1 text-sm">
+                      Name
+                      <input
+                        className={input}
+                        value={step.name}
+                        onChange={(event) => put({ name: event.target.value })}
+                      />
+                    </label>
+                    <label className="grid gap-1 text-sm">
+                      Type
+                      <select
+                        className={input}
+                        value={step.outcome}
+                        onChange={(event) =>
+                          put({ outcome: event.target.value as typeof step.outcome })
+                        }
+                      >
+                        <option value="operation">Operation</option>
+                        <option value="complete">Complete</option>
+                        <option value="failed">Failed</option>
+                      </select>
+                    </label>
+                    <StepRelationships
+                      step={step}
+                      lineId={route.lineId}
+                      catalog={catalog}
+                      put={put}
+                    />
+                    <label className="grid gap-1 text-sm">
+                      Required capabilities
+                      <input
+                        className={input}
+                        defaultValue={step.capabilities.join(", ")}
+                        onChange={(event) => put({ capabilities: identifiers(event.target.value) })}
+                      />
+                    </label>
+                    <label className="grid gap-1 text-sm">
+                      Evidence requirements
+                      <input
+                        className={input}
+                        defaultValue={step.evidence.join(", ")}
+                        onChange={(event) => put({ evidence: identifiers(event.target.value) })}
+                      />
+                    </label>
+                    <label className="grid gap-1 text-sm">
+                      Expected duration (seconds)
+                      <input
+                        className={input}
+                        type="number"
+                        min={0}
+                        value={step.expectedSeconds}
+                        onChange={(event) => put({ expectedSeconds: Number(event.target.value) })}
+                      />
+                    </label>
+                    <label className="grid gap-1 text-sm">
+                      Wait timeout (seconds)
+                      <input
+                        className={input}
+                        type="number"
+                        min={1}
+                        value={step.waitTimeoutSeconds ?? ""}
+                        onChange={(event) =>
+                          put({
+                            waitTimeoutSeconds: event.target.value
+                              ? Number(event.target.value)
+                              : null,
+                          })
+                        }
+                      />
+                    </label>
+                    <Button
+                      variant="outline"
+                      type="button"
+                      onClick={() => {
+                        const links = route.transitions.filter(
+                          (edge) => edge.from === step.id || edge.to === step.id,
+                        ).length;
+                        if (
+                          !window.confirm(
+                            `Remove "${step.name}"${links ? ` and ${links} connected transition${links === 1 ? "" : "s"}` : ""} from this draft?`,
+                          )
+                        )
+                          return;
+                        change({
+                          steps: route.steps.filter((item) => item.id !== step.id),
+                          transitions: route.transitions.filter(
+                            (edge) => edge.from !== step.id && edge.to !== step.id,
+                          ),
+                          start: route.start === step.id ? "" : route.start,
+                        });
+                      }}
+                    >
+                      Remove step
+                    </Button>
+                  </fieldset>
+                );
+              })}
             <Button
               variant="outline"
               type="button"
               disabled={route.steps.length >= 300}
               onClick={() => {
                 const id = crypto.randomUUID();
+                setFocus(id);
                 change({
                   start: route.start || id,
                   steps: [
@@ -496,12 +561,14 @@ function ProcessEditor({
           </section>
           <section className="space-y-2">
             <h2 className="text-lg font-semibold">
-              Transitions{" "}
+              Outgoing transitions{" "}
               <span className="text-sm font-normal text-muted-foreground">
-                ({route.transitions.length})
+                ({route.transitions.filter((edge) => edge.from === activeStep?.id).length})
               </span>
             </h2>
             {route.transitions.map((edge, index) => {
+              if (edge.from !== activeStep?.id && route.steps.some((step) => step.id === edge.from))
+                return null;
               const put = (patch: Partial<typeof edge>) =>
                 change({
                   transitions: route.transitions.map((item, at) =>
@@ -548,6 +615,86 @@ function ProcessEditor({
                       <option value="rework">Rework</option>
                     </select>
                   </label>
+                  <label className="grid gap-1 text-sm">
+                    Condition variable
+                    <input
+                      className={input}
+                      value={edge.condition?.variable ?? ""}
+                      placeholder="Default path"
+                      onChange={(e) =>
+                        put({
+                          condition: e.target.value
+                            ? { variable: e.target.value, equals: edge.condition?.equals ?? "" }
+                            : null,
+                        })
+                      }
+                    />
+                  </label>
+                  {edge.condition && (
+                    <>
+                      <label className="grid gap-1 text-sm">
+                        Comparison type
+                        <select
+                          className={input}
+                          value={typeof edge.condition.equals}
+                          onChange={(e) =>
+                            put({
+                              condition: {
+                                variable: edge.condition!.variable,
+                                equals:
+                                  e.target.value === "number"
+                                    ? 0
+                                    : e.target.value === "boolean"
+                                      ? false
+                                      : "",
+                              },
+                            })
+                          }
+                        >
+                          <option value="string">Text</option>
+                          <option value="number">Number</option>
+                          <option value="boolean">Boolean</option>
+                        </select>
+                      </label>
+                      <label className="grid gap-1 text-sm">
+                        Equals
+                        {typeof edge.condition.equals === "boolean" ? (
+                          <select
+                            className={input}
+                            value={String(edge.condition.equals)}
+                            onChange={(e) =>
+                              put({
+                                condition: {
+                                  variable: edge.condition!.variable,
+                                  equals: e.target.value === "true",
+                                },
+                              })
+                            }
+                          >
+                            <option>false</option>
+                            <option>true</option>
+                          </select>
+                        ) : (
+                          <input
+                            className={input}
+                            type={typeof edge.condition.equals === "number" ? "number" : "text"}
+                            value={edge.condition.equals}
+                            onChange={(e) =>
+                              put({
+                                condition: {
+                                  variable: edge.condition!.variable,
+                                  equals:
+                                    typeof edge.condition!.equals === "number"
+                                      ? Number(e.target.value)
+                                      : e.target.value,
+                                },
+                              })
+                            }
+                          />
+                        )}
+                      </label>
+                    </>
+                  )}
                   {edge.outcome === "rework" && (
                     <label className="grid gap-1 text-sm">
                       Maximum attempts
@@ -576,14 +723,14 @@ function ProcessEditor({
             <Button
               variant="outline"
               type="button"
-              disabled={route.steps.length < 2 || route.transitions.length >= 1000}
+              disabled={!activeStep || route.steps.length < 2 || route.transitions.length >= 1000}
               onClick={() =>
                 change({
                   transitions: [
                     ...route.transitions,
                     {
-                      from: route.steps[0]!.id,
-                      to: route.steps[1]!.id,
+                      from: activeStep!.id,
+                      to: route.steps.find((step) => step.id !== activeStep?.id)!.id,
                       outcome: "success",
                       condition: null,
                       maxAttempts: null,

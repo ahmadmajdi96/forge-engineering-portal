@@ -1,10 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { FactoryWorkspace } from "@/components/spatial/workspace";
-import { siteKey } from "@/lib/production/contracts";
+import { editPermission, siteKey, viewPermission } from "@/lib/production/contracts";
+
+const targetId = z.string().trim().min(1).max(180).optional().catch(undefined);
 
 export const Route = createFileRoute("/factory-layout")({
-  validateSearch: z.object({ site: siteKey.optional().catch(undefined) }),
+  validateSearch: z.object({
+    site: siteKey.optional().catch(undefined),
+    space: targetId,
+    occurrence: targetId,
+    line: targetId,
+    station: targetId,
+    asset: targetId,
+    assetKind: z.enum(["equipment", "terminal"]).optional().catch(undefined),
+  }),
   head: () => ({
     meta: [
       { title: "Factory layout · EMS" },
@@ -16,10 +26,12 @@ export const Route = createFileRoute("/factory-layout")({
 
 function FactoryLayout() {
   const { ems } = Route.useRouteContext();
-  const { site } = Route.useSearch();
+  const { site, space, occurrence, line, station, asset, assetKind } = Route.useSearch();
+  const target = { space, occurrence, line, station, asset, assetKind };
   const sites = ems.identity?.sites ?? [];
   const currentSite = site || sites[0]?.key || "";
-  const allowed = sites.some(({ key }) => key === currentSite);
+  const selectedSite = sites.find(({ key }) => key === currentSite);
+  const allowed = selectedSite?.actions?.includes(viewPermission.spatial);
 
   return (
     <div className="mx-auto min-w-0 max-w-[1800px] space-y-4">
@@ -27,12 +39,17 @@ function FactoryLayout() {
         <h1 className="font-display text-2xl font-semibold tracking-tight">Factory layout</h1>
         {allowed && (
           <p className="mt-1 text-sm text-muted-foreground">
-            {sites.find((s) => s.key === currentSite)?.name} · Layout workspace
+            {selectedSite?.name} · Layout workspace
           </p>
         )}
       </header>
       {allowed ? (
-        <FactoryWorkspace site={currentSite} key={currentSite} />
+        <FactoryWorkspace
+          site={currentSite}
+          key={JSON.stringify([currentSite, target])}
+          target={target}
+          canEdit={Boolean(selectedSite?.actions?.includes(editPermission.spatial))}
+        />
       ) : (
         <p
           role="status"
@@ -42,9 +59,11 @@ function FactoryLayout() {
             ? "Site permissions are currently unavailable."
             : !ems.identity
               ? "An authorized EMS session is required to open a factory workspace."
-              : sites.length
-                ? "Choose a site you have access to."
-                : "Your account has no factory sites assigned."}
+              : selectedSite
+                ? "Layout access is required for this factory."
+                : sites.length
+                  ? "Choose a site you have access to."
+                  : "Your account has no factory sites assigned."}
         </p>
       )}
     </div>

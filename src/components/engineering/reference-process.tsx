@@ -1,106 +1,472 @@
-import {graphHasCycle} from "@/lib/engineering/model";
-import {EngineeringDataDrawer,AddRecord,RecordActions,useRecords} from './record-editor';
-import {useEffect,useState} from 'react';
-import {Link} from '@tanstack/react-router';
-import {ArrowRight,Network,Plus,Check,Box,Settings2,Weight,ShieldCheck,ScanLine,Server,Database,Radio,Thermometer,Gauge,Copy,Save,Play,FlaskConical,Lock,Info,AlertTriangle,CheckCircle2,Send,Layers,Barcode,Timer,ChevronDown,Minus,Maximize,RotateCcw} from 'lucide-react';
-import {Button} from '@/components/ui/button';
-import {useEngineering} from '@/lib/engineering/context';
-import {toast} from 'sonner';
-import {stationsForStep} from '@/lib/engineering/asset-flow';
-import {Surface,ReferencePage,ScopeSelectors,RefTabs,RefTable,KeyValues,Notice,StationList,Badge,DetailLinks,DraftDialog} from './reference-ui';
+import { useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { ArrowRight, Layers, Send } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useEngineering } from "@/lib/engineering/context";
+import { stationsForStep } from "@/lib/engineering/asset-flow";
+import { projectAssets } from "@/lib/engineering/asset-registry";
+import { AddRecord, RecordActions, useRecords } from "./record-editor";
+import {
+  Surface,
+  ReferencePage,
+  ScopeSelectors,
+  RefTabs,
+  RefTable,
+  KeyValues,
+  Badge,
+  DraftDialog,
+} from "./reference-ui";
+export { LineTopology } from "./line-design";
+export { SignalBindings, CommandPolicy } from "./station-signals";
 
-export function LineTopology(){const {model,select,lineId}=useEngineering();const {rows:buffers}=useRecords('buffer');const [tab,setTab]=useState('Topology'),[buffer,setBuffer]=useState('BUF-01'),[dialog,setDialog]=useState(false),[zoom,setZoom]=useState('100%');const nodes=model.stations.flatMap(s=>[s,...buffers.filter(b=>b.parent===s.id).map(b=>({id:b.id,name:'',mode:'buffer'}))]);const currentBuffer=buffers.find(b=>b.id===buffer)??buffers[0];return <ReferencePage title="Line Topology Designer" sub={`${model.scope} · ${lineId} ${model.name} · Engineering draft`} actions={<><EngineeringDataDrawer initialKind="station" label="Manage stations"/><Button variant="outline" onClick={()=>{setTab('Topology');if(graphHasCycle(model.routeEdges))toast.error('A cycle was found in the configured route edges. Review the process route.');else toast.info(model.routeEdges.length?'No cycles found in the configured route edges.':'No route edges are configured for cycle validation.');}}><Check size={16}/>Validate topology</Button><Button variant="outline" onClick={()=>setTab('Parameters')}><Network size={16}/>Compare production r3</Button></>}><RefTabs items={['Topology','Parameters','Change Log','Approval','Deployment']} value={tab} onChange={setTab}/>{tab==='Topology'?<><div className="ref-topology-layout"><Surface title="Equipment Containment" className="ref-asset-list"><div className="ref-tree-root"><ChevronDown size={13}/><Network size={16}/>{model.scope}</div><div className="ref-tree-root is-selected"><ChevronDown size={13}/><Network size={15}/>{lineId} {model.name}</div>{model.stations.map(s=><Button variant="ghost" className="ref-topology-tree-row" key={s.id} onClick={()=>select(s.id)}><Server size={13}/>{s.id} {s.name.replace(' (CCP)','').replace(' & Palletize','')}</Button>)}<div className="ref-tree-root"><ChevronDown size={13}/><Database size={16}/>Buffers</div>{buffers.map(r=>r.id).map(b=><Button variant="ghost" className="ref-topology-tree-row" key={b} onClick={()=>setBuffer(b)}><Database size={14}/>{b}</Button>)}</Surface><Surface title={`${lineId} ${model.name} — Material Flow (Draft)`} className="ref-topology-canvas" actions={<div className="ref-zoom"><Button variant="ghost" size="icon" title="Zoom out" onClick={()=>setZoom('75%')}><Minus size={14}/></Button><select aria-label="Topology zoom" value={zoom} onChange={e=>setZoom(e.target.value)}>{['75%','100%','125%'].map(z=><option key={z}>{z}</option>)}</select><Button variant="ghost" size="icon" title="Zoom in" onClick={()=>setZoom('125%')}><Plus size={14}/></Button></div>}><div className={`ref-flow-scroll zoom-${zoom.replace('%','')}`}><div className="ref-resource-group"><h3><Network size={16}/>{lineId} {model.name} (Resource Group)</h3><div className="ref-flow-nodes">{nodes.map((s,i)=>{const Icon=s.mode==='buffer'?Database:[Weight,Settings2,Settings2,ScanLine,Radio,Box][model.stations.findIndex(x=>x.id===s.id)]??Box;return <div className="ref-flow-unit" key={s.id}><Button variant="outline" className={`ref-flow-node ${s.mode==='buffer'?'buffer':''}`} onClick={()=>s.mode==='buffer'?setBuffer(s.id):select(s.id)}><Icon size={27}/><strong>{s.id}</strong>{s.name&&<span>{s.name.replace(' (CCP)','').replace(' & Palletize','')}</span>}{s.mode!=='buffer'&&<Badge tone={s.mode==='automatic'?'cyan':'neutral'}>{s.mode==='automatic'?'Automatic':'Manual'}</Badge>}</Button>{i<nodes.length-1&&<ArrowRight size={18}/>}</div>;})}</div></div></div><div className="ref-legend"><b>Legend</b><ArrowRight size={38}/><div><strong>Material flow (solid arrow)</strong><small>Physical material movement between stations, buffers, or equipment.</small></div><span className="ref-dashed-key"/><div><strong>Resource grouping (dashed)</strong><small>Logical containment (e.g. production line or area) for organization and configuration.</small></div></div></Surface><Surface title="Inspector — Buffer" actions={<AddRecord kind="buffer"/>}><div className="ref-inspector-title"><Database size={30}/><strong>{buffer}</strong></div><KeyValues items={[["Buffer capacity",currentBuffer?currentBuffer.value+' '+currentBuffer.unit:'None'],["Source station",currentBuffer?.parent??'Unassigned'],["Destination station",currentBuffer?.binding??'Unassigned'],["Transfer policy",currentBuffer?.description??"FIFO"]]}/>{currentBuffer&&<RecordActions record={currentBuffer}/>}</Surface></div><Surface title="Topology Issues (Draft r4)"><RefTable headers={['#','Type','Description']} rows={[[1,<Badge tone="good">✓ Validation</Badge>,'No flow cycles.'],[2,<Badge tone="warn">⚠ Configuration</Badge>,'Missing buffer eligibility rule (define which materials are allowed for BUF-01).']]}/></Surface></>:<Surface title={tab}>{tab==='Parameters'?<RefTable headers={['Parameter','Production r3 (sample)','Draft r4']} rows={[["Throughput","5,000 kg/h","5,500 kg/h"],["Buffer capacity","120 kg","120 kg"],["Transfer policy","FIFO","FIFO"]]}/>:<Notice>{tab==='Deployment'?'No verified deployment. The desired and actual manifests must be independently confirmed.':'Engineering draft only. Verified review and approval are separate from production activation.'}</Notice>}<Button variant="outline" asChild><Link to={tab==='Change Log'?'/changes':'/release-readiness'}>Open {tab.toLowerCase()}</Link></Button></Surface>}<DraftDialog open={dialog} onClose={()=>setDialog(false)} title="Create topology change proposal"/></ReferencePage>;}
-
-export function SignalBindings(){const {model,setModel,selected}=useEngineering();const station=model.stations.find(item=>item.id===selected)??model.stations[0];const stationTitle=station?`${station.id} ${station.name}`:'Unassigned station';const [tab,setTab]=useState('Signal Bindings'),[active,setActive]=useState(0),[dialog,setDialog]=useState(false);const signals=model.signals.map(r=>[r.key,r.address,r.type+' ('+r.unit+')',r.quality,r.age+' s',Radio] as const);const signal=signals[active]??signals[0]??['No signals','','','Unavailable','—',Radio];const [offset,setOffset]=useState('0'),[max,setMax]=useState('120'),[fresh,setFresh]=useState('2 s');return <ReferencePage title={`Signal bindings — ${stationTitle}`} sub={`${model.scope} / ${model.name} · Configure semantic signals and station mappings.`}><DetailLinks/><div className="ref-signals-grid"><StationList/><Surface><RefTabs items={['Signal Bindings','Source Configuration','Validation']} value={tab} onChange={setTab}/><div className="ref-signals-inner"><div className="ref-stack"><Surface title={<>{stationTitle} · Draft r4 <Badge>DRAFT</Badge></>} sub="Map source data to semantic signals for engineering validation and approval."><RefTable headers={['Semantic signal','Source address','Type / unit','Access','Quality','Sample age']} selected={active} onSelect={setActive} rows={signals.map(([key,address,type,quality,age,Icon])=>[<span className="ref-icon-text"><Icon size={15}/>{key}</span>,address,type,'Read',<span className={quality==='Good'?'text-success':'text-warning'}>● {quality}</span>,age])}/></Surface>{tab==='Validation'?<Notice tone="warn"><b>Stale required completion signal blocks commissioning.</b><p>batch_complete is stale (75 s). A fresh Good read must be verified before commissioning.</p></Notice>:<div className="ref-two-col"><Surface title={`Signal details: ${signal[0]}`}><div className="ref-form-grid"><label>Temperature scale<select aria-label="Temperature scale"><option>°C (Celsius)</option><option>°F (Fahrenheit)</option></select></label><label>Offset<input aria-label="Signal offset" value={offset} onChange={e=>setOffset(e.target.value)}/></label><label className="span-two">Range (engineering)<div className="ref-range"><input aria-label="Range minimum" defaultValue="0"/>—<input aria-label="Range maximum" value={max} onChange={e=>setMax(e.target.value)}/>°C</div></label><label className="span-two">Freshness (max age)<select aria-label="Freshness" value={fresh} onChange={e=>{setFresh(e.target.value);setModel({...model,signals:model.signals.map((v,i)=>i===active?{...v,maxAge:Number(e.target.value.split(" ")[0])}:v)});}}>{['2 s','5 s','10 s','60 s'].map(v=><option key={v}>{v}</option>)}</select></label></div></Surface><Surface title="OPC UA Source"><label>Endpoint<input aria-label="Source endpoint" value={model.adapter.endpoint} onChange={e=>setModel({...model,adapter:{...model.adapter,endpoint:e.target.value}})}/></label><label>Namespace URI<input aria-label="Namespace URI" defaultValue="urn:plant01riyadh:mixerlinea:mixingvessel"/></label><Button variant="outline" className="ref-full-button" onClick={()=>toast.error('No authorized OT gateway is connected. Namespace browsing is unavailable.')}><Network size={16}/>Browse read namespace</Button></Surface></div>}</div><aside className="ref-stack"><Surface title="Permissions"><KeyValues items={[["Read access",<span className="text-success">✓ Allowed (sample)</span>],["Write access","⊘ Not allowed"]]}/></Surface><Surface title="Lifecycle (Engineering)"><div className="ref-vertical-lifecycle"><strong>Draft (r4) <Badge tone="cyan">CURRENT DRAFT</Badge></strong><span>Under Review</span><span>Approved</span></div><h3 className="ref-section-label">Deployment (Production)</h3><Badge>Not deployed</Badge><p className="ref-sub">Engineering drafts do not change live production. Deployment is a separate, approved action.</p></Surface></aside></div></Surface></div><div className="ref-bottom-actions"><Notice tone="warn"><b>Validation: Stale required completion signal blocks commissioning.</b><p>The 'batch_complete' signal is stale (age 75 s). Provide a fresh, Good read (≤ 2 s) to proceed with commissioning.</p></Notice><Button variant="outline" onClick={()=>{setTab('Validation');toast.info('Unit review opened. Live signal verification remains unavailable.');}}><Check size={16}/>Validate units</Button><Button onClick={()=>setDialog(true)}><Save size={16}/>Save draft</Button></div><DraftDialog open={dialog} onClose={()=>setDialog(false)}/></ReferencePage>;}
-
-const commands=['request_reject_test','clear_test_fault','reset_alarm','view_status'];
-export function CommandPolicy(){const {rows:commandRecords}=useRecords('command');const commands=commandRecords.map(r=>r.name);const [tab,setTab]=useState('Commands'),[command,setCommand]=useState('request_reject_test'),[simulated,setSimulated]=useState(false),[dialog,setDialog]=useState(false);return <ReferencePage title="Command Policy Editor" sub="Define and manage station command policies with access, safety, and commissioning controls." actions={<Notice>Portal command approval does not replace local interlocks.</Notice>}><DetailLinks/><div className="ref-command-grid"><div className="ref-command-main"><div className="ref-command-top"><StationList/><Surface title={<> <ShieldCheck size={18}/>ST-104 MetalDetector (MD-104) · Command Policy <Badge tone="warn">Draft r4</Badge></>}><RefTabs items={['Commands','State Timeline','Approval & Deployment','Policy Details']} value={tab} onChange={setTab}/><div className="ref-command-name"><Radio size={19}/><strong>{command}</strong><Badge tone="cyan">{command==='view_status'?'Read-only':'Commissioning Only'}</Badge><p>Execute a controlled reject test sequence on the metal detector (commissioning only).</p></div><h3 className="ref-section-label">Command Rules</h3><div className="ref-command-rules"><KeyValues items={[["Allowed Mode",command==='view_status'?'Read-only (any mode)':'Commissioning-only'],["Required Role","Commissioning engineer"],["Local Enable","Required (station local enable)"],["Expiry","10 s (from dispatch)"],["Rate Limit","One test per 30 s"]]}/><div><h4><Server size={24}/>PLC Interaction (Required)</h4><p>✓ Execute defined PLC sequence</p><p>✓ Verify readback (test complete)</p></div></div></Surface></div><Surface title={<><Network size={18}/>Commands in Policy (r4)</>} actions={<AddRecord kind="command"/>}><RefTable headers={['Command','Allowed context','Required role','Local enable','Expiry','Rate limit']} selected={commands.indexOf(command)} onSelect={i=>setCommand(commands[i]??commands[0]??'request_reject_test')} rows={commands.map((c,i)=>[<span className="ref-icon-text"><Radio size={14}/>{c}</span>,<Badge tone={i===3?'neutral':'cyan'}>{i===3?'Read-only (any mode)':'Commissioning-only'}</Badge>,i===3?'Engineer (or higher)':'Commissioning engineer',i===3?'Not required':'Required',i===3?'—':'10 s',i===3?'—':'One per 30 s'])}/></Surface><Surface title={<><Network size={18}/>State Timeline</>} sub={`Request lifecycle for ${command}.`}><div className="ref-timeline-row"><Badge tone="good">Example (Success)</Badge>{['Requested','Authorized','Dispatched','Acknowledged','Completed'].map((v,i)=><div key={v}><CheckCircle2 size={17} className="text-primary"/><strong>{v}</strong><small>10:15:0{i+2}</small>{i<4&&<ArrowRight size={27}/>}</div>)}</div><div className="ref-timeline-row unknown"><Badge tone="warn">Example (Unknown)</Badge>{['Requested','Authorized','Dispatched','Unknown'].map((v,i)=><div key={v}>{i===3?<AlertTriangle size={19} className="text-warning"/>:<CheckCircle2 size={17} className="text-primary"/>}<strong>{v}</strong><small>11:02:{11+i*3}</small>{i<3&&<ArrowRight size={27}/>}</div>)}<Notice tone="warn"><b>Reconcile before retry:</b><p>Verify PLC readback, station state, and event logs.</p></Notice></div></Surface></div><aside className="ref-stack"><Surface title={<><FlaskConical size={18}/>Test (Sandbox Only)</>} actions={<Badge tone="cyan">Sandbox</Badge>}><Notice>Sandbox only. No equipment writes. Actual production commands are unavailable from this draft.</Notice><label>Command<select aria-label="Sandbox command" value={command} onChange={e=>setCommand(e.target.value)}>{commands.map(c=><option key={c}>{c}</option>)}</select></label><h3 className="ref-section-label">Test Input (Simulated)</h3><label>Production lot (optional)<input aria-label="Simulated production lot" defaultValue="SIM-0001"/></label><Button variant="outline" className="ref-full-button" onClick={()=>setSimulated(true)}><Play size={15}/>Run Test (Sandbox)</Button><div className="ref-read-result"><h3><CheckCircle2 size={22}/>{simulated?'Simulation Complete':'Illustrative simulation result'}</h3><p>Sequence and readback validated (simulated).</p><KeyValues items={[["Outcome",simulated?'Completed (simulated)':'Example only'],["Duration","3.8 s"],["Readback","OK (test_complete = true)"]]}/></div></Surface><Surface title={<><ShieldCheck size={18}/>Approval & Policy Hash (r4)</>} sub="Approve this draft for deployment. Approval is tied to a policy hash."><label>Policy Hash (Preview)<input readOnly value="a8f3e9d4c7b1e2f0d6a9c5e13b8d4f7e9a2c0d1b"/></label><Button className="ref-full-button" onClick={()=>setDialog(true)}><ShieldCheck size={17}/>Submit for Approval</Button><p className="ref-sub">Approval enables deployment to a target environment. It does not modify live production.</p></Surface></aside></div><DraftDialog open={dialog} onClose={()=>setDialog(false)} review title="Review command policy proposal"/></ReferencePage>;}
-
-const operations=[['Preheat','ST-102','Automatic','Heat jacket to 75.0 °C (setpoint) and hold for 5.0 min.',Thermometer],['Weigh oats','ST-101','Manual','Weigh oats: 12.00 kg ± 0.50 kg.',Weight],['Add honey','ST-102','Automatic','Add honey: 18.00 kg; control within ±1.0%.',FlaskConical],['Mix','ST-102','Automatic','Mix for 8.0 min at 45 rpm.',Network],['Transfer / extrude','ST-103','Automatic','Extrude to 6.0 mm nominal; speed 12.0 m/min.',ArrowRight],['CCP challenge','ST-104','Automatic','Perform 3 challenge results + reject confirmation (required).',ShieldCheck],['Wrap / seal','ST-105','Automatic','Film temperature 160.0 °C; seal pressure 2.5 bar.',Box],['Case pack','ST-106','Manual','Pack 12 units per case; apply case label.',Box]] as const;
 export function ProcessRoute() {
-  const {model,lineId,revision} = useEngineering();
-  const {rows:operations} = useRecords('operation');
-  const [selectedId,setSelectedId]=useState('');
-  const [tab,setTab]=useState('Details');
-  const [preview,setPreview]=useState(false);
-  const [checked,setChecked]=useState(false);
-  const [dialog,setDialog]=useState(false);
-  const operation=operations.find(item=>item.id===selectedId) ?? operations[0];
-  const index=operation ? operations.indexOf(operation) : -1;
-  const stations=operation ? stationsForStep(model,operation) : [];
-  const unassigned=operations.filter(item=>!stationsForStep(model,item).length);
-  const unresolved=operations.filter(item=>stationsForStep(model,item).some(station=>!station.operation));
-  const evidence=operation ? model.records.filter(record=>!record.archived && record.kind==='evidence' && record.parent===operation.id) : [];
-  return <ReferencePage title={`${model.name} · Process route`} sub="Sequence operations and review their station assignments." crumb="Process & Routes"
-    actions={<><ScopeSelectors/><Button variant="outline" disabled={!operations.length} onClick={()=>{setSelectedId(operations[0]!.id);setPreview(true);}}>Preview sequence</Button>
-      <Button disabled={!operations.length} onClick={()=>setDialog(true)}><Send size={16}/>Submit for review</Button></>}>
-    <div className="ref-route-summary">{[['Plant',model.scope],['Production line',lineId],['Operations',operations.length],['Without a station',unassigned.length],['Workspace revision',revision?`r${revision}`:'Unsaved']].map(([label,value])=>
-      <div key={label}><small>{label}</small><strong>{value}</strong></div>)}</div>
-    <div className="ref-route-grid"><div className="ref-stack">
-      <Surface title="Route design" sub={`${model.name} · Operation sequence`}>
-        {!operation ? <p className="ref-empty">Add the first operation to define this route.</p> : <div className="ref-route-canvas" aria-label="Operation sequence"><div className="ref-operation-flow">
-          {operations.map((item,i)=><div key={item.id}><Button aria-pressed={item.id===operation.id} variant="outline" className={item.id===operation.id?'is-selected':''} onClick={()=>setSelectedId(item.id)}>
-            <Layers size={17}/><span>{item.name}<small>{stationsForStep(model,item).map(s=>s.id).join(', ')||'Unassigned'}</small></span>
-          </Button>{i<operations.length-1&&<ArrowRight size={15}/>}</div>)}</div></div>}
-        {preview && operation && <div className="ref-sequence-preview"><span role="status">Preview · {index+1} of {operations.length} · {operation.name}</span>
-          <Button variant="outline" disabled={index===0} onClick={()=>setSelectedId(operations[index-1]!.id)}>Previous</Button>
-          {index+1<operations.length && <Button variant="outline" onClick={()=>setSelectedId(operations[index+1]!.id)}>Next operation</Button>}
-          <Button variant="ghost" onClick={()=>setPreview(false)}>End preview</Button></div>}
-      </Surface>
-      <Surface title={`Operations (${operations.length})`} actions={<AddRecord kind="operation"/>}>
-        {!!operations.length && <RefTable headers={['#','Operation','Assigned stations','Parameters']} selected={index}
-          onSelect={i=>setSelectedId(operations[i]!.id)} rows={operations.map((item,i)=>[i+1,item.name,
-          stationsForStep(model,item).map(station=>station.name).join(', ')||'Unassigned',item.description||'—'])}/>}
-      </Surface>
-      <Surface title="Station coverage" actions={<Button variant="outline" onClick={()=>setChecked(true)}>Check assignments</Button>}>
-        {checked && <p role="status">{!operations.length?'No operations to check.':unassigned.length||unresolved.length?
-          `Missing station: ${unassigned.map(item=>item.name).join(', ')||'none'}. Missing MES mapping: ${unresolved.map(item=>item.name).join(', ')||'none'}.`:'All operations have a station with a configured MES mapping.'}</p>}
-        <Link to="/asset-steps" className="ref-issue-link">Configure assignments<ArrowRight size={14}/></Link>
-      </Surface>
-    </div>{operation && <Surface title={operation.name} sub={operation.id} actions={<RecordActions key={operation.id} record={operation}/>}>
-      <RefTabs items={['Details','Evidence','Failure & control']} value={tab} onChange={setTab}/>
-      {tab==='Details'?<KeyValues items={[['Sequence',`${index+1} of ${operations.length}`],['Assigned stations',stations.map(s=>s.name).join(', ')||'Unassigned'],
-        ['MES operation mappings',stations.map(s=>s.operation).filter(Boolean).join(', ')||'Unmapped'],['Description',operation.description||'No description entered'],['Version',operation.version]]}/>
-      :tab==='Evidence'?<><KeyValues items={[['Required dependency',operation.required?'Yes':'No'],['Linked evidence',evidence.length]]}/>{evidence.map(item=><p key={item.id}>{item.name}</p>)}</>
-      :<><KeyValues items={[['Operating modes',Array.from(new Set(stations.map(s=>s.mode))).join(', ')||'Unassigned']]}/>
-        <Link to="/edge-app-studio" className="ref-issue-link">Inspect workflow failure handling<ArrowRight size={14}/></Link></>}
-    </Surface>}</div><DraftDialog review open={dialog} onClose={()=>setDialog(false)} title="Submit route for engineering review"/>
-  </ReferencePage>;
+  const { model, lineId, site, revision } = useEngineering();
+  const { rows: operations } = useRecords("operation");
+  const [selectedId, setSelectedId] = useState("");
+  const [tab, setTab] = useState("Details");
+  const [preview, setPreview] = useState(false);
+  const [checked, setChecked] = useState(false);
+  const [dialog, setDialog] = useState(false);
+  const operation = operations.find((item) => item.id === selectedId) ?? operations[0];
+  const index = operation ? operations.indexOf(operation) : -1;
+  const stations = operation ? stationsForStep(model, operation) : [];
+  const unassigned = operations.filter((item) => !stationsForStep(model, item).length);
+  const unresolved = operations.filter((item) =>
+    stationsForStep(model, item).some((station) => !station.operation),
+  );
+  const evidence = operation
+    ? model.records.filter(
+        (record) =>
+          !record.archived && record.kind === "evidence" && record.parent === operation.id,
+      )
+    : [];
+  return (
+    <ReferencePage
+      title={`${model.name} · Process route`}
+      sub="Sequence operations and review their station assignments."
+      crumb="Process & Routes"
+      actions={
+        <>
+          <ScopeSelectors />
+          <Button
+            variant="outline"
+            disabled={!operations.length}
+            onClick={() => {
+              setSelectedId(operations[0]!.id);
+              setPreview(true);
+            }}
+          >
+            Preview sequence
+          </Button>
+          <Button disabled={!operations.length} onClick={() => setDialog(true)}>
+            <Send size={16} />
+            Submit for review
+          </Button>
+        </>
+      }
+    >
+      <div className="ref-route-summary">
+        {[
+          ["Plant", model.scope],
+          ["Production line", lineId],
+          ["Operations", operations.length],
+          ["Without a station", unassigned.length],
+          ["Workspace revision", revision ? `r${revision}` : "Unsaved"],
+        ].map(([label, value]) => (
+          <div key={label}>
+            <small>{label}</small>
+            <strong>{value}</strong>
+          </div>
+        ))}
+      </div>
+      <div className="ref-route-grid">
+        <div className="ref-stack">
+          <Surface title="Route design" sub={`${model.name} · Operation sequence`}>
+            {!operation ? (
+              <p className="ref-empty">Add the first operation to define this route.</p>
+            ) : (
+              <div className="ref-route-canvas" aria-label="Operation sequence">
+                <div className="ref-operation-flow">
+                  {operations.map((item, i) => (
+                    <div key={item.id}>
+                      <Button
+                        aria-pressed={item.id === operation.id}
+                        variant="outline"
+                        className={item.id === operation.id ? "is-selected" : ""}
+                        onClick={() => setSelectedId(item.id)}
+                      >
+                        <Layers size={17} />
+                        <span>
+                          {item.name}
+                          <small>
+                            {stationsForStep(model, item)
+                              .map((s) => s.id)
+                              .join(", ") || "Unassigned"}
+                          </small>
+                        </span>
+                      </Button>
+                      {i < operations.length - 1 && <ArrowRight size={15} />}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {preview && operation && (
+              <div className="ref-sequence-preview">
+                <span role="status">
+                  Preview · {index + 1} of {operations.length} · {operation.name}
+                </span>
+                <Button
+                  variant="outline"
+                  disabled={index === 0}
+                  onClick={() => setSelectedId(operations[index - 1]!.id)}
+                >
+                  Previous
+                </Button>
+                {index + 1 < operations.length && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setSelectedId(operations[index + 1]!.id)}
+                  >
+                    Next operation
+                  </Button>
+                )}
+                <Button variant="ghost" onClick={() => setPreview(false)}>
+                  End preview
+                </Button>
+              </div>
+            )}
+          </Surface>
+          <Surface
+            title={`Operations (${operations.length})`}
+            actions={<AddRecord kind="operation" />}
+          >
+            {!!operations.length && (
+              <RefTable
+                headers={["#", "Operation", "Assigned stations", "Parameters"]}
+                selected={index}
+                onSelect={(i) => setSelectedId(operations[i]!.id)}
+                rows={operations.map((item, i) => [
+                  i + 1,
+                  item.name,
+                  stationsForStep(model, item)
+                    .map((station) => station.name)
+                    .join(", ") || "Unassigned",
+                  item.description || "—",
+                ])}
+              />
+            )}
+          </Surface>
+          <Surface
+            title="Station coverage"
+            actions={
+              <Button variant="outline" onClick={() => setChecked(true)}>
+                Check assignments
+              </Button>
+            }
+          >
+            {checked && (
+              <p role="status">
+                {!operations.length
+                  ? "No operations to check."
+                  : unassigned.length || unresolved.length
+                    ? `Missing station: ${unassigned.map((item) => item.name).join(", ") || "none"}. Missing MES mapping: ${unresolved.map((item) => item.name).join(", ") || "none"}.`
+                    : "All operations have a station with a configured MES mapping."}
+              </p>
+            )}
+            <Link
+              to="/asset-steps"
+              search={(prev) => ({ ...prev, step: operation?.id, engLine: lineId })}
+              className="ref-issue-link"
+            >
+              Configure assignments
+              <ArrowRight size={14} />
+            </Link>
+          </Surface>
+        </div>
+        {operation && (
+          <Surface
+            title={operation.name}
+            sub={operation.id}
+            actions={<RecordActions key={operation.id} record={operation} />}
+          >
+            <RefTabs
+              items={["Details", "Evidence", "Failure & control"]}
+              value={tab}
+              onChange={setTab}
+            />
+            {tab === "Details" ? (
+              <KeyValues
+                items={[
+                  ["Sequence", `${index + 1} of ${operations.length}`],
+                  ["Assigned stations", stations.map((s) => s.name).join(", ") || "Unassigned"],
+                  [
+                    "MES operation mappings",
+                    stations
+                      .map((s) => s.operation)
+                      .filter(Boolean)
+                      .join(", ") || "Unmapped",
+                  ],
+                  ["Description", operation.description || "No description entered"],
+                  ["Version", operation.version],
+                ]}
+              />
+            ) : tab === "Evidence" ? (
+              <>
+                <KeyValues
+                  items={[
+                    ["Required dependency", operation.required ? "Yes" : "No"],
+                    ["Linked evidence", evidence.length],
+                  ]}
+                />
+                {evidence.map((item) => (
+                  <p key={item.id}>{item.name}</p>
+                ))}
+              </>
+            ) : (
+              <>
+                <KeyValues
+                  items={[
+                    [
+                      "Operating modes",
+                      Array.from(new Set(stations.map((s) => s.mode))).join(", ") || "Unassigned",
+                    ],
+                  ]}
+                />
+                <Link
+                  to="/factory-process"
+                  search={(prev) => ({ ...prev, site })}
+                  className="ref-issue-link"
+                >
+                  Design branches, failure paths and bounded rework
+                  <ArrowRight size={14} />
+                </Link>
+              </>
+            )}
+          </Surface>
+        )}
+      </div>
+      <DraftDialog
+        review
+        open={dialog}
+        onClose={() => setDialog(false)}
+        title="Submit route for engineering review"
+      />
+    </ReferencePage>
+  );
 }
 
 export function StepTemplateLibrary() {
-  const {model,lineId}=useEngineering();
-  const {rows}=useRecords('template');
-  const [selectedId,setSelectedId]=useState('');
-  const [query,setQuery]=useState('');
-  const [comparisonId,setComparisonId]=useState('');
-  const [dialog,setDialog]=useState(false);
-  const templates=rows.filter(item=>item.parent===lineId || model.stations.some(s=>s.id===item.parent || s.config?.templateIds?.includes(item.id)));
-  const matches=templates.filter(item=>[item.name,item.id,item.binding].some(value=>value.toLowerCase().includes(query.trim().toLowerCase())));
-  const selected=matches.find(item=>item.id===selectedId) ?? matches[0];
-  const comparison=templates.find(item=>item.id===comparisonId && item.id!==selected?.id);
-  const assigned=model.stations.filter(station=>station.id===selected?.parent || (selected && station.config?.templateIds?.includes(selected.id)));
-  return <ReferencePage title="Step Template Library" sub="Inspect draft templates, compare definitions and review the stations they affect." actions={<ScopeSelectors/>}>
-    <div className="ref-template-grid">
-      <Surface title={`Templates (${templates.length})`} actions={<AddRecord kind="template"/>}>
-        <label className="ref-template-search">Find a template<input type="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Name, ID or owner"/></label>
-        {matches.map(item=><Button key={item.id} variant="outline" aria-pressed={item.id===selected?.id} onClick={()=>setSelectedId(item.id)} className={`ref-template-item ${item.id===selected?.id?'is-selected':''}`}>
-          <Layers size={22}/><div><strong>{item.name}</strong><small>{item.id}</small><small>{item.binding||'No owner specified'}</small></div><Badge>{item.version}</Badge>
-        </Button>)}
-        {!matches.length && <p className="ref-empty">{query?'No matching templates.':'No templates assigned to this line.'}{query && <Button variant="outline" onClick={()=>setQuery('')}>Clear search</Button>}</p>}
-      </Surface>
-      {selected && <div className="ref-stack"><Surface title={selected.name} sub={selected.id} actions={<RecordActions key={selected.id} record={selected}/>}>
-        <label className="ref-template-search">Compare with<select value={comparison?.id??''} onChange={e=>setComparisonId(e.target.value)}>
-          <option value="">Select another template</option>{templates.filter(item=>item.id!==selected.id).map(item=><option value={item.id} key={item.id}>{item.name} · {item.version}</option>)}
-        </select></label>
-        <div className="ref-template-definitions">{(comparison?[selected,comparison]:[selected]).map(template=><div key={template.id} className="ref-template-version">
-          <h3>{template.name} <Badge>{template.version}</Badge></h3>
-          <KeyValues items={[['Scope',template.parent],['Owner / binding',template.binding||'Unspecified'],['Description',template.description||'Unspecified'],['Configured inputs',template.value||'Unspecified'],['Required dependency',template.required?'Yes':'No']]}/>
-        </div>)}</div>
-      </Surface><Surface title="Assignment & impact" actions={<Button onClick={()=>setDialog(true)}>Submit for review</Button>}>
-        {assigned.length?<RefTable headers={['Assigned station','Application','Template']} rows={assigned.map(station=>[station.name,station.app||'Unbound',selected.name])}/>
-          :<p className="ref-empty">No station assignments recorded for this template.</p>}
-      </Surface></div>}
-    </div><DraftDialog review open={dialog} onClose={()=>setDialog(false)} title="Submit template workspace for review"/>
-  </ReferencePage>;
+  const { model, setModel, lineId } = useEngineering();
+  const [saving, setSaving] = useState(false);
+  const [stationFilter, setStationFilter] = useState("");
+  const { rows } = useRecords("template");
+  const [selectedId, setSelectedId] = useState("");
+  const [query, setQuery] = useState("");
+  const [comparisonId, setComparisonId] = useState("");
+  const [dialog, setDialog] = useState(false);
+  const templates = rows.filter(
+    (item) =>
+      item.parent === lineId ||
+      model.stations.some((s) => s.id === item.parent || s.config?.templateIds?.includes(item.id)),
+  );
+  const matches = templates.filter((item) =>
+    [item.name, item.id, item.binding].some((value) =>
+      value.toLowerCase().includes(query.trim().toLowerCase()),
+    ),
+  );
+  const selected = matches.find((item) => item.id === selectedId) ?? matches[0];
+  const comparison = templates.find((item) => item.id === comparisonId && item.id !== selected?.id);
+  const assigned = model.stations.filter(
+    (station) =>
+      station.id === selected?.parent ||
+      (selected && station.config?.templateIds?.includes(selected.id)),
+  );
+  return (
+    <ReferencePage
+      title="Step Template Library"
+      sub="Inspect draft templates, compare definitions and review the stations they affect."
+      actions={
+        <>
+          <ScopeSelectors />
+          <Button onClick={() => setSaving(true)}>Save draft</Button>
+        </>
+      }
+    >
+      <div className="ref-template-grid">
+        <Surface title={`Templates (${templates.length})`} actions={<AddRecord kind="template" />}>
+          <label className="ref-template-search">
+            Find a template
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Name, ID or owner"
+            />
+          </label>
+          {matches.map((item) => (
+            <Button
+              key={item.id}
+              variant="outline"
+              aria-pressed={item.id === selected?.id}
+              onClick={() => setSelectedId(item.id)}
+              className={`ref-template-item ${item.id === selected?.id ? "is-selected" : ""}`}
+            >
+              <Layers size={22} />
+              <div>
+                <strong>{item.name}</strong>
+                <small>{item.id}</small>
+                <small>{item.binding || "No owner specified"}</small>
+              </div>
+              <Badge>{item.version}</Badge>
+            </Button>
+          ))}
+          {!matches.length && (
+            <p className="ref-empty">
+              {query ? "No matching templates." : "No templates assigned to this line."}
+              {query && (
+                <Button variant="outline" onClick={() => setQuery("")}>
+                  Clear search
+                </Button>
+              )}
+            </p>
+          )}
+        </Surface>
+        {selected && (
+          <div className="ref-stack">
+            <Surface
+              title={selected.name}
+              sub={selected.id}
+              actions={<RecordActions key={selected.id} record={selected} />}
+            >
+              <label className="ref-template-search">
+                Compare with
+                <select
+                  value={comparison?.id ?? ""}
+                  onChange={(e) => setComparisonId(e.target.value)}
+                >
+                  <option value="">Select another template</option>
+                  {templates
+                    .filter((item) => item.id !== selected.id)
+                    .map((item) => (
+                      <option value={item.id} key={item.id}>
+                        {item.name} · {item.version}
+                      </option>
+                    ))}
+                </select>
+              </label>
+              <div className="ref-template-definitions">
+                {(comparison ? [selected, comparison] : [selected]).map((template) => (
+                  <div key={template.id} className="ref-template-version">
+                    <h3>
+                      {template.name} <Badge>{template.version}</Badge>
+                    </h3>
+                    <KeyValues
+                      items={[
+                        ["Scope", template.parent],
+                        ["Owner / binding", template.binding || "Unspecified"],
+                        ["Description", template.description || "Unspecified"],
+                        ["Configured inputs", template.value || "Unspecified"],
+                        ["Required dependency", template.required ? "Yes" : "No"],
+                      ]}
+                    />
+                  </div>
+                ))}
+              </div>
+            </Surface>
+            <Surface
+              title="Assignment & impact"
+              actions={<Button onClick={() => setDialog(true)}>Submit for review</Button>}
+            >
+              <p>
+                {assigned.length} assigned {assigned.length === 1 ? "station" : "stations"} ·{" "}
+                {selected.version}
+              </p>
+              <label className="ref-template-search">
+                Find a station
+                <input
+                  type="search"
+                  value={stationFilter}
+                  onChange={(e) => setStationFilter(e.target.value)}
+                  placeholder="Station ID or name"
+                />
+              </label>
+              <div className="asset-assignment-list">
+                {model.stations
+                  .filter((s) =>
+                    (s.name + " " + s.id)
+                      .toLowerCase()
+                      .includes(stationFilter.trim().toLowerCase()),
+                  )
+                  .map((station) => (
+                    <label key={station.id}>
+                      <input
+                        type="checkbox"
+                        aria-label={`Assign ${selected.name} to ${station.name}`}
+                        checked={assigned.some((s) => s.id === station.id)}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          const existing =
+                            station.config?.templateIds ??
+                            model.records
+                              .filter(
+                                (r) =>
+                                  r.kind === "template" && !r.archived && r.parent === station.id,
+                              )
+                              .map((r) => r.id);
+                          const templateIds = checked
+                            ? Array.from(new Set([...existing, selected.id]))
+                            : existing.filter((id) => id !== selected.id);
+                          setModel({
+                            ...model,
+                            records:
+                              !checked && selected.parent === station.id
+                                ? model.records.map((r) =>
+                                    r.kind === "template" && r.id === selected.id
+                                      ? { ...r, parent: lineId }
+                                      : r,
+                                  )
+                                : model.records,
+                            stations: model.stations.map((s) =>
+                              s.id === station.id
+                                ? {
+                                    ...s,
+                                    config: {
+                                      status: "idle",
+                                      cycleTimeSec: 0,
+                                      sequence:
+                                        projectAssets(model).stations.find(
+                                          (s) => s.id === station.id,
+                                        )?.sequence ?? 1,
+                                      ...s.config,
+                                      templateIds,
+                                    },
+                                  }
+                                : s,
+                            ),
+                          });
+                        }}
+                      />
+                      <span>
+                        {station.name} · {station.id}
+                      </span>
+                    </label>
+                  ))}
+              </div>
+              {!model.stations.some((s) =>
+                (s.name + " " + s.id).toLowerCase().includes(stationFilter.trim().toLowerCase()),
+              ) && <p className="ref-empty">No matching stations on this line.</p>}
+            </Surface>
+          </div>
+        )}
+      </div>
+      <DraftDialog open={saving} onClose={() => setSaving(false)} />
+      <DraftDialog
+        review
+        open={dialog}
+        onClose={() => setDialog(false)}
+        title="Submit template workspace for review"
+      />
+    </ReferencePage>
+  );
 }

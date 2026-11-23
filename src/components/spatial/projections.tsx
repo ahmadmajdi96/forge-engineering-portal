@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { memo, useId } from "react";
 import {
   add,
   portPosition,
@@ -40,7 +40,7 @@ function hull(points: Point[]): Point[] {
   return [...chain(sorted), ...chain(sorted.reverse())];
 }
 
-export function SpatialProjection({
+export const SpatialProjection = memo(function SpatialProjection({
   floor,
   records,
   connections,
@@ -96,21 +96,36 @@ export function SpatialProjection({
         <rect width={width} height={height} fill={`url(#${id})`} />
         {records.map(({ record, template }) => {
           const size = record.sizeOverride ?? template.size;
-          const vectors = [-1, 1].flatMap((x) =>
-            [0, 1].flatMap((y) =>
-              [-1, 1].map((z) =>
-                project(
-                  add(
-                    record.position,
-                    rotate(
-                      { x: (size.x * x) / 2, y: size.y * y, z: (size.z * z) / 2 },
-                      record.rotation,
+          let outline: Point[];
+          if (record.rotation.x === 0 && record.rotation.y === 0 && record.rotation.z === 0) {
+            const x = record.position.x - size.x / 2;
+            const y = plan ? record.position.z - size.z / 2 : height - record.position.y - size.y;
+            const endY = y + (plan ? size.z : size.y);
+            outline = [
+              [x, y],
+              [x + size.x, y],
+              [x + size.x, endY],
+              [x, endY],
+            ];
+          } else {
+            outline = hull(
+              [-1, 1].flatMap((x) =>
+                [0, 1].flatMap((y) =>
+                  [-1, 1].map((z) =>
+                    project(
+                      add(
+                        record.position,
+                        rotate(
+                          { x: (size.x * x) / 2, y: size.y * y, z: (size.z * z) / 2 },
+                          record.rotation,
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          );
+            );
+          }
           const chosen = selection.has(record.id);
           const bounds =
             chosen && record.clearance
@@ -133,9 +148,7 @@ export function SpatialProjection({
                 />
               )}
               <polygon
-                points={hull(vectors)
-                  .map((point) => point.join(","))
-                  .join(" ")}
+                points={outline.map((point) => point.join(",")).join(" ")}
                 className="cursor-pointer hover:brightness-125 focus-visible:brightness-150"
                 role="button"
                 tabIndex={0}
@@ -189,4 +202,4 @@ export function SpatialProjection({
       </svg>
     </figure>
   );
-}
+});

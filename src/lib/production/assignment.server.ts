@@ -239,3 +239,44 @@ export async function inspectAssignment(
     },
   };
 }
+
+export async function engineeringAssignments(
+  request: Request,
+  {
+    site,
+    field,
+    id,
+    after,
+  }: z.infer<typeof import("./engineering-relations.functions").relationScope>,
+) {
+  await requirePermission(request, site, assignmentPermission.view);
+  const fixture = fixtureTarget(site);
+  const alternate = field === "stepId" ? "operationId" : field;
+  const result = await database()<
+    {
+      id: string;
+      release: string;
+      node: string;
+      kind: "operator" | "hmi";
+      config: string;
+      application_id: string;
+      revision: number;
+      schedule: string;
+    }[]
+  >`
+    with target as (
+      select node_id,context from ems.assignment_targets where site=${site}
+      and provenance='enrolled' and revoked_at is null and verified_at > now()-interval '2 minutes'
+      union all select ${fixture?.context.nodeId ?? null}::text,${JSON.stringify(fixture?.context ?? {})}::jsonb where ${!!fixture}
+    ) select a.id,a.release_id as release,a.node_id as node,a.kind,a.definition->>'configRevision' as config,
+      r.application_id,r.workspace_revision as revision,
+      case when a.effective_from>now() then 'Scheduled' when a.effective_until<=now() then 'Expired' else 'Within assignment interval' end as schedule
+      from ems.assignments a join ems.releases r on r.site=a.site and r.id=a.release_id
+      where a.site=${site} and (${after ?? null}::uuid is null or a.id>${after ?? null}::uuid) and
+        (a.definition->'selector'->>${field}=${id} or a.definition->'selector'->>${alternate}=${id}
+        or exists (select 1 from target t where t.node_id=a.node_id and t.context @> (a.definition->'selector')
+          and (t.context->>${field}=${id} or t.context->>${alternate}=${id})))
+      order by a.id limit 11`;
+  const records = result.slice(0, 10);
+  return { records, next: result.length > 10 ? records.at(-1)!.id : null };
+}

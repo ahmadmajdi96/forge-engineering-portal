@@ -27,5 +27,5 @@ export const releasePermission = {
   publish: "ems.factory_releases.publish",
 } as const;
 export type EmsMode = "sandbox" | "local" | "production" | "blocked";
-export type SiteSummary = { key: string; name: string };
+export type SiteSummary = { key: string; name: string; actions?: string[] };
 export type EmsIdentity = { name: string; sites: SiteSummary[] };

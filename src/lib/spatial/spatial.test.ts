@@ -1,12 +1,21 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from "vitest";
-import { Box3, Euler, Vector3 } from "three";
+import { Box3, Euler, PerspectiveCamera, Vector3 } from "three";
 import {
   digestArtifact,
   encodeArtifact,
   inspectGltf,
   verifySpatialArtifactContent,
 } from "./artifacts";
+import { frameBounds } from "./camera";
+import { makeModel } from "@/lib/engineering/model";
+import {
+  brokenByEngineeringEdit,
+  engineeringLinks,
+  changedEngineeringLinks,
+  invalidEngineeringLinks,
+  resolveLayoutTarget,
+} from "./engineering-links";
 import { draftReducer, mergeSpatialDocuments, moveSelection, startDraft } from "./draft";
 import {
   createOccurrence,
@@ -105,6 +114,113 @@ function modelFixture(millimetres: boolean, binary: boolean) {
 }
 
 describe("spatial document", () => {
+  it("frames the actual rectangular floor and selected bounds on wide and narrow cameras", () => {
+    const bounds = new Box3(new Vector3(0, 0, 0), new Vector3(42, 4, 12));
+    for (const aspect of [0.6, 2.2]) {
+      const frame = frameBounds(bounds, new Vector3(1, 0.8, 1), aspect, 44);
+      const camera = new PerspectiveCamera(44, aspect, 0.03, 6000);
+      camera.position.copy(frame.eye);
+      camera.lookAt(frame.center);
+      camera.updateMatrixWorld();
+      const corners = [0, 42].flatMap((x) =>
+        [0, 4].flatMap((y) => [0, 12].map((z) => new Vector3(x, y, z).project(camera))),
+      );
+      const extent = Math.max(...corners.flatMap((p) => [Math.abs(p.x), Math.abs(p.y)]));
+      expect(extent).toBeLessThan(1);
+      expect(extent).toBeGreaterThan(0.86);
+      expect(corners.every((p) => p.z < 1 && p.z > -1)).toBe(true);
+    }
+  });
+  it("resolves canonical line, station and asset deep links and preserves a valid parent for unplaced records", () => {
+    const { document, a } = layout();
+    const line = document.spaces.find((s) => s.kind === "line")!;
+    const station = document.spaces.find((s) => s.kind === "station")!;
+    line.engineeringId = "L-01";
+    station.engineeringId = "ST-104";
+    a.asset = { system: "EMS", id: "MD-104", exclusive: true };
+    expect(resolveLayoutTarget(document, { line: "L-01" }).scope).toBe(line.id);
+    expect(resolveLayoutTarget(document, { station: "ST-104", line: "L-01" }).scope).toBe(
+      station.id,
+    );
+    expect(resolveLayoutTarget(document, { asset: "MD-104" }).occurrence?.id).toBe(a.id);
+    expect(resolveLayoutTarget(document, { asset: "missing", station: "ST-104" })).toMatchObject({
+      scope: station.id,
+      missing: "missing",
+    });
+    expect(resolveLayoutTarget(document, { station: "missing", line: "L-01" })).toMatchObject({
+      scope: line.id,
+      missing: "missing",
+    });
+    expect(resolveLayoutTarget(emptySpatialDocument("other-site"), { line: "L-01" })).toMatchObject(
+      { scope: undefined, missing: "L-01" },
+    );
+    expect(resolveLayoutTarget(document, { occurrence: a.id }).occurrence?.id).toBe(a.id);
+  });
+  it("disambiguates hardware kinds and rejects cross-line child selections", () => {
+    const { document, a, b } = layout();
+    const line = document.spaces.find((s) => s.kind === "line")!;
+    const station = document.spaces.find((s) => s.kind === "station")!;
+    line.engineeringId = "L-01";
+    station.engineeringId = "ST-104";
+    a.asset = { system: "EMS", id: "MD-104", kind: "equipment", exclusive: true };
+    b.asset = { system: "EMS", id: "MD-104", kind: "terminal", exclusive: true };
+    const model = makeModel();
+    const hardware = model.records.find((r) => r.id === "MD-104")!;
+    model.records.push({ ...hardware, kind: "terminal" });
+    expect(validateSpatialRelationships(document)).toEqual([]);
+    expect(invalidEngineeringLinks(engineeringLinks(document), model)).toEqual([]);
+    expect(resolveLayoutTarget(document, { asset: "MD-104" }).missing).toBe("MD-104");
+    expect(
+      resolveLayoutTarget(document, { asset: "MD-104", assetKind: "terminal" }).occurrence?.id,
+    ).toBe(b.id);
+    expect(
+      resolveLayoutTarget(document, { asset: "MD-104", assetKind: "terminal", line: "unplaced" })
+        .occurrence,
+    ).toBeUndefined();
+    expect(resolveLayoutTarget(document, { station: "ST-104", line: "unplaced" }).missing).toBe(
+      "ST-104",
+    );
+  });
+  it("checks newly bound engineering identities and their parent against the saved model", () => {
+    const { document, a } = layout();
+    const model = makeModel();
+    const line = document.spaces.find((s) => s.kind === "line")!;
+    const station = document.spaces.find((s) => s.kind === "station")!;
+    line.engineeringId = "L-01";
+    station.engineeringId = "ST-104";
+    a.asset = { system: "EMS", id: "MD-104", exclusive: true };
+    a.processStepIds = ["inspect"];
+    expect(invalidEngineeringLinks(engineeringLinks(document), model)).toEqual([]);
+    const saved = spatialDocumentSchema.parse(document);
+    a.position = { x: 7, y: 0, z: 5 };
+    expect(changedEngineeringLinks(saved, document)).toEqual([]);
+    expect(a.processStepIds).toEqual(["inspect"]);
+    station.engineeringId = "wrong-parent";
+    const changed = changedEngineeringLinks(saved, document);
+    expect(invalidEngineeringLinks(changed, model).map((l) => l.layoutId)).toEqual([
+      station.id,
+      a.id,
+    ]);
+    station.engineeringId = "ST-104";
+    const before = structuredClone(model);
+    model.records.find((r) => r.id === "MD-104")!.archived = true;
+    expect(brokenByEngineeringEdit(engineeringLinks(document), before, model)?.layoutId).toBe(a.id);
+    expect(brokenByEngineeringEdit(engineeringLinks(document), model, model)).toBeUndefined();
+    expect(invalidEngineeringLinks(engineeringLinks(document), model)).toMatchObject([
+      { layoutId: a.id },
+    ]);
+    const duplicate = duplicateOccurrences([a], origin)[0]!;
+    expect(duplicate.asset).toBeNull();
+    expect(duplicate.processStepIds).toEqual([]);
+    const duplicateLine = { ...line, id: "different-location" };
+    document.spaces.push(duplicateLine);
+    expect(validateSpatialRelationships(document)).toContainEqual(
+      expect.objectContaining({
+        rule: "engineering-placement@1",
+        ids: [line.id, duplicateLine.id],
+      }),
+    );
+  });
   it("keeps independent placements on exact template revisions and clears hard links on duplication", () => {
     const { document, a, b, template } = layout();
     const revised = { ...template, revision: 2, size: { ...template.size, x: 5 } };

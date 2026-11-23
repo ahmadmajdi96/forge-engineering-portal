@@ -12,9 +12,9 @@ export const Route = createFileRoute("/procedure-designer")({
   head: () => ({ meta: [
     { name: "twitter:card", content: "summary" },
     { property: "og:type", content: "website" },
-    { title: "Operator App · Engineering Portal" },
+    { title: "Procedure Designer · Application Studio" },
     { name: "description", content: "Author step templates and procedures with evidence requirements and preview before publishing." },
-    { property: "og:title", content: "Operator App · Engineering Portal" },
+    { property: "og:title", content: "Procedure Designer · Application Studio" },
     { property: "og:description", content: "Author step templates and procedures with evidence requirements and preview before publishing." },
   ] }),
   component: () => (

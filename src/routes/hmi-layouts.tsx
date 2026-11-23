@@ -13,9 +13,9 @@ export const Route = createFileRoute("/hmi-layouts")({
   head: () => ({ meta: [
     { name: "twitter:card", content: "summary" },
     { property: "og:type", content: "website" },
-    { title: "HMI Runtime · Engineering Portal" },
+    { title: "HMI Designer · Application Studio" },
     { name: "description", content: "Build touchscreen HMI layouts with tile bindings, action buttons and display settings." },
-    { property: "og:title", content: "HMI Runtime · Engineering Portal" },
+    { property: "og:title", content: "HMI Designer · Application Studio" },
     { property: "og:description", content: "Build touchscreen HMI layouts with tile bindings, action buttons and display settings." },
   ] }),
   component: HmiDesigner,

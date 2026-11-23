@@ -1,5 +1,5 @@
 import { EngineeringWorkspaceGate } from "@/components/engineering/workspace-gate";
-import { Link, Outlet, useRouterState } from "@tanstack/react-router";
+import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,92 +48,12 @@ import {
 
 import type { EmsIdentity } from "@/lib/production/contracts";
 
-type NavItem = {
-  title: string;
-  url:
-    | "/factory-layout"
-    | "/factory-process"
-    | "/application-studio"
-    | "/factory-releases"
-    | "/factory-assignment"
-    | "/admin/qa"
-    | "/"
-    | "/lines"
-    | "/stations"
-    | "/live"
-    | "/operator"
-    | "/operator-apps"
-    | "/step-templates"
-    | "/workstations"
-    | "/machines"
-    | "/operator-app"
-    | "/hmi"
-    | "/changes"
-    | "/analytics"
-    | "/reports"
-    | "/line-engineering"
-    | "/asset-steps"
-    | "/station-connectivity"
-    | "/edge-app-studio"
-    | "/release-readiness"
-    | "/registry"
-    | "/process-routes"
-    | "/mes-integration"
-    | "/integrations"
-    | "/approvals"
-    | "/edge-fleet"
-    | "/diagnostics"
-    | "/screen-editor"
-    | "/hmi-layouts"
-    | "/deployments"
-    | "/commissioning";
-  icon: typeof Boxes;
-};
-const GROUPS: { label: string; items: NavItem[] }[] = [
-  { label: "Overview", items: [{ title: "Overview", url: "/", icon: LayoutDashboard }] },
-  {
-    label: "Asset Engineering",
-    items: [
-      { title: "Line Engineering", url: "/line-engineering", icon: Network },
-      { title: "Production Steps", url: "/asset-steps", icon: ListChecks },
-      { title: "Station Connectivity", url: "/station-connectivity", icon: Cpu },
-      { title: "Asset Registry", url: "/registry", icon: Boxes },
-      { title: "Production Lines", url: "/lines", icon: Network },
-      { title: "Stations", url: "/stations", icon: Boxes },
-      { title: "Workstations", url: "/workstations", icon: Boxes },
-      { title: "Machines", url: "/machines", icon: Cpu },
-    ],
-  },
-  {
-    label: "Process Design",
-    items: [
-      { title: "Process & Routes", url: "/process-routes", icon: GitBranch },
-      { title: "Edge App Studio", url: "/edge-app-studio", icon: Workflow },
-      { title: "Screen Editor", url: "/screen-editor", icon: LayoutGrid },
-      { title: "HMI Designer", url: "/hmi-layouts", icon: LayoutGrid },
-      { title: "Live Shopfloor", url: "/live", icon: LayoutDashboard },
-      { title: "Operator Consoles", url: "/operator", icon: ListChecks },
-      { title: "HMI Runtime", url: "/hmi", icon: LayoutGrid },
-      { title: "Step Templates", url: "/step-templates", icon: ListChecks },
-    ],
-  },
-  {
-    label: "Governance",
-    items: [
-      { title: "Release & MES Readiness", url: "/release-readiness", icon: GitBranch },
-      { title: "Edge Fleet", url: "/edge-fleet", icon: Cpu },
-      { title: "Deployments", url: "/deployments", icon: GitBranch },
-      { title: "Commissioning", url: "/commissioning", icon: ListChecks },
-      { title: "MES Integration", url: "/mes-integration", icon: Network },
-      { title: "System Integrations", url: "/integrations", icon: Network },
-      { title: "Approval Chain", url: "/approvals", icon: Network },
-      { title: "Diagnostics", url: "/diagnostics", icon: BarChart3 },
-      { title: "Change Management", url: "/changes", icon: GitBranch },
-      { title: "Analytics", url: "/analytics", icon: BarChart3 },
-      { title: "Reports", url: "/reports", icon: FileText },
-    ],
-  },
-];
+import {
+  workspaceGroups,
+  allWorkspaceGroups,
+  workspaceForPath,
+  allowedWorkspace,
+} from "@/lib/engineering/navigation";
 
 const inputCls =
   "h-10 w-full rounded-lg border border-border/60 bg-background/50 pl-8 pr-3 text-sm focus:border-primary/50 focus:outline-none";
@@ -250,26 +170,16 @@ function SignIn() {
   );
 }
 
-const factoryGroup = {
-  label: "Factory Engineering",
-  items: [
-    { title: "Factory layout", url: "/factory-layout", icon: Boxes },
-    { title: "Factory process routes", url: "/factory-process", icon: GitBranch },
-    { title: "Application Studio", url: "/application-studio", icon: LayoutGrid },
-    { title: "Factory releases", url: "/factory-releases", icon: ListChecks },
-    { title: "Factory assignments", url: "/factory-assignment", icon: Network },
-    { title: "Admin QA", url: "/admin/qa", icon: BarChart3 },
-  ],
-} satisfies (typeof GROUPS)[number];
 type NativeProps = { identity?: EmsIdentity | undefined; site?: string | undefined };
 function AppSidebar({ identity, site }: NativeProps) {
   const path = useRouterState({ select: (r) => r.location.pathname });
-  const isActive = (url: string) => path === url || (url !== "/" && path.startsWith(`${url}/`));
+  const navigate = useNavigate();
+  const isActive = (url: string) => workspaceForPath(path)?.url === url;
   const { session } = useStore();
   const { isMobile, setOpenMobile, state: sidebarState } = useSidebar();
   const [filter, setFilter] = useState("");
   const searchInput = useRef<HTMLInputElement>(null);
-  const groups = identity ? [GROUPS[0]!, factoryGroup, ...GROUPS.slice(1)] : GROUPS;
+  const groups = workspaceGroups(identity?.sites.find((s) => s.key === site));
   const effectiveFilter = !isMobile && sidebarState === "collapsed" ? "" : filter;
   const words = effectiveFilter.trim().toLowerCase().split(/\s+/);
   const matchingGroups = groups
@@ -299,7 +209,7 @@ function AppSidebar({ identity, site }: NativeProps) {
             <div className="flex min-w-0 flex-col leading-tight group-data-[collapsible=icon]:hidden">
               <span className="text-sm font-semibold tracking-tight">Engineering Portal</span>
               <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                MES · Engineering
+                Engineering Management System
               </span>
             </div>
           </Link>
@@ -315,6 +225,25 @@ function AppSidebar({ identity, site }: NativeProps) {
             </Button>
           )}
         </div>
+        <select
+          className="h-9 w-full rounded-md border bg-sidebar px-2 text-sm group-data-[collapsible=icon]:hidden"
+          aria-label="Open EMS section"
+          value={workspaceForPath(path)?.group ?? ""}
+          onChange={(event) => {
+            const first = groups.find((group) => group.label === event.target.value)?.items[0];
+            if (first) {
+              followLink();
+              void navigate({ to: first.url });
+            }
+          }}
+        >
+          {!workspaceForPath(path) && <option value="">Open section</option>}
+          {groups
+            .filter((g) => g.items.length)
+            .map((g) => (
+              <option key={g.label}>{g.label}</option>
+            ))}
+        </select>
         <div className="relative mt-2 group-data-[collapsible=icon]:hidden">
           <Search
             aria-hidden="true"
@@ -398,7 +327,11 @@ function AppSidebar({ identity, site }: NativeProps) {
                     : "Demo access"}
             </span>
           </div>
-          <p className="mt-1 text-[10px] text-warning">MES preview · sample data · not connected</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {identity
+              ? identity.sites.find((s) => s.key === site)?.name
+              : "MES preview · simulated data"}
+          </p>
         </div>
       </SidebarFooter>
     </Sidebar>
@@ -418,9 +351,7 @@ function TopBar({ identity, site }: NativeProps) {
   const transitioning = useRouterState({ select: (state) => state.isLoading });
   const { session, setSession, theme, toggleTheme } = useStore();
   const path = useRouterState({ select: (r) => r.location.pathname });
-  const current = [...GROUPS, factoryGroup]
-    .flatMap((g) => g.items.map((i) => ({ ...i, group: g.label })))
-    .find((i) => (i.url === "/" ? path === "/" : path === i.url || path.startsWith(i.url + "/")));
+  const current = workspaceForPath(path);
   if (!identity && !session) return null;
   const name = identity?.name ?? session?.name ?? session?.email ?? "Member";
   const btn =
@@ -438,7 +369,7 @@ function TopBar({ identity, site }: NativeProps) {
       )}
       <SidebarTrigger className="h-10 w-10 shrink-0 text-muted-foreground hover:text-foreground" />
       <div className="hidden items-center gap-1.5 text-xs text-muted-foreground xl:flex">
-        <span>Engineering</span>
+        <Link to="/">EMS</Link>
         <ChevronRight className="h-3 w-3" />
         <span>{current?.group ?? "—"}</span>
         <ChevronRight className="h-3 w-3" />
@@ -454,9 +385,9 @@ function TopBar({ identity, site }: NativeProps) {
               const url = new URL(window.location.href);
               url.search = "";
               url.hash = "";
-              const collection = GROUPS.flatMap((group) => group.items).find(
-                (item) => item.url !== "/" && url.pathname.startsWith(item.url + "/"),
-              );
+              const collection = allWorkspaceGroups
+                .flatMap((group) => [...group.items])
+                .find((item) => item.url !== "/" && url.pathname.startsWith(item.url + "/"));
               if (collection) url.pathname = collection.url;
               else if (/^\/(units|work-orders)\//.test(url.pathname)) url.pathname = "/";
               url.searchParams.set("site", event.target.value);
@@ -512,6 +443,10 @@ function TopBar({ identity, site }: NativeProps) {
 }
 
 export function Shell(props: NativeProps) {
+  const path = useRouterState({ select: (s) => s.location.pathname });
+  const permitted =
+    !props.identity ||
+    allowedWorkspace(path, props.identity.sites.find((s) => s.key === props.site)?.actions ?? []);
   const { session, setSession } = useStore();
   useEffect(() => {
     if (props.identity) return;
@@ -544,7 +479,16 @@ export function Shell(props: NativeProps) {
           <TopBar {...props} />
           <main id="workspace" tabIndex={-1} className="min-h-0 min-w-0 flex-1 p-4 lg:p-6">
             <EngineeringWorkspaceGate>
-              <Outlet />
+              {permitted ? (
+                <Outlet />
+              ) : (
+                <section className="ref-surface p-5">
+                  <h1>Workspace access required</h1>
+                  <p>
+                    Your account does not have access to this workspace in the selected factory.
+                  </p>
+                </section>
+              )}
             </EngineeringWorkspaceGate>
           </main>
         </div>

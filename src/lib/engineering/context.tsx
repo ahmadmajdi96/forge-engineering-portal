@@ -7,6 +7,9 @@ import { loadWorkspace, saveWorkspace } from "./workspace.functions";
 import { toast } from "sonner";
 type Context = {
   native: boolean;
+  actions: readonly string[];
+  fixture: boolean;
+  lifecycle: string;
   dirty: boolean;
   loadState: "loading" | "ready" | "error";
   site: string | undefined;
@@ -20,6 +23,7 @@ type Context = {
   select: (id: string) => void;
   revision: number;
   authenticated: boolean;
+  canSave: boolean;
   busy: boolean;
   save: (review?: boolean) => Promise<boolean>;
   reload: () => Promise<void>;
@@ -57,11 +61,19 @@ export function EngineeringProvider({
   children,
   native = false,
   fixture = false,
+  actions = [],
+  scopeLine,
+  scopeStation,
+  onScopeChange,
   site,
 }: {
   children: ReactNode;
   native?: boolean;
   fixture?: boolean;
+  actions?: readonly string[] | undefined;
+  scopeLine?: string | null;
+  scopeStation?: string | null;
+  onScopeChange?: (line: string, station: string) => void;
   site?: string | undefined;
 }) {
   const [model, setModel] = useState(() => (native ? emptyWorkspace(site) : makeModel()));
@@ -78,19 +90,42 @@ export function EngineeringProvider({
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
-  const [selected, setSelected] = useState("ST-104");
-  const [lineId, setLineId] = useState("L-01");
+  const [localStation, setLocalStation] = useState("");
+  const [localLine, setLocalLine] = useState("");
+  const availableLines = model.lines.filter((line) => !line.archived);
+  const requestedLine = scopeLine ?? localLine;
+  const requestedStation = model.stations.find((s) => s.id === (scopeStation ?? localStation));
+  const lineId =
+    (
+      availableLines.find((line) => line.id === (requestedLine || requestedStation?.lineId)) ??
+      availableLines[0]
+    )?.id ?? "";
+  const currentStations = model.stations.filter((s) => (s.lineId ?? "L-01") === lineId);
+  const selected =
+    (currentStations.find((s) => s.id === requestedStation?.id) ?? currentStations[0])?.id ?? "";
+  useEffect(() => {
+    if (loadState !== "ready" || !onScopeChange) return;
+    if ((scopeLine && scopeLine !== lineId) || (scopeStation && scopeStation !== selected))
+      onScopeChange(lineId, selected);
+  }, [loadState, scopeLine, scopeStation, lineId, selected, onScopeChange]);
   function selectLine(id: string) {
-    setLineId(id);
-    setSelected(model.stations.find((s) => s.lineId === id)?.id ?? "");
+    if (!availableLines.some((line) => line.id === id)) return;
+    const station = model.stations.find((s) => (s.lineId ?? "L-01") === id)?.id ?? "";
+    setLocalLine(id);
+    setLocalStation(station);
+    onScopeChange?.(id, station);
   }
   function select(id: string) {
-    setSelected(id);
     const station = model.stations.find((s) => s.id === id);
-    if (station) setLineId(station.lineId ?? "L-01");
+    if (!station || selected === id) return;
+    const nextLine = station.lineId ?? "L-01";
+    setLocalStation(id);
+    setLocalLine(nextLine);
+    onScopeChange?.(nextLine, id);
   }
   const [id, setId] = useState<string | null>(null);
   const [revision, setRevision] = useState(0);
+  const [lifecycle, setLifecycle] = useState("Draft");
   const [authenticated, setAuthenticated] = useState(false);
   const [busy, setBusy] = useState(false);
   const load = useServerFn(loadWorkspace),
@@ -120,6 +155,11 @@ export function EngineeringProvider({
         setModel(next);
         setBaseline(next);
         setRevision(result.revision);
+        setLifecycle(
+          (result.payload as { lifecycle?: string } | null)?.lifecycle === "In Review"
+            ? "In Review"
+            : "Draft",
+        );
         setAuthenticated(true);
         setLoadState("ready");
       } catch {
@@ -170,11 +210,14 @@ export function EngineeringProvider({
       subscription.unsubscribe();
     };
   }, []);
+  const canSave = authenticated && (!native || actions.includes("ems.engineering.edit"));
+  const saving = useRef(false);
   async function save(review = false) {
-    if (!authenticated) {
+    if (saving.current) return false;
+    if (!canSave) {
       toast.error(
         native
-          ? "Shared workspace access is required to save a revision."
+          ? "Engineering edit permission is required to save a revision."
           : "Sign in with a verified account to save a shared sandbox revision.",
       );
       return false;
@@ -183,6 +226,7 @@ export function EngineeringProvider({
       toast.error("Enter a change reason before saving.");
       return false;
     }
+    saving.current = true;
     setBusy(true);
     try {
       if (native && site) {
@@ -196,6 +240,7 @@ export function EngineeringProvider({
           },
         });
         setRevision(r.revision);
+        setLifecycle(review ? "In Review" : "Draft");
         setBaseline(model);
         toast.success(
           review ? "Engineering revision submitted for review" : "Engineering revision saved",
@@ -221,6 +266,7 @@ export function EngineeringProvider({
       toast.error(e instanceof Error ? e.message : "Save failed");
       return false;
     } finally {
+      saving.current = false;
       setBusy(false);
     }
   }
@@ -257,7 +303,7 @@ export function EngineeringProvider({
     records: scopedRecords,
   };
   function updateScoped(next: EngineeringModel) {
-    const visibleIds = new Set(scopedRecords.map((r) => r.id));
+    const visibleIds = new Set(scopedRecords.map((r) => JSON.stringify([r.kind, r.id])));
     setModel({
       ...next,
       lines: next.lines.map((l) =>
@@ -267,13 +313,19 @@ export function EngineeringProvider({
         ...model.stations.filter((s) => (s.lineId ?? "L-01") !== activeLine),
         ...next.stations.map((s) => ({ ...s, lineId: s.lineId ?? activeLine })),
       ],
-      records: [...model.records.filter((r) => !visibleIds.has(r.id)), ...next.records],
+      records: [
+        ...model.records.filter((r) => !visibleIds.has(JSON.stringify([r.kind, r.id]))),
+        ...next.records,
+      ],
     });
   }
   return (
     <C.Provider
       value={{
         native,
+        actions,
+        fixture,
+        lifecycle,
         site,
         loadState,
         dirty,
@@ -287,6 +339,7 @@ export function EngineeringProvider({
         select,
         revision,
         authenticated,
+        canSave,
         busy,
         save,
         reload,

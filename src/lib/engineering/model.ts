@@ -16,9 +16,19 @@ export const stationSchema = z.object({
   lineId: z.string().default("L-01"),
   config: stationConfigSchema.optional(),
 });
+export function isSignalReferenceSafe(value: string) {
+  return !/\w+:\/\/[^/\s]+@|(?:^|[?&;\s])(?:password|passwd|api[_-]?key|secret|token)=/i.test(value);
+}
 export const signalSchema = z.object({
   key: z.string().min(1),
-  address: z.string(),
+  stationId: z.string().min(1).optional(),
+  equipmentId: z.string().min(1).optional(),
+  interfaceRef: z.string().trim().max(160).refine(isSignalReferenceSafe, "Enter an interface reference without credentials.").optional(),
+  protocol: z.enum(["OPC UA", "MQTT", "Modbus TCP", "EtherNet/IP", "PROFINET", "REST", "Discrete I/O"]).optional(),
+  scale: z.number().finite().refine(value => value !== 0).optional(),
+  offset: z.number().finite().optional(),
+  requiredCapability: z.string().trim().max(160).optional(),
+  address: z.string().refine(isSignalReferenceSafe, "Enter a tag reference without credentials."),
   type: z.enum(["Boolean", "Uint32", "Enum", "Number"]),
   unit: z.string(),
   expectedUnit: z.string(),
@@ -62,6 +72,7 @@ export const modelSchema = z.object({
   name: z.string().min(1),
   scope: z.string(),
   stations: z.array(stationSchema),
+  archivedStations: z.array(stationSchema).optional(),
   signals: z.array(signalSchema),
   appWorkflows: z.record(z.string(), workflowDraftSchema).optional(),
   steps: z.array(stepSchema),
@@ -131,6 +142,9 @@ export function makeModel(): EngineeringModel {
     signals: [
       {
         key: "metal_detected",
+        stationId: "ST-104",
+        equipmentId: "MD-104",
+        protocol: "OPC UA",
         address: "ns=4;s=MetalDetection/Detected",
         type: "Boolean",
         unit: "—",
@@ -144,6 +158,9 @@ export function makeModel(): EngineeringModel {
       },
       {
         key: "reject_count",
+        stationId: "ST-104",
+        equipmentId: "MD-104",
+        protocol: "OPC UA",
         address: "ns=4;s=MetalDetection/RejectCount",
         type: "Uint32",
         unit: "ea",
@@ -157,6 +174,9 @@ export function makeModel(): EngineeringModel {
       },
       {
         key: "challenge_result",
+        stationId: "ST-104",
+        equipmentId: "MD-104",
+        protocol: "OPC UA",
         address: "ns=4;s=MetalDetection/ChallengeResult",
         type: "Enum",
         unit: "Pass, Fail, Pending",
@@ -170,6 +190,9 @@ export function makeModel(): EngineeringModel {
       },
       {
         key: "reject_request",
+        stationId: "ST-104",
+        equipmentId: "ACT-104",
+        protocol: "Modbus TCP",
         address: "Coil 00001",
         type: "Boolean",
         unit: "—",
@@ -283,7 +306,13 @@ export function validateModel(m: EngineeringModel): Issue[] {
     )
       add(s.id, "CCP challenge workflow unassigned", "Process");
   }
+  const signalKeys = new Set<string>();
   for (const s of m.signals) {
+    if (signalKeys.has(s.key)) add(s.key, "Duplicate signal key", "Signals");
+    signalKeys.add(s.key);
+    if (s.stationId && !ids.has(s.stationId)) add(s.key, "Assigned station is unavailable", "Signals");
+    if (s.equipmentId && !m.records.some(r => !r.archived && ["equipment", "terminal"].includes(r.kind) && r.id === s.equipmentId && r.parent === s.stationId))
+      add(s.key, "Source equipment is unavailable at this station", "Signals");
     if (s.required && (s.quality !== "Good" || s.age > s.maxAge))
       add(s.key, "Required input is stale, bad or unavailable", "Signals");
     if (s.unit !== s.expectedUnit) add(s.key, "Engineering unit mismatch", "Signals");

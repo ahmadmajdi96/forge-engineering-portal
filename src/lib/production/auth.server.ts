@@ -8,7 +8,7 @@ import {
 import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from "jose";
 import { z } from "zod";
 import { database, EmsError, hash, mode } from "./db.server";
-import { qaPermission, releasePermission, viewPermission } from "./contracts";
+import { editPermission, qaPermission, releasePermission, viewPermission } from "./contracts";
 
 const sessionCookie = "ems_session";
 const requestCookie = "ems_oidc";
@@ -411,7 +411,16 @@ export async function listAuthorizedSites(request: Request) {
             "ems.factory_assignments.view",
           ].includes(action),
         )
-          ? { key: site.key, name: site.name }
+          ? {
+              key: site.key,
+              name: site.name,
+              actions: actions.filter(
+                (action) =>
+                  (action.startsWith("ems.") && action.endsWith(".view")) ||
+                  action === editPermission.spatial ||
+                  action === editPermission.engineering,
+              ),
+            }
           : null;
       }),
     );

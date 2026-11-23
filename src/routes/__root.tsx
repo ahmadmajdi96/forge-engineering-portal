@@ -81,6 +81,12 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
   );
 }
 
+type EngineeringSearch = {
+  site?: string | undefined;
+  engLine?: string | undefined;
+  engStation?: string | undefined;
+};
+
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
@@ -97,12 +103,22 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: appCss,
       },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap",
+      },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
-  validateSearch: (params): {site?:string} => typeof params["site"] === "string" ? {site:params["site"]} : {},
-  search: {middlewares:[retainSearchParams(["site"])]},
+  validateSearch: (params): EngineeringSearch =>
+    Object.fromEntries(
+      ["site", "engLine", "engStation"].flatMap((key) =>
+        typeof params[key] === "string" && params[key].length <= 128 ? [[key, params[key]]] : [],
+      ),
+    ),
+  search: {
+    middlewares: [retainSearchParams<EngineeringSearch>(["site", "engLine", "engStation"])],
+  },
   beforeLoad: async () => ({ ems: await emsSession() }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -127,18 +143,71 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient, ems } = Route.useRouteContext();
 
-  const search = useRouterState({select: state => state.location.searchStr});
-  const requested = new URLSearchParams(search).get("site");
-  const site = ems.identity?.sites.find(s => s.key === requested)?.key ?? ems.identity?.sites[0]?.key;
+  const search = useRouterState({ select: (state) => state.location.searchStr });
+  const router = useRouter();
+  const params = new URLSearchParams(search);
+  const requested = params.get("site");
+  const authorizedSite = requested
+    ? ems.identity?.sites.find((s) => s.key === requested)
+    : ems.identity?.sites[0];
+  const site = authorizedSite?.key;
   if (ems.mode !== "sandbox" && !ems.identity) {
-    return <QueryClientProvider client={queryClient}><FactoryShell session={ems} /><Toaster /></QueryClientProvider>;
+    return (
+      <QueryClientProvider client={queryClient}>
+        <FactoryShell session={ems} />
+        <Toaster />
+      </QueryClientProvider>
+    );
   }
 
+  if (ems.identity && requested && !authorizedSite)
+    return (
+      <main className="mx-auto max-w-lg space-y-3 p-8">
+        <h1>Factory access unavailable</h1>
+        <p>Your session has no access to this factory.</p>
+        <a href="/" className="text-primary underline">
+          Choose an authorized factory
+        </a>
+      </main>
+    );
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <StoreProvider key={site} nativeName={ems.identity?.name} site={site}>
-        <MesProvider><EngineeringProvider key={site} fixture={ems.mode === "local"} native={!!ems.identity} site={site}><Shell identity={ems.identity ?? undefined} site={site} /><Toaster /></EngineeringProvider></MesProvider>
+        <MesProvider>
+          <EngineeringProvider
+            key={site}
+            actions={authorizedSite?.actions}
+            scopeLine={params.get("engLine")}
+            scopeStation={params.get("engStation")}
+            onScopeChange={(engLine, engStation) => {
+              if (
+                (params.get("engLine") ?? "") === engLine &&
+                (params.get("engStation") ?? "") === engStation
+              )
+                return;
+              void router.navigate({
+                to: router.state.location.pathname,
+                replace: true,
+                resetScroll: false,
+                search: (prev) => {
+                  const { step, signal, engAsset, ...scope } = prev;
+                  return {
+                    ...scope,
+                    engLine: engLine || undefined,
+                    engStation: engStation || undefined,
+                  };
+                },
+              });
+            }}
+            fixture={ems.mode === "local"}
+            native={!!ems.identity}
+            site={site}
+          >
+            <Shell identity={ems.identity ?? undefined} site={site} />
+            <Toaster />
+          </EngineeringProvider>
+        </MesProvider>
       </StoreProvider>
     </QueryClientProvider>
   );

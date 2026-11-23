@@ -6,7 +6,7 @@ import {
   BoxGeometry,
   Color,
   Euler,
-  GridHelper,
+  LineSegments,
   Group,
   InstancedMesh,
   Line,
@@ -47,6 +47,7 @@ import {
   type Vector,
 } from "@/lib/spatial/model";
 import { connectionColors, equipmentColors } from "./palette";
+import { frameBounds } from "@/lib/spatial/camera";
 import { occurrenceBounds } from "@/lib/spatial/validation";
 
 export type VisualRecord = { record: Occurrence; template: CatalogTemplate };
@@ -56,8 +57,9 @@ type Gizmo = "translate" | "rotate";
 type Transform = Pick<Occurrence, "position" | "rotation">;
 type CameraState = Omit<SavedCamera, "id" | "label" | "floorId">;
 
+export type CameraDirection = "isometric" | "top" | "front" | "side";
 export type ViewportHandle = {
-  fit: () => void;
+  fit: (direction?: CameraDirection) => void;
   capture: () => CameraState;
   restore: (state: CameraState) => void;
 };
@@ -104,6 +106,7 @@ function createScene(
   host: HTMLDivElement,
   current: () => Props,
   setFailure: (message: string) => void,
+  setHover: (id: string) => void,
 ) {
   const renderer = new WebGLRenderer({
     antialias: true,
@@ -211,25 +214,34 @@ function createScene(
     resize();
   }
 
-  function fit(preferSelection = true) {
+  function fit(preferSelection = true, direction?: CameraDirection) {
     const props = current();
     const selected = new Set(props.selection);
     const items = preferSelection
       ? props.visible.filter(({ record }) => selected.has(record.id))
       : [];
-    const bounds = items.reduce((box, { record, template }) => {
+    const bounds = (items.length ? items : props.visible).reduce((box, { record, template }) => {
       const bound = occurrenceBounds(record, template);
       return box.expandByPoint(vec(bound.min)).expandByPoint(vec(bound.max));
     }, new Box3());
-    if (bounds.isEmpty()) {
-      bounds.set(new Vector3(0, 0, 0), new Vector3(props.floor.size.x, 0, props.floor.size.z));
-    }
-    const center = bounds.getCenter(new Vector3());
-    const size = bounds.getSize(new Vector3());
-    const diagonal = Math.max(1, size.length());
-    navigation.target.copy(center);
-    camera.position.copy(center).addScaledVector(new Vector3(0.99, 0.77, 1.08), diagonal * 0.98);
-    extent = diagonal * 1.35;
+    if (!items.length)
+      bounds
+        .expandByPoint(new Vector3())
+        .expandByPoint(new Vector3(props.floor.size.x, 0, props.floor.size.z));
+    const directions = {
+      isometric: new Vector3(0.99, 0.77, 1.08),
+      top: new Vector3(0, 1, 0.00001),
+      front: new Vector3(0, 0, 1),
+      side: new Vector3(1, 0, 0),
+    };
+    const viewDirection = direction
+      ? directions[direction]
+      : camera.position.clone().sub(navigation.target);
+    if (viewDirection.lengthSq() < 0.01) viewDirection.copy(directions.isometric);
+    const frame = frameBounds(bounds, viewDirection, perspective.aspect, perspective.fov);
+    navigation.target.copy(frame.center);
+    camera.position.copy(frame.eye);
+    extent = frame.orthoHeight;
     camera.zoom = 1;
     resize();
     navigation.update();
@@ -262,8 +274,10 @@ function createScene(
     floorSignature = signature;
     activeFloorReference = "";
     for (const item of [...floorGroup.children]) {
-      if (item instanceof GridHelper) item.dispose();
-      else disposeTree(item);
+      if (item instanceof LineSegments) {
+        item.geometry.dispose();
+        (item.material as LineBasicMaterial).dispose();
+      } else disposeTree(item);
       floorGroup.remove(item);
     }
     const ground = new Mesh(
@@ -273,15 +287,30 @@ function createScene(
     ground.rotation.x = -Math.PI / 2;
     ground.position.set(floor.size.x / 2, -0.015, floor.size.z / 2);
     floorGroup.add(ground);
-    const side = Math.max(floor.size.x, floor.size.z);
-    const grid = new GridHelper(
-      side,
-      Math.max(1, Math.min(100, Math.ceil(side))),
-      "#677e97",
-      "#324760",
-    );
-    grid.position.set(floor.size.x / 2, 0, floor.size.z / 2);
-    floorGroup.add(grid);
+    const { x: width, z: depth } = floor.size;
+    const step = Math.max(1, Math.ceil(Math.max(width, depth) / 100));
+    const segments: Vector3[] = [];
+    for (let x = step; x < width; x += step)
+      segments.push(new Vector3(x, 0, 0), new Vector3(x, 0, depth));
+    for (let z = step; z < depth; z += step)
+      segments.push(new Vector3(0, 0, z), new Vector3(width, 0, z));
+    const outline = [
+      new Vector3(),
+      new Vector3(width, 0, 0),
+      new Vector3(width, 0, depth),
+      new Vector3(0, 0, depth),
+    ];
+    for (const [points, color] of [
+      [segments, "#324760"],
+      [outline.flatMap((point, index) => [point, outline[(index + 1) % 4]!]), "#8295aa"],
+    ] as const) {
+      floorGroup.add(
+        new LineSegments(
+          new BufferGeometry().setFromPoints(points),
+          new LineBasicMaterial({ color }),
+        ),
+      );
+    }
     if (!floor.reference) return;
     const reference = floor.reference;
     activeFloorReference = signature;
@@ -561,7 +590,10 @@ function createScene(
         );
       }
     }
-    currentSelection = props.editable ? chosen.find(({ record }) => !record.locked) : undefined;
+    const primaryId = props.selection.at(-1);
+    currentSelection = props.editable
+      ? chosen.find(({ record }) => record.id === primaryId && !record.locked)
+      : undefined;
     const record = currentSelection?.record;
     selectionId = record?.id ?? null;
     transformMembers = record
@@ -584,17 +616,33 @@ function createScene(
     transform.setRotationSnap(props.angleSnap ? props.angleSnap * radians : null);
   }
 
-  function update() {
+  let previousProps: Props | undefined;
+  function update(forceDetail = false) {
     const props = current();
     if (transform.dragging) return;
     applyProjection(props.mode);
     rebuildFloor(props.floor);
-    clearModelCopies();
-    refreshDocument(props);
+    const previous = previousProps;
+    const detailSelection = props.exploded || props.artifacts.length > 0;
+    const refresh =
+      forceDetail ||
+      !previous ||
+      previous.visible !== props.visible ||
+      previous.connections !== props.connections ||
+      previous.artifacts !== props.artifacts ||
+      previous.section !== props.section ||
+      previous.transparent !== props.transparent ||
+      previous.exploded !== props.exploded ||
+      (detailSelection && previous.selection !== props.selection);
+    if (refresh) {
+      clearModelCopies();
+      refreshDocument(props);
+    }
+    previousProps = props;
     showSelection(props);
     if (!floorInitialized) {
       floorInitialized = true;
-      fit(false);
+      fit(true, "isometric");
     }
     invalidate();
   }
@@ -617,13 +665,7 @@ function createScene(
     pointerStart = event.button === 0 ? [event.clientX, event.clientY] : null;
     gizmoGesture = transform.dragging;
   };
-  const select = (event: PointerEvent) => {
-    if (
-      !pointerStart ||
-      gizmoGesture ||
-      Math.hypot(event.clientX - pointerStart[0], event.clientY - pointerStart[1]) > 5
-    )
-      return;
+  function hitId(event: PointerEvent) {
     pick(event);
     for (const hit of raycaster.intersectObjects(pickables, true)) {
       const section = current().section;
@@ -634,13 +676,35 @@ function createScene(
           item instanceof InstancedMesh && hit.instanceId != null
             ? (item.userData["ids"] as string[])[hit.instanceId]
             : (item.userData["occurrenceId"] as string | undefined);
-        if (id) {
-          current().onSelect(id, event.shiftKey || event.metaKey || event.ctrlKey);
-          return;
-        }
+        if (id) return id;
         item = item.parent;
       }
     }
+    return "";
+  }
+  // Wait for a resting mouse before raycasting; orbit and touch gestures do no hover picking.
+  let hoverTimer: ReturnType<typeof setTimeout> | undefined;
+  function clearHover() {
+    clearTimeout(hoverTimer);
+    setHover("");
+  }
+  const hover = (event: PointerEvent) => {
+    clearTimeout(hoverTimer);
+    if (event.buttons || event.pointerType !== "mouse" || transform.dragging) {
+      setHover("");
+      return;
+    }
+    hoverTimer = setTimeout(() => setHover(hitId(event)), 120);
+  };
+  const select = (event: PointerEvent) => {
+    if (
+      !pointerStart ||
+      gizmoGesture ||
+      Math.hypot(event.clientX - pointerStart[0], event.clientY - pointerStart[1]) > 5
+    )
+      return;
+    const id = hitId(event);
+    if (id) current().onSelect(id, event.shiftKey || event.metaKey || event.ctrlKey);
   };
   const change = () => {
     if (!selectionId || !currentSelection || !transform.dragging) return;
@@ -707,7 +771,7 @@ function createScene(
       current().visible.filter(({ template }) => template.artifactId).length >
       concurrentImportedModels
     )
-      update();
+      update(true);
   });
   transform.addEventListener("change", invalidate);
   transform.addEventListener("objectChange", change);
@@ -717,6 +781,8 @@ function createScene(
   transform.addEventListener("mouseUp", endTransform);
   canvas.addEventListener("pointerdown", start);
   canvas.addEventListener("pointerup", select);
+  canvas.addEventListener("pointermove", hover);
+  canvas.addEventListener("pointerleave", clearHover);
   canvas.addEventListener("webglcontextlost", lost);
   host.addEventListener("dragover", allowDrop);
   host.addEventListener("drop", drop);
@@ -726,7 +792,7 @@ function createScene(
 
   return {
     update,
-    fit: () => fit(),
+    fit: (direction?: CameraDirection) => fit(true, direction),
     capture: (): CameraState => ({
       mode: camera === ortho ? "orthographic" : "perspective",
       position: plain(camera.position),
@@ -754,6 +820,9 @@ function createScene(
       canvas.removeEventListener("webglcontextlost", lost);
       canvas.removeEventListener("pointerdown", start);
       canvas.removeEventListener("pointerup", select);
+      clearTimeout(hoverTimer);
+      canvas.removeEventListener("pointermove", hover);
+      canvas.removeEventListener("pointerleave", clearHover);
       navigation.dispose();
       transform.dispose();
       clearModelCopies();
@@ -762,8 +831,10 @@ function createScene(
         if (entry.value) disposeTree(entry.value);
       }
       for (const item of floorGroup.children) {
-        if (item instanceof GridHelper) item.dispose();
-        else disposeTree(item);
+        if (item instanceof LineSegments) {
+          item.geometry.dispose();
+          (item.material as LineBasicMaterial).dispose();
+        } else disposeTree(item);
       }
       for (const item of objects.children)
         if (item instanceof InstancedMesh) {
@@ -790,6 +861,8 @@ export default function SpatialScene(props: Props) {
   const [attempt, setAttempt] = useState(0);
   const [failure, setFailure] = useState("");
   const [assetIssue, setAssetIssue] = useState("");
+  const [hoveredId, setHoveredId] = useState("");
+  const hovered = hoveredId && props.visible.find(({ record }) => record.id === hoveredId)?.record;
   const viewport = props.viewport;
 
   useEffect(() => {
@@ -799,7 +872,7 @@ export default function SpatialScene(props: Props) {
       setAssetIssue(String((event as CustomEvent<string>).detail));
     container.addEventListener("spatialasseterror", errorListener, true);
     try {
-      controller.current = createScene(container, () => current.current, setFailure);
+      controller.current = createScene(container, () => current.current, setFailure, setHoveredId);
       controller.current.update();
     } catch {
       setFailure("WebGL 2 could not start.");
@@ -859,13 +932,19 @@ export default function SpatialScene(props: Props) {
 
   return (
     <div
-      className="relative min-h-[360px] overflow-hidden rounded-lg border border-border bg-[#151d28] lg:min-h-[530px]"
+      className="relative min-h-[360px] overflow-hidden rounded-lg border border-border bg-[#151d28] xl:min-h-[530px]"
       data-testid="spatial-3d"
     >
       <div ref={host} aria-hidden={!!failure} className="absolute inset-0" />
       <div className="pointer-events-none absolute left-3 top-3 rounded border border-white/20 bg-slate-950/75 px-2 py-1 text-xs font-medium text-slate-100">
-        {props.mode === "perspective" ? "Perspective" : "Orthographic"} · m
+        {props.mode === "perspective" ? "Perspective" : "Orthographic"} · {props.floor.size.x} ×{" "}
+        {props.floor.size.z} m
       </div>
+      {hovered && !failure && (
+        <div className="pointer-events-none absolute bottom-3 left-3 max-w-[90%] break-words rounded border border-white/20 bg-slate-950/85 px-2 py-1 text-xs text-slate-100">
+          {hovered.label} · {hovered.asset?.id ?? hovered.id}
+        </div>
+      )}
       {failure && (
         <div className="absolute inset-0 flex items-center justify-center bg-slate-950/90 p-5 text-slate-100">
           <div className="max-w-xs text-center">

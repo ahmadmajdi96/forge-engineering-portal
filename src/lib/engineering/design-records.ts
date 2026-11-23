@@ -34,7 +34,21 @@ export const designRecordSchema = z.object({
   diagram: z.literal("mixing-vessel").optional(),
   screenKind: z.enum(["operator", "hmi"]).optional(),
   breakpoint: z.enum(["Tablet (1280 × 800)", "Industrial panel (1920 × 1080)"]).optional(),
+  executionMode: z.enum(["manual", "automatic"]).optional(),
+  expectedSeconds: z.number().finite().nonnegative().optional(),
+  resourcePolicy: z.enum(["all", "alternatives"]).optional(),
   machine: machineConfigSchema.optional(),
+  hardware: z.object({
+    category: z.string().max(100).optional(),
+    manufacturer: z.string().max(200).optional(),
+    modelNumber: z.string().max(200).optional(),
+    document: z.string().max(500).optional(),
+    capabilities: z.string().max(2000).optional(),
+    interfaces: z.string().max(2000).optional(),
+    widthM: z.number().positive().finite().optional(),
+    depthM: z.number().positive().finite().optional(),
+    heightM: z.number().positive().finite().optional(),
+  }).optional(),
 });
 export type DesignRecord = z.infer<typeof designRecordSchema>;
 export function initialDesignRecords(): DesignRecord[] {
@@ -64,7 +78,7 @@ export function initialDesignRecords(): DesignRecord[] {
       parent: "ST-104",
       binding: id === "SENSOR-104" ? "reject_confirmed" : "",
       description: "Physical component · illustrative",
-      value: "SN-104-27",
+      value: id === "MD-104" ? "SN-104-27" : "",
     }),
   );
   [
@@ -233,14 +247,27 @@ export function initialDesignRecords(): DesignRecord[] {
 }
 export function upsertDesignRecord(records: DesignRecord[], record: DesignRecord) {
   const parsed = designRecordSchema.parse(record);
-  return records.some((r) => r.id === parsed.id)
-    ? records.map((r) => (r.id === parsed.id ? parsed : r))
-    : [...records, parsed];
+  const same = (r: DesignRecord) => r.id === parsed.id && r.kind === parsed.kind;
+  return records.some(same) ? records.map(r => same(r) ? parsed : r) : [...records, parsed];
 }
-export function archiveDesignRecord(records: DesignRecord[], id: string) {
-  if (records.some((r) => !r.archived && r.parent === id))
-    throw Error("Remove or reassign child records before archiving this record.");
-  return records.map((r) => (r.id === id ? { ...r, archived: true } : r));
+export function archiveDesignRecord(records: DesignRecord[], id: string, kind?: RecordKind) {
+  const matches = records.filter(r => r.id === id && (!kind || r.kind === kind));
+  if (matches.length > 1) throw Error("Select the record type before archiving this ID.");
+  const record = matches[0];
+  if (!record) throw Error("The selected record no longer exists.");
+  const dependencies = records.filter(r => r !== record && !r.archived &&
+    (r.parent === id || r.binding.split(',').some(v => v.trim() === id)));
+  if (dependencies.length) throw Error("Reassign child records or bindings first: " + dependencies.map(r => r.id).join(', '));
+  return records.map(r => r === record ? {...r, archived:true} : r);
+}
+
+export function duplicateDesignRecord(record: DesignRecord, id: string): DesignRecord {
+  const copy = {...record, id, name: record.name + ' copy', version: 'r1'};
+  if (['equipment', 'terminal', 'node'].includes(record.kind)) {
+    delete copy.machine;
+    return {...copy, parent:'', binding:'', value:'', required:false};
+  }
+  return copy;
 }
 export function activeRecords(records: DesignRecord[], kind: RecordKind) {
   return records.filter((r) => r.kind === kind && !r.archived);

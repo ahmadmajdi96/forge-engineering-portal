@@ -34,6 +34,13 @@ export function occurrenceBounds(
   margin = 0,
 ): Bounds {
   const size = record.sizeOverride ?? template.size;
+  if (record.rotation.x === 0 && record.rotation.y === 0 && record.rotation.z === 0) {
+    const { x, y, z } = record.position;
+    return {
+      min: { x: x - size.x / 2 - margin, y: y - margin, z: z - size.z / 2 - margin },
+      max: { x: x + size.x / 2 + margin, y: y + size.y + margin, z: z + size.z / 2 + margin },
+    };
+  }
   const local = [-1, 1].flatMap((x) =>
     [0, 1].flatMap((y) =>
       [-1, 1].map((z) =>
@@ -122,7 +129,27 @@ export function validateSpatialRelationships(document: SpatialDocument): Spatial
     );
   }
 
+  const linkedSpaceIds = new Map<string, string>();
   for (const node of document.spaces) {
+    if (node.engineeringId) {
+      const key = node.kind + "/" + node.engineeringId;
+      const prior = linkedSpaceIds.get(key);
+      if (prior)
+        error(
+          "engineering-placement",
+          [prior, node.id],
+          `Engineering ${node.kind} ${node.engineeringId} has multiple locations`,
+          "Keep one location for this engineering record.",
+        );
+      linkedSpaceIds.set(key, node.id);
+    }
+    if (node.engineeringId && node.kind !== "line" && node.kind !== "station")
+      error(
+        "engineering-link-kind",
+        [node.id],
+        "Only lines and stations can reference engineering definitions",
+        "Clear the engineering link.",
+      );
     const parent = node.parentId ? spaces.get(node.parentId) : undefined;
     if (
       (node.kind === "organization"
@@ -201,8 +228,18 @@ export function validateSpatialRelationships(document: SpatialDocument): Spatial
       groups.set(record.group, floor.id);
     }
     if (record.asset) {
-      const key = JSON.stringify([record.asset.system, record.asset.id]);
-      assets.set(key, [...(assets.get(key) ?? []), record]);
+      const kinds =
+        record.asset.system === "EMS"
+          ? record.asset.kind
+            ? [record.asset.kind]
+            : ["equipment", "terminal"]
+          : [""];
+      for (const kind of kinds) {
+        const key = JSON.stringify([record.asset.system, record.asset.id, kind]);
+        const bucket = assets.get(key) ?? [];
+        bucket.push(record);
+        assets.set(key, bucket);
+      }
     }
   }
   for (const records of assets.values()) {

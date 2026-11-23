@@ -1,4 +1,5 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouteContext } from "@tanstack/react-router";
+import { allowedWorkspace } from "@/lib/engineering/navigation";
 import { resolveFactoryAssignment } from "@/lib/production/assignment.functions";
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import {
@@ -114,6 +115,7 @@ export function OccurrenceInspector({
   origin: floorOrigin,
   onApply,
   onRemove,
+  connectionCount,
   onState,
 }: {
   item: VisualRecord;
@@ -122,9 +124,11 @@ export function OccurrenceInspector({
   origin: Vector;
   onApply: (record: Occurrence) => void;
   onRemove: () => void;
+  connectionCount: number;
   onState: (change: Partial<Pick<Occurrence, "locked" | "hidden">>) => void;
 }) {
   const [error, setError] = useState("");
+  const [reviewRemove, setReviewRemove] = useState(false);
   const { record, template } = item;
   const size = record.sizeOverride ?? template.size;
   const canResize = template.allowDimensionOverride && !template.artifactId;
@@ -149,6 +153,10 @@ export function OccurrenceInspector({
       );
       return;
     }
+    if (assetSystem.toUpperCase() === "EMS" && record.asset?.system !== "EMS") {
+      setError("Choose the saved equipment or terminal in the Engineering record panel.");
+      return;
+    }
     if (!!assetId !== !!assetSystem || !!distance !== !!reference) {
       setError(
         "Enter the complete asset reference and clearance rule, or clear both fields for each.",
@@ -163,9 +171,12 @@ export function OccurrenceInspector({
         position: triple(data, "position"),
         rotation: triple(data, "rotation"),
         clearance: distance ? { distance: Number(distance), ruleReference: reference } : null,
-        asset: assetId
-          ? { id: assetId, system: assetSystem, exclusive: data.get("exclusive") === "on" }
-          : null,
+        asset:
+          record.asset?.system === "EMS"
+            ? record.asset
+            : assetId
+              ? { id: assetId, system: assetSystem, exclusive: data.get("exclusive") === "on" }
+              : null,
         notes: str(data, "notes"),
         documents: ids(data, "documents"),
         processStepIds: list,
@@ -263,30 +274,38 @@ export function OccurrenceInspector({
                   defaultValue={record.processStepIds.join(", ")}
                 />
               </Field>
-              <Field name="Physical asset system">
-                <input
-                  name="asset-system"
-                  className={control}
-                  defaultValue={record.asset?.system}
-                  maxLength={180}
-                />
-              </Field>
-              <Field name="Physical asset ID">
-                <input
-                  name="asset-id"
-                  className={control}
-                  defaultValue={record.asset?.id}
-                  maxLength={96}
-                />
-              </Field>
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  name="exclusive"
-                  type="checkbox"
-                  defaultChecked={record.asset?.exclusive ?? true}
-                />{" "}
-                Exclusive equipment
-              </label>
+              {record.asset?.system === "EMS" ? (
+                <p className="text-xs text-muted-foreground">
+                  Linked engineering asset · {record.asset.id}
+                </p>
+              ) : (
+                <>
+                  <Field name="Physical asset system">
+                    <input
+                      name="asset-system"
+                      className={control}
+                      defaultValue={record.asset?.system}
+                      maxLength={180}
+                    />
+                  </Field>
+                  <Field name="Physical asset ID">
+                    <input
+                      name="asset-id"
+                      className={control}
+                      defaultValue={record.asset?.id}
+                      maxLength={96}
+                    />
+                  </Field>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      name="exclusive"
+                      type="checkbox"
+                      defaultChecked={record.asset?.exclusive ?? true}
+                    />{" "}
+                    Exclusive equipment
+                  </label>
+                </>
+              )}
               {terminal && (
                 <>
                   <Field name="Terminal engineering ID">
@@ -357,8 +376,8 @@ export function OccurrenceInspector({
             <button className={primary} type="submit">
               Apply properties
             </button>
-            <button className={button} type="button" onClick={onRemove}>
-              Remove
+            <button className={button} type="button" onClick={() => setReviewRemove(true)}>
+              Remove placement
             </button>
           </div>
         </fieldset>
@@ -368,9 +387,33 @@ export function OccurrenceInspector({
           </p>
         )}
       </form>
+      {reviewRemove && (
+        <div className="mt-3 space-y-2 rounded border border-border p-2">
+          <p className="text-sm font-medium">Remove {record.label} from the layout?</p>
+          <p className="text-xs text-muted-foreground">
+            This draft will lose the placement, {connectionCount} connection
+            {connectionCount === 1 ? "" : "s"}, and {record.processStepIds.length} process reference
+            {record.processStepIds.length === 1 ? "" : "s"}.
+            {record.asset && " Its physical asset link will be released."}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className={button} onClick={() => setReviewRemove(false)}>
+              Keep placement
+            </button>
+            <button type="button" className={button + " text-destructive"} onClick={onRemove}>
+              Confirm removal
+            </button>
+          </div>
+        </div>
+      )}
       {terminal && (
         <TerminalContext
           site={site}
+          engineeringId={
+            record.asset?.system === "EMS" && record.asset.kind === "terminal"
+              ? record.asset.id
+              : undefined
+          }
           terminalId={record.terminalId}
           appId={record.authoringAppId}
           kind={template.kind === "hmi" ? "hmi" : "operator"}
@@ -381,6 +424,7 @@ export function OccurrenceInspector({
 }
 
 export function TerminalContext({
+  engineeringId,
   site,
   terminalId,
   appId,
@@ -390,12 +434,17 @@ export function TerminalContext({
   terminalId: string | null;
   appId: string | null;
   kind: "operator" | "hmi";
+  engineeringId?: string | undefined;
 }) {
+  const { ems } = useRouteContext({ from: "__root__" });
+  const actions = ems.identity?.sites.find((entry) => entry.key === site)?.actions ?? [];
+  const canResolve = allowedWorkspace("/factory-assignment", actions);
+  const canOpenStudio = allowedWorkspace("/application-studio", actions);
   const [resolved, setResolved] = useState<Awaited<ReturnType<typeof resolveFactoryAssignment>>>();
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    if (!terminalId) return;
+    if (!terminalId || !canResolve) return;
     let active = true;
     setFailed(false);
     setResolved(undefined);
@@ -409,11 +458,11 @@ export function TerminalContext({
     return () => {
       active = false;
     };
-  }, [site, terminalId, kind]);
+  }, [site, terminalId, kind, canResolve]);
 
   return (
     <div className="mt-3 space-y-2 border-t border-border pt-3">
-      <h3 className="text-sm font-semibold">Terminal context</h3>
+      <h3 className="text-sm font-semibold">Assigned Applications/HMI</h3>
       {terminalId ? (
         <p className="break-all text-xs text-muted-foreground">{terminalId}</p>
       ) : (
@@ -423,7 +472,9 @@ export function TerminalContext({
       )}
       {terminalId && (
         <div role="status" className="space-y-1 text-xs text-muted-foreground">
-          {resolved?.status === "resolved" ? (
+          {!canResolve ? (
+            <p>Assignment access is required to see release details.</p>
+          ) : resolved?.status === "resolved" ? (
             <>
               <p>
                 Target {resolved.target.nodeId} · {resolved.target.provenance}
@@ -443,19 +494,22 @@ export function TerminalContext({
         </div>
       )}
       <div className="flex flex-wrap gap-2">
-        <Link
-          className={button}
-          to="/application-studio"
-          search={{
-            site,
-            kind,
-            ...(terminalId ? { terminal: terminalId } : {}),
-            ...(appId ? { app: appId, view: "preview" } : {}),
-          }}
-        >
-          {appId ? "Open application preview" : "Open Application Studio"}
-        </Link>
-        {terminalId && (
+        {canOpenStudio && (
+          <Link
+            className={button}
+            to="/application-studio"
+            search={{
+              site,
+              kind,
+              ...(terminalId ? { terminal: terminalId } : {}),
+              ...(engineeringId ? { source: "terminalId" as const, entity: engineeringId } : {}),
+              ...(appId ? { app: appId, view: "preview" } : {}),
+            }}
+          >
+            Open in Application Studio
+          </Link>
+        )}
+        {terminalId && canResolve && (
           <Link
             className={button}
             to="/factory-assignment"
