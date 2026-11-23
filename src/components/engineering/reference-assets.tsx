@@ -1,3 +1,4 @@
+import {SentinelBrief} from './ems-persona';
 import {AssignedApplications} from './assigned-applications';
 import {HardwareAssignment} from './hardware-assignment';
 import {FactoryStructure} from './factory-structure';
@@ -17,7 +18,7 @@ const engineeringSteps = [
 ] as const;
 
 export function EngineeringOverview() {
-  const {model,workspaceModel,issues,revision,native,site,lineId,fixture} = useEngineering();
+  const {model,workspaceModel,issues,revision,native,site,lineId,fixture,dirty} = useEngineering();
   const stations=model.stations;
   const physicalIssues=issues.filter(issue=>issue.category!=='Workflow');
   const equipment=workspaceModel.records.filter(r=>!r.archived && ['equipment','terminal','node'].includes(r.kind));
@@ -45,6 +46,7 @@ export function EngineeringOverview() {
           return [<strong>{issue.object}</strong>,issue.message,<Link className="ref-issue-link" to={target} search={destination}>Inspect<ArrowRight size={13}/></Link>];
         })}/>:<p className="ref-empty"><CheckCircle2 size={16}/>No current engineering findings.</p>}
       </Surface></div><div className="ref-stack">
+      <SentinelBrief revision={revision} dirty={dirty} finding={physicalIssues[0]} hasLines={workspaceModel.lines.some(line=>!line.archived)}/>
       <Surface title="Engineering workflow"><nav aria-label="Engineering workflow"><ol className="ref-journey">{engineeringSteps.map(({to,title,detail,icon:Icon})=><li key={to}><Link to={to}><Icon size={18}/><span><strong>{title}</strong><small>{detail}</small></span><ArrowRight size={15}/></Link></li>)}</ol></nav></Surface>
       <Surface title="Engineering reviews"><nav className="ref-detail-links"><Link to="/approvals">Approval chain</Link><Link to="/commissioning">Commissioning evidence</Link><Link to="/changes">Change history</Link></nav></Surface></div></div></ReferencePage>;
 }

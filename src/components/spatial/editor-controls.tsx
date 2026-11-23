@@ -912,6 +912,7 @@ export function TemplateEditor({
           : undefined;
       const latest = base
         ? Math.max(
+            base.revision,
             ...document.catalog.filter((item) => item.id === base.id).map((item) => item.revision),
           )
         : 0;
@@ -937,6 +938,9 @@ export function TemplateEditor({
         revision: latest + 1,
         label: str(data, "label"),
         kind: str(data, "kind") as CatalogTemplate["kind"],
+        ...(base?.stationModel && !artifact && base.kind === str(data, "kind")
+          ? { stationModel: base.stationModel }
+          : {}),
         size: artifact?.size ?? (base?.artifactId ? base.size : triple(data, "size")),
         artifactId: artifact?.id ?? base?.artifactId ?? null,
         allowDimensionOverride: !artifact && !base?.artifactId && data.get("resizable") === "on",

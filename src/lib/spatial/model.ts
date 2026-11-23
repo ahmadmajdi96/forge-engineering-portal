@@ -126,12 +126,23 @@ export const floorReferenceSchema = z
   })
   .strict();
 
+export const stationModels = [
+  "commissioning-bench",
+  "inspection-station",
+  "production-cell",
+  "storage-rack",
+  "access-gate",
+] as const;
+export const catalogLimit = 500;
+export const placementLimit = 2500;
+
 const catalogTemplate = z
   .object({
     id,
     revision: z.number().int().positive(),
     label: text,
     kind: z.enum(equipmentKinds),
+    stationModel: z.enum(stationModels).optional(),
     size: dimensions,
     allowDimensionOverride: z.boolean(),
     provenance: sourceInfo.nullable(),
@@ -224,8 +235,8 @@ export const spatialDocumentSchema = z
     schemaVersion: z.literal(1),
     siteCode: id,
     spaces: z.array(space).max(1500),
-    catalog: z.array(catalogTemplate).max(500),
-    occurrences: z.array(occurrence).max(2500),
+    catalog: z.array(catalogTemplate).max(catalogLimit),
+    occurrences: z.array(occurrence).max(placementLimit),
     connections: z.array(connection).max(3500),
     artifacts: z.array(spatialArtifactSchema).max(14),
     cameras: z.array(savedCamera).max(50),

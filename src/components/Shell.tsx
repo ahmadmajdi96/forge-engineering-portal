@@ -1,3 +1,8 @@
+import {
+  EmsSignInLayout,
+  ManuQubeEmblem,
+  SentinelPresence,
+} from "@/components/engineering/ems-persona";
 import { EngineeringWorkspaceGate } from "@/components/engineering/workspace-gate";
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
@@ -24,7 +29,6 @@ import {
   Network,
   Sun,
   UserCog,
-  Workflow,
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { useStore } from "@/lib/store";
@@ -91,82 +95,59 @@ function SignIn() {
     }
   };
   return (
-    <div className="grid min-h-screen place-items-center bg-background px-4 py-10">
-      <div className="w-full max-w-md">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-primary to-info text-primary-foreground shadow-[var(--shadow-glow)]">
-            <Workflow className="h-5 w-5" />
+    <EmsSignInLayout>
+      <VerifiedSignIn />
+      <form onSubmit={submit} className="space-y-3">
+        <label className="block">
+          <span className="text-[11px] uppercase tracking-wider text-muted-foreground">
+            Work email
+          </span>
+          <div className="relative mt-1">
+            <Mail className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="email"
+              required
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@company.com"
+              className={inputCls}
+            />
           </div>
-          <div>
-            <h1 className="font-display text-xl font-semibold tracking-tight">
-              Engineering Portal
-            </h1>
-            <p className="text-xs text-muted-foreground">MES asset & process engineering</p>
+        </label>
+        {demo && (
+          <label className="block">
+            <span className="text-[11px] uppercase tracking-wider text-muted-foreground">
+              Demo role
+            </span>
+            <div className="relative mt-1">
+              <UserCog className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <select value={role} onChange={(e) => setRole(e.target.value)} className={inputCls}>
+                {ROLES.map((r) => (
+                  <option key={r}>{r}</option>
+                ))}
+              </select>
+            </div>
+          </label>
+        )}
+        {msg && (
+          <div className="rounded-lg border border-border/60 bg-background/40 p-2 text-xs text-muted-foreground">
+            {msg}
           </div>
-        </div>
-        <div className="glass-panel rounded-2xl p-6">
-          <VerifiedSignIn />
-          <form onSubmit={submit} className="space-y-3">
-            <label className="block">
-              <span className="text-[11px] uppercase tracking-wider text-muted-foreground">
-                Work email
-              </span>
-              <div className="relative mt-1">
-                <Mail className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="email"
-                  required
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@company.com"
-                  className={inputCls}
-                />
-              </div>
-            </label>
-            {demo && (
-              <label className="block">
-                <span className="text-[11px] uppercase tracking-wider text-muted-foreground">
-                  Demo role
-                </span>
-                <div className="relative mt-1">
-                  <UserCog className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                  <select
-                    value={role}
-                    onChange={(e) => setRole(e.target.value)}
-                    className={inputCls}
-                  >
-                    {ROLES.map((r) => (
-                      <option key={r}>{r}</option>
-                    ))}
-                  </select>
-                </div>
-              </label>
-            )}
-            {msg && (
-              <div className="rounded-lg border border-border/60 bg-background/40 p-2 text-xs text-muted-foreground">
-                {msg}
-              </div>
-            )}
-            <button
-              type="submit"
-              disabled={busy || !email.includes("@")}
-              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60"
-            >
-              {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-              {demo
-                ? `Enter as ${role}`
-                : busy
-                  ? "Checking access…"
-                  : "Verify with Command Access Hub"}
-            </button>
-          </form>
-          <p className="mt-4 text-center text-[11px] text-muted-foreground">
-            Access, roles and permissions are managed in Command Access Hub.
-          </p>
-        </div>
-      </div>
-    </div>
+        )}
+        <button
+          type="submit"
+          disabled={busy || !email.includes("@")}
+          className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60"
+        >
+          {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+          {demo ? `Enter as ${role}` : busy ? "Checking access…" : "Verify with Command Access Hub"}
+        </button>
+      </form>
+      <p className="mt-4 text-center text-[11px] text-muted-foreground">
+        Access, roles and permissions are managed in Command Access Hub.
+      </p>
+    </EmsSignInLayout>
   );
 }
 
@@ -200,16 +181,19 @@ function AppSidebar({ identity, site }: NativeProps) {
   }
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      <SidebarHeader className="p-4">
+      <SidebarHeader className="p-4 group-data-[collapsible=icon]:px-1">
         <div className="flex items-center justify-between">
-          <Link to="/" onClick={followLink} className="flex items-center gap-2.5">
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-primary to-info text-primary-foreground shadow-[var(--shadow-glow)]">
-              <Workflow className="h-5 w-5" />
-            </div>
+          <Link
+            to="/"
+            onClick={followLink}
+            aria-label="ManuQube EMS overview"
+            className="flex items-center gap-2.5"
+          >
+            <ManuQubeEmblem />
             <div className="flex min-w-0 flex-col leading-tight group-data-[collapsible=icon]:hidden">
-              <span className="text-sm font-semibold tracking-tight">Engineering Portal</span>
+              <span className="text-sm font-semibold tracking-tight">ManuQube EMS</span>
               <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                Engineering Management System
+                Engineering Management
               </span>
             </div>
           </Link>
@@ -311,11 +295,12 @@ function AppSidebar({ identity, site }: NativeProps) {
           ))}
         </nav>
       </SidebarContent>
-      <SidebarFooter className="p-3">
+      <SidebarFooter className="p-3 group-data-[collapsible=icon]:px-1">
+        <SentinelPresence />
         <div className="rounded-xl border border-border/60 bg-card/60 p-3 group-data-[collapsible=icon]:hidden">
           <div className="flex items-center gap-2 text-xs">
             <span
-              className={`status-dot animate-pulse-glow ${session?.source === "hub" ? "text-success" : "text-warning"}`}
+              className={`status-dot ${session?.source === "hub" ? "text-success" : "text-warning"}`}
             />
             <span className="font-medium">
               {identity

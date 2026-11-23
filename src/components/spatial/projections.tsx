@@ -60,8 +60,8 @@ export const SpatialProjection = memo(function SpatialProjection({
   const grid = Math.max(1, Math.ceil(Math.max(width, height) / 50));
 
   return (
-    <figure className="min-w-0 overflow-hidden rounded-lg border border-border bg-[#151d28]">
-      <figcaption className="border-b border-white/15 px-3 py-2 text-sm text-slate-100">
+    <figure className="min-w-0 overflow-hidden rounded-lg border border-border bg-[#292624]">
+      <figcaption className="border-b border-white/15 px-3 py-2 text-sm text-stone-100">
         {plan ? "Floor plan · X/Z" : "Front elevation · X/Y"}
       </figcaption>
       <svg
@@ -76,12 +76,12 @@ export const SpatialProjection = memo(function SpatialProjection({
             <path
               d={`M ${grid} 0 L 0 0 0 ${grid}`}
               strokeWidth={stroke / 2}
-              stroke="#49627a"
+              stroke="#55524d"
               fill="none"
             />
           </pattern>
         </defs>
-        <rect width={width} height={height} fill="#1e2b3b" stroke="#90a6bc" strokeWidth={stroke} />
+        <rect width={width} height={height} fill="#373532" stroke="#96938b" strokeWidth={stroke} />
         {plan && floor.reference && (
           <image
             x={floor.reference.x}
@@ -156,7 +156,7 @@ export const SpatialProjection = memo(function SpatialProjection({
                 aria-pressed={chosen}
                 fill={equipmentColors[template.kind] ?? "#8491a5"}
                 fillOpacity={chosen ? 1 : 0.78}
-                stroke={chosen ? "#ffd488" : "#152131"}
+                stroke={chosen ? "#ffd488" : "#26292c"}
                 strokeWidth={chosen ? stroke * 1.25 : stroke / 2}
                 onClick={(event) =>
                   onSelect(record.id, event.shiftKey || event.metaKey || event.ctrlKey)

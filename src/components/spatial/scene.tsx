@@ -47,6 +47,7 @@ import {
   type Vector,
 } from "@/lib/spatial/model";
 import { connectionColors, equipmentColors } from "./palette";
+import { createStationGeometry, type StationShape } from "./station-geometry";
 import { frameBounds } from "@/lib/spatial/camera";
 import { occurrenceBounds } from "@/lib/spatial/validation";
 
@@ -88,7 +89,8 @@ const vec = ({ x, y, z }: Vector) => new Vector3(x, y, z);
 const plain = ({ x, y, z }: Vector): Vector => ({ x, y, z });
 const radians = Math.PI / 180;
 const concurrentImportedModels = 12;
-const sceneBackground = new Color("#151d28");
+const sceneBackground = new Color("#292624");
+const fullStationDetailLimit = 300;
 
 function paintMatrix(target: Object3D, position: Vector, rotation: Vector, size?: Vector) {
   target.position.copy(vec(position));
@@ -126,10 +128,12 @@ function createScene(
 
   const scene = new Scene();
   scene.background = sceneBackground;
-  const ambient = new AmbientLight("#e3edff", 1.55);
-  const light = new DirectionalLight("#fff4e1", 2.2);
+  const ambient = new AmbientLight("#f2ede5", 1.15);
+  const light = new DirectionalLight("#ffe6cc", 2.3);
   light.position.set(8, 14, 9);
-  scene.add(ambient, light);
+  const rim = new DirectionalLight("#bfcde0", 1.15);
+  rim.position.set(-7, 6, -6);
+  scene.add(ambient, light, rim);
 
   const perspective = new PerspectiveCamera(44, 1, 0.03, 6000);
   const ortho = new OrthographicCamera(-16, 16, 16, -16, 0.03, 6000);
@@ -152,6 +156,15 @@ function createScene(
     outlines = new Group();
   scene.add(floorGroup, objects, links, outlines);
   const unit = new BoxGeometry(1, 1, 1);
+  const stationGeometry = new Map<string, BufferGeometry>();
+  function symbolGeometry(shape: StationShape, simplified: boolean) {
+    const key = shape + (simplified ? "/low" : "/full");
+    const existing = stationGeometry.get(key);
+    if (existing) return existing;
+    const geometry = createStationGeometry(shape, simplified);
+    stationGeometry.set(key, geometry);
+    return geometry;
+  }
   const clipping = new Plane(new Vector3(0, -1, 0), 0);
   const tool = new Object3D();
   const instanceById = new Map<string, InstanceRef[]>();
@@ -282,7 +295,7 @@ function createScene(
     }
     const ground = new Mesh(
       new PlaneGeometry(floor.size.x, floor.size.z),
-      new MeshBasicMaterial({ color: "#1e2b3b" }),
+      new MeshBasicMaterial({ color: "#373532" }),
     );
     ground.rotation.x = -Math.PI / 2;
     ground.position.set(floor.size.x / 2, -0.015, floor.size.z / 2);
@@ -301,8 +314,8 @@ function createScene(
       new Vector3(0, 0, depth),
     ];
     for (const [points, color] of [
-      [segments, "#324760"],
-      [outline.flatMap((point, index) => [point, outline[(index + 1) % 4]!]), "#8295aa"],
+      [segments, "#4b4843"],
+      [outline.flatMap((point, index) => [point, outline[(index + 1) % 4]!]), "#8d877b"],
     ] as const) {
       floorGroup.add(
         new LineSegments(
@@ -428,11 +441,14 @@ function createScene(
         .map(({ record }) => record.id),
     );
     type Box = { id: string; size: Vector; position: Vector; rotation: Vector; track: boolean };
-    const boxes = new Map<string, { items: Box[]; opacity: number; color: string }>();
+    const boxes = new Map<
+      string,
+      { items: Box[]; opacity: number; color: string; geometry: BufferGeometry }
+    >();
 
-    const box = (color: string, opacity: number, item: Box) => {
-      const key = `${color}/${opacity}`;
-      if (!boxes.has(key)) boxes.set(key, { items: [], color, opacity });
+    const box = (color: string, opacity: number, item: Box, geometry: BufferGeometry = unit) => {
+      const key = `${geometry.id}/${color}/${opacity}`;
+      if (!boxes.has(key)) boxes.set(key, { items: [], color, opacity, geometry });
       boxes.get(key)?.items.push(item);
     };
     for (const { record, template } of props.visible) {
@@ -442,13 +458,26 @@ function createScene(
       const detailed = artifact && highDetail.has(record.id);
       const opacity = props.transparent || detailed ? 0.29 : 1;
       if (!(props.exploded && selected.has(record.id) && template.subcomponents.length)) {
-        box(color, opacity, {
-          id: record.id,
-          size,
-          position: record.position,
-          rotation: record.rotation,
-          track: true,
-        });
+        // Explicit assemblies and imported templates keep their authored geometry and envelope.
+        const schematic = !template.artifactId && !template.subcomponents.length;
+        const geometry = schematic
+          ? symbolGeometry(
+              template.stationModel ?? template.kind,
+              props.visible.length > fullStationDetailLimit && !selected.has(record.id),
+            )
+          : unit;
+        box(
+          schematic ? "#ffffff" : color,
+          opacity,
+          {
+            id: record.id,
+            size,
+            position: record.position,
+            rotation: record.rotation,
+            track: true,
+          },
+          geometry,
+        );
       }
       if (detailed) {
         void getAsset(artifact).then(
@@ -517,8 +546,10 @@ function createScene(
       }
     }
 
-    for (const { color, opacity, items } of boxes.values()) {
-      const mesh = new InstancedMesh(unit, layerMaterials(props, color, opacity), items.length);
+    for (const { color, opacity, items, geometry } of boxes.values()) {
+      const material = layerMaterials(props, color, opacity);
+      material.vertexColors = geometry.hasAttribute("color");
+      const mesh = new InstancedMesh(geometry, material, items.length);
       mesh.userData["ids"] = items.map((item) => item.id);
       mesh.frustumCulled = false;
       for (const [index, item] of items.entries()) {
@@ -623,7 +654,11 @@ function createScene(
     applyProjection(props.mode);
     rebuildFloor(props.floor);
     const previous = previousProps;
-    const detailSelection = props.exploded || props.artifacts.length > 0;
+    const detailSelection =
+      props.exploded ||
+      props.artifacts.length > 0 ||
+      props.visible.length > fullStationDetailLimit ||
+      props.visible.some((item) => item.template.subcomponents.length > 0);
     const refresh =
       forceDetail ||
       !previous ||
@@ -846,6 +881,7 @@ function createScene(
         (item.material as LineBasicMaterial).dispose();
       }
       clearOutlines();
+      for (const geometry of stationGeometry.values()) geometry.dispose();
       unit.dispose();
       renderer.dispose();
       renderer.forceContextLoss();
@@ -932,31 +968,31 @@ export default function SpatialScene(props: Props) {
 
   return (
     <div
-      className="relative min-h-[360px] overflow-hidden rounded-lg border border-border bg-[#151d28] xl:min-h-[530px]"
+      className="relative min-h-[360px] overflow-hidden rounded-lg border border-border bg-[#292624] xl:min-h-[530px]"
       data-testid="spatial-3d"
     >
       <div ref={host} aria-hidden={!!failure} className="absolute inset-0" />
-      <div className="pointer-events-none absolute left-3 top-3 rounded border border-white/20 bg-slate-950/75 px-2 py-1 text-xs font-medium text-slate-100">
+      <div className="pointer-events-none absolute left-3 top-3 rounded border border-white/20 bg-stone-950/75 px-2 py-1 text-xs font-medium text-stone-100">
         {props.mode === "perspective" ? "Perspective" : "Orthographic"} · {props.floor.size.x} ×{" "}
         {props.floor.size.z} m
       </div>
       {hovered && !failure && (
-        <div className="pointer-events-none absolute bottom-3 left-3 max-w-[90%] break-words rounded border border-white/20 bg-slate-950/85 px-2 py-1 text-xs text-slate-100">
+        <div className="pointer-events-none absolute bottom-3 left-3 max-w-[90%] break-words rounded border border-white/20 bg-stone-950/85 px-2 py-1 text-xs text-stone-100">
           {hovered.label} · {hovered.asset?.id ?? hovered.id}
         </div>
       )}
       {failure && (
-        <div className="absolute inset-0 flex items-center justify-center bg-slate-950/90 p-5 text-slate-100">
+        <div className="absolute inset-0 flex items-center justify-center bg-stone-950/90 p-5 text-stone-100">
           <div className="max-w-xs text-center">
             <p role="status" className="font-medium">
               {failure}
             </p>
-            <p className="mt-2 text-sm text-slate-300">
+            <p className="mt-2 text-sm text-stone-300">
               Placement controls and the plan and elevation views are available below.
             </p>
             <button
               type="button"
-              className="mt-4 rounded border border-slate-500 px-3 py-2 text-sm hover:bg-slate-800"
+              className="mt-4 rounded border border-stone-500 px-3 py-2 text-sm hover:bg-stone-800"
               onClick={() => {
                 setFailure("");
                 setAssetIssue("");
@@ -971,7 +1007,7 @@ export default function SpatialScene(props: Props) {
       {assetIssue && !failure && (
         <p
           role="status"
-          className="absolute bottom-3 left-3 max-w-[80%] rounded bg-slate-950/90 px-3 py-2 text-xs text-amber-200"
+          className="absolute bottom-3 left-3 max-w-[80%] rounded bg-stone-950/90 px-3 py-2 text-xs text-amber-200"
         >
           {assetIssue}
         </p>

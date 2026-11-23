@@ -28,7 +28,6 @@ import {
 import {
   childKind,
   connectionKinds,
-  createOccurrence,
   createSpace,
   duplicateOccurrences,
   emptySpatialDocument,
@@ -70,6 +69,7 @@ import {
   type LayoutTarget,
 } from "@/lib/spatial/engineering-links";
 import { EngineeringPlacement } from "./engineering-placement";
+import { placeLibraryTemplate, placementLibrary } from "@/lib/spatial/station-library";
 import { SpatialProjection } from "./projections";
 import { connectionColors } from "./palette";
 import type { CameraDirection, ViewportHandle, VisualRecord } from "./scene";
@@ -211,7 +211,8 @@ function LayoutEditor({
   );
   const [scopeId, setScopeId] = useState(initialTarget.scope ?? "");
   const [catalogQuery, setCatalogQuery] = useState("");
-  const [templateId, setTemplateId] = useState("machine@1");
+  const [libraryTab, setLibraryTab] = useState<"stations" | "equipment">("stations");
+  const [templateId, setTemplateId] = useState("manuqube-commissioning-bench@1");
   const [savedView, setReadonlyView] = useState(false);
   const readonlyView = !canEdit || savedView;
   const [showTable, setShowTable] = useState(false);
@@ -228,7 +229,7 @@ function LayoutEditor({
     () => new Map(document.catalog.map((entry) => [templateKey(entry), entry])),
     [document.catalog],
   );
-  const selectedTemplate = choices.get(templateId);
+  const available = useMemo(() => placementLibrary(document.catalog), [document.catalog]);
   const firstFloor = document.spaces.find((node) => node.kind === "floor");
   const siteNode = document.spaces.find((node) => node.kind === "site");
   const scope = spaces.get(scopeId) ?? firstFloor ?? siteNode;
@@ -293,13 +294,16 @@ function LayoutEditor({
   const activeSelection = floorRecords.filter(({ record }) => selection.includes(record.id));
   const selectedRecord = activeSelection.find(({ record }) => record.id === selection.at(-1));
   const distinctLayers = [...new Set(scopedRecords.map(({ record }) => record.layer))].sort();
-  const catalog = document.catalog.filter(
-    (entry) =>
-      !catalogQuery ||
-      [entry.label, entry.kind, ...entry.capabilities].some((term) =>
-        term.toLowerCase().includes(catalogQuery.toLowerCase()),
-      ),
-  );
+  const catalog = available
+    .filter((entry) => Boolean(entry.stationModel) === (libraryTab === "stations"))
+    .filter(
+      (entry) =>
+        !catalogQuery ||
+        [entry.label, entry.kind, ...entry.capabilities].some((term) =>
+          term.toLowerCase().includes(catalogQuery.toLowerCase()),
+        ),
+    );
+  const selectedTemplate = catalog.find((entry) => templateKey(entry) === templateId) ?? catalog[0];
   const engineering = useEngineering();
   const savedEngineering =
     engineering.authenticated &&
@@ -420,18 +424,27 @@ function LayoutEditor({
 
   const place = useCallback(
     (key: string, at?: Vector) => {
-      const item = choices.get(key);
+      const item = available.find((template) => templateKey(template) === key);
       if (readonlyView || !item || !targetStation || !floor) return;
       const point = at ?? { x: floor.size.x / 2, y: 0, z: floor.size.z / 2 };
       if (point.x < 0 || point.z < 0 || point.x > floor.size.x || point.z > floor.size.z) {
         setFeedback({ message: "Drop the component within this floor.", error: true });
         return;
       }
-      const placed = createOccurrence(item, targetStation.id, snapVector(point, moveSnap));
-      edited((previous) => ({ ...previous, occurrences: [...previous.occurrences, placed] }));
-      select(placed.id, false);
+      try {
+        const next = placeLibraryTemplate(
+          document,
+          item,
+          targetStation.id,
+          snapVector(point, moveSnap),
+        );
+        edited(() => next.document);
+        select(next.record.id, false);
+      } catch (error) {
+        setFeedback({ message: message(error, "Could not place this template."), error: true });
+      }
     },
-    [choices, readonlyView, targetStation, floor, moveSnap, edited, select],
+    [available, document, readonlyView, targetStation, floor, moveSnap, edited, select],
   );
 
   function addSpace(event: FormEvent<HTMLFormElement>) {
@@ -919,6 +932,26 @@ function LayoutEditor({
                 <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
                   <Box aria-hidden="true" size={16} /> Component library
                 </h2>
+                <div
+                  className="my-2 grid grid-cols-2 gap-1 rounded-lg border bg-muted/40 p-1"
+                  role="group"
+                  aria-label="Library collection"
+                >
+                  {(["stations", "equipment"] as const).map((collection) => (
+                    <button
+                      key={collection}
+                      type="button"
+                      aria-pressed={collection === libraryTab}
+                      className="min-h-9 rounded-md px-1 text-xs font-medium aria-pressed:bg-card aria-pressed:text-primary focus-visible:outline-2 focus-visible:outline-ring"
+                      onClick={() => {
+                        setLibraryTab(collection);
+                        setCatalogQuery("");
+                      }}
+                    >
+                      {collection === "stations" ? "Station assemblies" : "Equipment"}
+                    </button>
+                  ))}
+                </div>
                 <Field name="Find a component">
                   <input
                     className={control + " w-full"}
@@ -937,16 +970,29 @@ function LayoutEditor({
                       <button
                         key={key}
                         type="button"
-                        aria-pressed={key === templateId}
+                        aria-pressed={entry === selectedTemplate}
                         draggable
-                        className={`block min-h-8 w-full truncate rounded px-2 py-1 text-left text-xs hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring ${key === templateId ? "bg-accent font-semibold" : ""}`}
+                        className={`flex min-h-9 w-full items-center gap-2 rounded px-2 py-1 text-left text-xs hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring ${entry === selectedTemplate ? "bg-accent font-semibold" : ""}`}
                         onClick={() => setTemplateId(key)}
                         onDragStart={(event) => {
                           event.dataTransfer.setData("application/x-ems-template", key);
                           event.dataTransfer.effectAllowed = "copy";
                         }}
                       >
-                        {entry.label} · r{entry.revision}
+                        {entry.stationModel && (
+                          <img
+                            src={`/station-models/${entry.stationModel}.webp`}
+                            alt=""
+                            width={52}
+                            height={38}
+                            draggable={false}
+                            className="h-10 w-14 shrink-0 rounded bg-stone-800 object-contain"
+                          />
+                        )}
+                        <span>
+                          {entry.label}{" "}
+                          <span className="text-muted-foreground">· r{entry.revision}</span>
+                        </span>
                       </button>
                     );
                   })}
@@ -954,6 +1000,15 @@ function LayoutEditor({
                     <p className="text-xs text-muted-foreground">No matching templates.</p>
                   )}
                 </div>
+                {selectedTemplate?.stationModel && (
+                  <p className="my-2 text-xs text-muted-foreground">
+                    {selectedTemplate.provenance?.accuracy === "verified"
+                      ? "Verified envelope"
+                      : "Approximate envelope"}{" "}
+                    · {selectedTemplate.size.x} × {selectedTemplate.size.y} ×{" "}
+                    {selectedTemplate.size.z} m (X/Y/Z)
+                  </p>
+                )}
                 {stations.length > 1 && (
                   <Field name="Placement station">
                     <select
@@ -974,7 +1029,7 @@ function LayoutEditor({
                   type="button"
                   className={button}
                   disabled={!targetStation || !selectedTemplate}
-                  onClick={() => place(templateId)}
+                  onClick={() => selectedTemplate && place(templateKey(selectedTemplate))}
                 >
                   Place on floor
                 </button>
@@ -1168,7 +1223,7 @@ function LayoutEditor({
               <Suspense
                 fallback={
                   <div
-                    className="grid min-h-[360px] place-items-center rounded-lg bg-[#151d28] text-sm text-slate-100"
+                    className="grid min-h-[360px] place-items-center rounded-lg bg-[#292624] text-sm text-stone-100"
                     role="status"
                   >
                     Loading 3D tools…
