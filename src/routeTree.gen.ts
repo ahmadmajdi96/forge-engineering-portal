@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AccountRecoveryRouteImport } from './routes/account-recovery'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
+import { Route as ApplicationStudioRouteImport } from './routes/application-studio'
 import { Route as ApprovalsRouteImport } from './routes/approvals'
 import { Route as AssetStepsRouteImport } from './routes/asset-steps'
 import { Route as ChangesRouteImport } from './routes/changes'
@@ -21,6 +22,10 @@ import { Route as DeploymentsRouteImport } from './routes/deployments'
 import { Route as DiagnosticsRouteImport } from './routes/diagnostics'
 import { Route as EdgeAppStudioRouteImport } from './routes/edge-app-studio'
 import { Route as EdgeFleetRouteImport } from './routes/edge-fleet'
+import { Route as FactoryAssignmentRouteImport } from './routes/factory-assignment'
+import { Route as FactoryLayoutRouteImport } from './routes/factory-layout'
+import { Route as FactoryProcessRouteImport } from './routes/factory-process'
+import { Route as FactoryReleasesRouteImport } from './routes/factory-releases'
 import { Route as HmiRouteImport } from './routes/hmi'
 import { Route as HmiLayoutsRouteImport } from './routes/hmi-layouts'
 import { Route as IntegrationsRouteImport } from './routes/integrations'
@@ -44,6 +49,7 @@ import { Route as StepTemplatesRouteImport } from './routes/step-templates'
 import { Route as TerminalsRouteImport } from './routes/terminals'
 import { Route as WasteReasonsRouteImport } from './routes/waste-reasons'
 import { Route as WorkstationsRouteImport } from './routes/workstations'
+import { Route as AdminQaRouteImport } from './routes/admin/qa'
 import { Route as HmiIndexRouteImport } from './routes/hmi.index'
 import { Route as HmiStationIdRouteImport } from './routes/hmi.$stationId'
 import { Route as LinesIndexRouteImport } from './routes/lines.index'
@@ -54,6 +60,16 @@ import { Route as StationsIndexRouteImport } from './routes/stations.index'
 import { Route as StationsStationIdRouteImport } from './routes/stations.$stationId'
 import { Route as UnitsUidRouteImport } from './routes/units.$uid'
 import { Route as WorkOrdersWoIdRouteImport } from './routes/work-orders.$woId'
+import { Route as ApiEmsArtifactRouteImport } from './routes/api/ems/artifact'
+import { Route as ApiEmsAssignmentsRouteImport } from './routes/api/ems/assignments'
+import { Route as ApiEmsHealthRouteImport } from './routes/api/ems/health'
+import { Route as ApiEmsQaRouteImport } from './routes/api/ems/qa'
+import { Route as ApiEmsReleasesRouteImport } from './routes/api/ems/releases'
+import { Route as ApiEmsWorkspaceRouteImport } from './routes/api/ems/workspace'
+import { Route as ApiEmsAuthCallbackRouteImport } from './routes/api/ems/auth/callback'
+import { Route as ApiEmsAuthFixtureRouteImport } from './routes/api/ems/auth/fixture'
+import { Route as ApiEmsAuthSignOutRouteImport } from './routes/api/ems/auth/sign-out'
+import { Route as ApiEmsAuthStartRouteImport } from './routes/api/ems/auth/start'
 import { Route as ApiPublicIntegrationsAckRouteImport } from './routes/api/public/integrations/ack'
 
 const IndexRoute = IndexRouteImport.update({
@@ -69,6 +85,11 @@ const AccountRecoveryRoute = AccountRecoveryRouteImport.update({
 const AnalyticsRoute = AnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApplicationStudioRoute = ApplicationStudioRouteImport.update({
+  id: '/application-studio',
+  path: '/application-studio',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApprovalsRoute = ApprovalsRouteImport.update({
@@ -114,6 +135,26 @@ const EdgeAppStudioRoute = EdgeAppStudioRouteImport.update({
 const EdgeFleetRoute = EdgeFleetRouteImport.update({
   id: '/edge-fleet',
   path: '/edge-fleet',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FactoryAssignmentRoute = FactoryAssignmentRouteImport.update({
+  id: '/factory-assignment',
+  path: '/factory-assignment',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FactoryLayoutRoute = FactoryLayoutRouteImport.update({
+  id: '/factory-layout',
+  path: '/factory-layout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FactoryProcessRoute = FactoryProcessRouteImport.update({
+  id: '/factory-process',
+  path: '/factory-process',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FactoryReleasesRoute = FactoryReleasesRouteImport.update({
+  id: '/factory-releases',
+  path: '/factory-releases',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HmiRoute = HmiRouteImport.update({
@@ -231,6 +272,11 @@ const WorkstationsRoute = WorkstationsRouteImport.update({
   path: '/workstations',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminQaRoute = AdminQaRouteImport.update({
+  id: '/admin/qa',
+  path: '/admin/qa',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HmiIndexRoute = HmiIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -281,6 +327,56 @@ const WorkOrdersWoIdRoute = WorkOrdersWoIdRouteImport.update({
   path: '/work-orders/$woId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiEmsArtifactRoute = ApiEmsArtifactRouteImport.update({
+  id: '/api/ems/artifact',
+  path: '/api/ems/artifact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiEmsAssignmentsRoute = ApiEmsAssignmentsRouteImport.update({
+  id: '/api/ems/assignments',
+  path: '/api/ems/assignments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiEmsHealthRoute = ApiEmsHealthRouteImport.update({
+  id: '/api/ems/health',
+  path: '/api/ems/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiEmsQaRoute = ApiEmsQaRouteImport.update({
+  id: '/api/ems/qa',
+  path: '/api/ems/qa',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiEmsReleasesRoute = ApiEmsReleasesRouteImport.update({
+  id: '/api/ems/releases',
+  path: '/api/ems/releases',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiEmsWorkspaceRoute = ApiEmsWorkspaceRouteImport.update({
+  id: '/api/ems/workspace',
+  path: '/api/ems/workspace',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiEmsAuthCallbackRoute = ApiEmsAuthCallbackRouteImport.update({
+  id: '/api/ems/auth/callback',
+  path: '/api/ems/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiEmsAuthFixtureRoute = ApiEmsAuthFixtureRouteImport.update({
+  id: '/api/ems/auth/fixture',
+  path: '/api/ems/auth/fixture',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiEmsAuthSignOutRoute = ApiEmsAuthSignOutRouteImport.update({
+  id: '/api/ems/auth/sign-out',
+  path: '/api/ems/auth/sign-out',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiEmsAuthStartRoute = ApiEmsAuthStartRouteImport.update({
+  id: '/api/ems/auth/start',
+  path: '/api/ems/auth/start',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicIntegrationsAckRoute =
   ApiPublicIntegrationsAckRouteImport.update({
     id: '/api/public/integrations/ack',
@@ -292,6 +388,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/account-recovery': typeof AccountRecoveryRoute
   '/analytics': typeof AnalyticsRoute
+  '/application-studio': typeof ApplicationStudioRoute
   '/approvals': typeof ApprovalsRoute
   '/asset-steps': typeof AssetStepsRoute
   '/changes': typeof ChangesRoute
@@ -301,6 +398,10 @@ export interface FileRoutesByFullPath {
   '/diagnostics': typeof DiagnosticsRoute
   '/edge-app-studio': typeof EdgeAppStudioRoute
   '/edge-fleet': typeof EdgeFleetRoute
+  '/factory-assignment': typeof FactoryAssignmentRoute
+  '/factory-layout': typeof FactoryLayoutRoute
+  '/factory-process': typeof FactoryProcessRoute
+  '/factory-releases': typeof FactoryReleasesRoute
   '/hmi': typeof HmiRouteWithChildren
   '/hmi-layouts': typeof HmiLayoutsRoute
   '/integrations': typeof IntegrationsRoute
@@ -324,6 +425,7 @@ export interface FileRoutesByFullPath {
   '/terminals': typeof TerminalsRoute
   '/waste-reasons': typeof WasteReasonsRoute
   '/workstations': typeof WorkstationsRoute
+  '/admin/qa': typeof AdminQaRoute
   '/hmi/$stationId': typeof HmiStationIdRoute
   '/lines/$lineId': typeof LinesLineIdRoute
   '/operator/$stationId': typeof OperatorStationIdRoute
@@ -334,12 +436,23 @@ export interface FileRoutesByFullPath {
   '/lines/': typeof LinesIndexRoute
   '/operator/': typeof OperatorIndexRoute
   '/stations/': typeof StationsIndexRoute
+  '/api/ems/artifact': typeof ApiEmsArtifactRoute
+  '/api/ems/assignments': typeof ApiEmsAssignmentsRoute
+  '/api/ems/health': typeof ApiEmsHealthRoute
+  '/api/ems/qa': typeof ApiEmsQaRoute
+  '/api/ems/releases': typeof ApiEmsReleasesRoute
+  '/api/ems/workspace': typeof ApiEmsWorkspaceRoute
+  '/api/ems/auth/callback': typeof ApiEmsAuthCallbackRoute
+  '/api/ems/auth/fixture': typeof ApiEmsAuthFixtureRoute
+  '/api/ems/auth/sign-out': typeof ApiEmsAuthSignOutRoute
+  '/api/ems/auth/start': typeof ApiEmsAuthStartRoute
   '/api/public/integrations/ack': typeof ApiPublicIntegrationsAckRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/account-recovery': typeof AccountRecoveryRoute
   '/analytics': typeof AnalyticsRoute
+  '/application-studio': typeof ApplicationStudioRoute
   '/approvals': typeof ApprovalsRoute
   '/asset-steps': typeof AssetStepsRoute
   '/changes': typeof ChangesRoute
@@ -349,6 +462,10 @@ export interface FileRoutesByTo {
   '/diagnostics': typeof DiagnosticsRoute
   '/edge-app-studio': typeof EdgeAppStudioRoute
   '/edge-fleet': typeof EdgeFleetRoute
+  '/factory-assignment': typeof FactoryAssignmentRoute
+  '/factory-layout': typeof FactoryLayoutRoute
+  '/factory-process': typeof FactoryProcessRoute
+  '/factory-releases': typeof FactoryReleasesRoute
   '/hmi-layouts': typeof HmiLayoutsRoute
   '/integrations': typeof IntegrationsRoute
   '/line-engineering': typeof LineEngineeringRoute
@@ -368,6 +485,7 @@ export interface FileRoutesByTo {
   '/terminals': typeof TerminalsRoute
   '/waste-reasons': typeof WasteReasonsRoute
   '/workstations': typeof WorkstationsRoute
+  '/admin/qa': typeof AdminQaRoute
   '/hmi/$stationId': typeof HmiStationIdRoute
   '/lines/$lineId': typeof LinesLineIdRoute
   '/operator/$stationId': typeof OperatorStationIdRoute
@@ -378,6 +496,16 @@ export interface FileRoutesByTo {
   '/lines': typeof LinesIndexRoute
   '/operator': typeof OperatorIndexRoute
   '/stations': typeof StationsIndexRoute
+  '/api/ems/artifact': typeof ApiEmsArtifactRoute
+  '/api/ems/assignments': typeof ApiEmsAssignmentsRoute
+  '/api/ems/health': typeof ApiEmsHealthRoute
+  '/api/ems/qa': typeof ApiEmsQaRoute
+  '/api/ems/releases': typeof ApiEmsReleasesRoute
+  '/api/ems/workspace': typeof ApiEmsWorkspaceRoute
+  '/api/ems/auth/callback': typeof ApiEmsAuthCallbackRoute
+  '/api/ems/auth/fixture': typeof ApiEmsAuthFixtureRoute
+  '/api/ems/auth/sign-out': typeof ApiEmsAuthSignOutRoute
+  '/api/ems/auth/start': typeof ApiEmsAuthStartRoute
   '/api/public/integrations/ack': typeof ApiPublicIntegrationsAckRoute
 }
 export interface FileRoutesById {
@@ -385,6 +513,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/account-recovery': typeof AccountRecoveryRoute
   '/analytics': typeof AnalyticsRoute
+  '/application-studio': typeof ApplicationStudioRoute
   '/approvals': typeof ApprovalsRoute
   '/asset-steps': typeof AssetStepsRoute
   '/changes': typeof ChangesRoute
@@ -394,6 +523,10 @@ export interface FileRoutesById {
   '/diagnostics': typeof DiagnosticsRoute
   '/edge-app-studio': typeof EdgeAppStudioRoute
   '/edge-fleet': typeof EdgeFleetRoute
+  '/factory-assignment': typeof FactoryAssignmentRoute
+  '/factory-layout': typeof FactoryLayoutRoute
+  '/factory-process': typeof FactoryProcessRoute
+  '/factory-releases': typeof FactoryReleasesRoute
   '/hmi': typeof HmiRouteWithChildren
   '/hmi-layouts': typeof HmiLayoutsRoute
   '/integrations': typeof IntegrationsRoute
@@ -417,6 +550,7 @@ export interface FileRoutesById {
   '/terminals': typeof TerminalsRoute
   '/waste-reasons': typeof WasteReasonsRoute
   '/workstations': typeof WorkstationsRoute
+  '/admin/qa': typeof AdminQaRoute
   '/hmi/$stationId': typeof HmiStationIdRoute
   '/lines/$lineId': typeof LinesLineIdRoute
   '/operator/$stationId': typeof OperatorStationIdRoute
@@ -427,6 +561,16 @@ export interface FileRoutesById {
   '/lines/': typeof LinesIndexRoute
   '/operator/': typeof OperatorIndexRoute
   '/stations/': typeof StationsIndexRoute
+  '/api/ems/artifact': typeof ApiEmsArtifactRoute
+  '/api/ems/assignments': typeof ApiEmsAssignmentsRoute
+  '/api/ems/health': typeof ApiEmsHealthRoute
+  '/api/ems/qa': typeof ApiEmsQaRoute
+  '/api/ems/releases': typeof ApiEmsReleasesRoute
+  '/api/ems/workspace': typeof ApiEmsWorkspaceRoute
+  '/api/ems/auth/callback': typeof ApiEmsAuthCallbackRoute
+  '/api/ems/auth/fixture': typeof ApiEmsAuthFixtureRoute
+  '/api/ems/auth/sign-out': typeof ApiEmsAuthSignOutRoute
+  '/api/ems/auth/start': typeof ApiEmsAuthStartRoute
   '/api/public/integrations/ack': typeof ApiPublicIntegrationsAckRoute
 }
 export interface FileRouteTypes {
@@ -435,6 +579,7 @@ export interface FileRouteTypes {
     | '/'
     | '/account-recovery'
     | '/analytics'
+    | '/application-studio'
     | '/approvals'
     | '/asset-steps'
     | '/changes'
@@ -444,6 +589,10 @@ export interface FileRouteTypes {
     | '/diagnostics'
     | '/edge-app-studio'
     | '/edge-fleet'
+    | '/factory-assignment'
+    | '/factory-layout'
+    | '/factory-process'
+    | '/factory-releases'
     | '/hmi'
     | '/hmi-layouts'
     | '/integrations'
@@ -467,6 +616,7 @@ export interface FileRouteTypes {
     | '/terminals'
     | '/waste-reasons'
     | '/workstations'
+    | '/admin/qa'
     | '/hmi/$stationId'
     | '/lines/$lineId'
     | '/operator/$stationId'
@@ -477,12 +627,23 @@ export interface FileRouteTypes {
     | '/lines/'
     | '/operator/'
     | '/stations/'
+    | '/api/ems/artifact'
+    | '/api/ems/assignments'
+    | '/api/ems/health'
+    | '/api/ems/qa'
+    | '/api/ems/releases'
+    | '/api/ems/workspace'
+    | '/api/ems/auth/callback'
+    | '/api/ems/auth/fixture'
+    | '/api/ems/auth/sign-out'
+    | '/api/ems/auth/start'
     | '/api/public/integrations/ack'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/account-recovery'
     | '/analytics'
+    | '/application-studio'
     | '/approvals'
     | '/asset-steps'
     | '/changes'
@@ -492,6 +653,10 @@ export interface FileRouteTypes {
     | '/diagnostics'
     | '/edge-app-studio'
     | '/edge-fleet'
+    | '/factory-assignment'
+    | '/factory-layout'
+    | '/factory-process'
+    | '/factory-releases'
     | '/hmi-layouts'
     | '/integrations'
     | '/line-engineering'
@@ -511,6 +676,7 @@ export interface FileRouteTypes {
     | '/terminals'
     | '/waste-reasons'
     | '/workstations'
+    | '/admin/qa'
     | '/hmi/$stationId'
     | '/lines/$lineId'
     | '/operator/$stationId'
@@ -521,12 +687,23 @@ export interface FileRouteTypes {
     | '/lines'
     | '/operator'
     | '/stations'
+    | '/api/ems/artifact'
+    | '/api/ems/assignments'
+    | '/api/ems/health'
+    | '/api/ems/qa'
+    | '/api/ems/releases'
+    | '/api/ems/workspace'
+    | '/api/ems/auth/callback'
+    | '/api/ems/auth/fixture'
+    | '/api/ems/auth/sign-out'
+    | '/api/ems/auth/start'
     | '/api/public/integrations/ack'
   id:
     | '__root__'
     | '/'
     | '/account-recovery'
     | '/analytics'
+    | '/application-studio'
     | '/approvals'
     | '/asset-steps'
     | '/changes'
@@ -536,6 +713,10 @@ export interface FileRouteTypes {
     | '/diagnostics'
     | '/edge-app-studio'
     | '/edge-fleet'
+    | '/factory-assignment'
+    | '/factory-layout'
+    | '/factory-process'
+    | '/factory-releases'
     | '/hmi'
     | '/hmi-layouts'
     | '/integrations'
@@ -559,6 +740,7 @@ export interface FileRouteTypes {
     | '/terminals'
     | '/waste-reasons'
     | '/workstations'
+    | '/admin/qa'
     | '/hmi/$stationId'
     | '/lines/$lineId'
     | '/operator/$stationId'
@@ -569,6 +751,16 @@ export interface FileRouteTypes {
     | '/lines/'
     | '/operator/'
     | '/stations/'
+    | '/api/ems/artifact'
+    | '/api/ems/assignments'
+    | '/api/ems/health'
+    | '/api/ems/qa'
+    | '/api/ems/releases'
+    | '/api/ems/workspace'
+    | '/api/ems/auth/callback'
+    | '/api/ems/auth/fixture'
+    | '/api/ems/auth/sign-out'
+    | '/api/ems/auth/start'
     | '/api/public/integrations/ack'
   fileRoutesById: FileRoutesById
 }
@@ -576,6 +768,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccountRecoveryRoute: typeof AccountRecoveryRoute
   AnalyticsRoute: typeof AnalyticsRoute
+  ApplicationStudioRoute: typeof ApplicationStudioRoute
   ApprovalsRoute: typeof ApprovalsRoute
   AssetStepsRoute: typeof AssetStepsRoute
   ChangesRoute: typeof ChangesRoute
@@ -585,6 +778,10 @@ export interface RootRouteChildren {
   DiagnosticsRoute: typeof DiagnosticsRoute
   EdgeAppStudioRoute: typeof EdgeAppStudioRoute
   EdgeFleetRoute: typeof EdgeFleetRoute
+  FactoryAssignmentRoute: typeof FactoryAssignmentRoute
+  FactoryLayoutRoute: typeof FactoryLayoutRoute
+  FactoryProcessRoute: typeof FactoryProcessRoute
+  FactoryReleasesRoute: typeof FactoryReleasesRoute
   HmiRoute: typeof HmiRouteWithChildren
   HmiLayoutsRoute: typeof HmiLayoutsRoute
   IntegrationsRoute: typeof IntegrationsRoute
@@ -608,8 +805,19 @@ export interface RootRouteChildren {
   TerminalsRoute: typeof TerminalsRoute
   WasteReasonsRoute: typeof WasteReasonsRoute
   WorkstationsRoute: typeof WorkstationsRoute
+  AdminQaRoute: typeof AdminQaRoute
   UnitsUidRoute: typeof UnitsUidRoute
   WorkOrdersWoIdRoute: typeof WorkOrdersWoIdRoute
+  ApiEmsArtifactRoute: typeof ApiEmsArtifactRoute
+  ApiEmsAssignmentsRoute: typeof ApiEmsAssignmentsRoute
+  ApiEmsHealthRoute: typeof ApiEmsHealthRoute
+  ApiEmsQaRoute: typeof ApiEmsQaRoute
+  ApiEmsReleasesRoute: typeof ApiEmsReleasesRoute
+  ApiEmsWorkspaceRoute: typeof ApiEmsWorkspaceRoute
+  ApiEmsAuthCallbackRoute: typeof ApiEmsAuthCallbackRoute
+  ApiEmsAuthFixtureRoute: typeof ApiEmsAuthFixtureRoute
+  ApiEmsAuthSignOutRoute: typeof ApiEmsAuthSignOutRoute
+  ApiEmsAuthStartRoute: typeof ApiEmsAuthStartRoute
   ApiPublicIntegrationsAckRoute: typeof ApiPublicIntegrationsAckRoute
 }
 
@@ -634,6 +842,13 @@ declare module '@tanstack/react-router' {
       path: '/analytics'
       fullPath: '/analytics'
       preLoaderRoute: typeof AnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/application-studio': {
+      id: '/application-studio'
+      path: '/application-studio'
+      fullPath: '/application-studio'
+      preLoaderRoute: typeof ApplicationStudioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/approvals': {
@@ -697,6 +912,34 @@ declare module '@tanstack/react-router' {
       path: '/edge-fleet'
       fullPath: '/edge-fleet'
       preLoaderRoute: typeof EdgeFleetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/factory-assignment': {
+      id: '/factory-assignment'
+      path: '/factory-assignment'
+      fullPath: '/factory-assignment'
+      preLoaderRoute: typeof FactoryAssignmentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/factory-layout': {
+      id: '/factory-layout'
+      path: '/factory-layout'
+      fullPath: '/factory-layout'
+      preLoaderRoute: typeof FactoryLayoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/factory-process': {
+      id: '/factory-process'
+      path: '/factory-process'
+      fullPath: '/factory-process'
+      preLoaderRoute: typeof FactoryProcessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/factory-releases': {
+      id: '/factory-releases'
+      path: '/factory-releases'
+      fullPath: '/factory-releases'
+      preLoaderRoute: typeof FactoryReleasesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/hmi': {
@@ -860,6 +1103,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkstationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/qa': {
+      id: '/admin/qa'
+      path: '/admin/qa'
+      fullPath: '/admin/qa'
+      preLoaderRoute: typeof AdminQaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/hmi/': {
       id: '/hmi/'
       path: '/'
@@ -930,6 +1180,76 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkOrdersWoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/ems/artifact': {
+      id: '/api/ems/artifact'
+      path: '/api/ems/artifact'
+      fullPath: '/api/ems/artifact'
+      preLoaderRoute: typeof ApiEmsArtifactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ems/assignments': {
+      id: '/api/ems/assignments'
+      path: '/api/ems/assignments'
+      fullPath: '/api/ems/assignments'
+      preLoaderRoute: typeof ApiEmsAssignmentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ems/health': {
+      id: '/api/ems/health'
+      path: '/api/ems/health'
+      fullPath: '/api/ems/health'
+      preLoaderRoute: typeof ApiEmsHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ems/qa': {
+      id: '/api/ems/qa'
+      path: '/api/ems/qa'
+      fullPath: '/api/ems/qa'
+      preLoaderRoute: typeof ApiEmsQaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ems/releases': {
+      id: '/api/ems/releases'
+      path: '/api/ems/releases'
+      fullPath: '/api/ems/releases'
+      preLoaderRoute: typeof ApiEmsReleasesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ems/workspace': {
+      id: '/api/ems/workspace'
+      path: '/api/ems/workspace'
+      fullPath: '/api/ems/workspace'
+      preLoaderRoute: typeof ApiEmsWorkspaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ems/auth/callback': {
+      id: '/api/ems/auth/callback'
+      path: '/api/ems/auth/callback'
+      fullPath: '/api/ems/auth/callback'
+      preLoaderRoute: typeof ApiEmsAuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ems/auth/fixture': {
+      id: '/api/ems/auth/fixture'
+      path: '/api/ems/auth/fixture'
+      fullPath: '/api/ems/auth/fixture'
+      preLoaderRoute: typeof ApiEmsAuthFixtureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ems/auth/sign-out': {
+      id: '/api/ems/auth/sign-out'
+      path: '/api/ems/auth/sign-out'
+      fullPath: '/api/ems/auth/sign-out'
+      preLoaderRoute: typeof ApiEmsAuthSignOutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ems/auth/start': {
+      id: '/api/ems/auth/start'
+      path: '/api/ems/auth/start'
+      fullPath: '/api/ems/auth/start'
+      preLoaderRoute: typeof ApiEmsAuthStartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/integrations/ack': {
       id: '/api/public/integrations/ack'
       path: '/api/public/integrations/ack'
@@ -996,6 +1316,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccountRecoveryRoute: AccountRecoveryRoute,
   AnalyticsRoute: AnalyticsRoute,
+  ApplicationStudioRoute: ApplicationStudioRoute,
   ApprovalsRoute: ApprovalsRoute,
   AssetStepsRoute: AssetStepsRoute,
   ChangesRoute: ChangesRoute,
@@ -1005,6 +1326,10 @@ const rootRouteChildren: RootRouteChildren = {
   DiagnosticsRoute: DiagnosticsRoute,
   EdgeAppStudioRoute: EdgeAppStudioRoute,
   EdgeFleetRoute: EdgeFleetRoute,
+  FactoryAssignmentRoute: FactoryAssignmentRoute,
+  FactoryLayoutRoute: FactoryLayoutRoute,
+  FactoryProcessRoute: FactoryProcessRoute,
+  FactoryReleasesRoute: FactoryReleasesRoute,
   HmiRoute: HmiRouteWithChildren,
   HmiLayoutsRoute: HmiLayoutsRoute,
   IntegrationsRoute: IntegrationsRoute,
@@ -1028,8 +1353,19 @@ const rootRouteChildren: RootRouteChildren = {
   TerminalsRoute: TerminalsRoute,
   WasteReasonsRoute: WasteReasonsRoute,
   WorkstationsRoute: WorkstationsRoute,
+  AdminQaRoute: AdminQaRoute,
   UnitsUidRoute: UnitsUidRoute,
   WorkOrdersWoIdRoute: WorkOrdersWoIdRoute,
+  ApiEmsArtifactRoute: ApiEmsArtifactRoute,
+  ApiEmsAssignmentsRoute: ApiEmsAssignmentsRoute,
+  ApiEmsHealthRoute: ApiEmsHealthRoute,
+  ApiEmsQaRoute: ApiEmsQaRoute,
+  ApiEmsReleasesRoute: ApiEmsReleasesRoute,
+  ApiEmsWorkspaceRoute: ApiEmsWorkspaceRoute,
+  ApiEmsAuthCallbackRoute: ApiEmsAuthCallbackRoute,
+  ApiEmsAuthFixtureRoute: ApiEmsAuthFixtureRoute,
+  ApiEmsAuthSignOutRoute: ApiEmsAuthSignOutRoute,
+  ApiEmsAuthStartRoute: ApiEmsAuthStartRoute,
   ApiPublicIntegrationsAckRoute: ApiPublicIntegrationsAckRoute,
 }
 export const routeTree = rootRouteImport

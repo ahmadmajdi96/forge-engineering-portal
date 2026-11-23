@@ -19,12 +19,12 @@ export const Route = createFileRoute('/approvals')({
 });
 
 type Data = Awaited<ReturnType<typeof listApprovals>>;
-const NEXT: Record<string, { stage: 'In Review' | 'Approved' | 'Rejected' | 'Released' | 'Effective'; label: string }[]> = {
+const NEXT: Record<string, { stage: 'In Review' | 'Approved' | 'Rejected'; label: string }[]> = {
   Draft: [{ stage: 'In Review', label: 'Submit for review' }],
   Rejected: [{ stage: 'In Review', label: 'Resubmit' }],
   'In Review': [{ stage: 'Approved', label: 'Approve' }, { stage: 'Rejected', label: 'Reject' }],
-  Approved: [{ stage: 'Released', label: 'Release' }],
-  Released: [{ stage: 'Effective', label: 'Make effective (sandbox)' }],
+  Approved: [],
+  Released: [],
   Effective: [],
 };
 
@@ -45,7 +45,7 @@ function ApprovalsPage() {
   return (
     <div className="p-6 space-y-4">
       <div><h1 className="text-xl font-semibold">Approval Chain</h1>
-        <p className="text-sm text-muted-foreground">Draft → In Review → Approved → Released → Effective. Every step is an e-signature; authors cannot approve their own revisions. Effective here is sandbox-only and does not activate production. Your roles: {data.roles.length ? data.roles.join(', ') : 'none (author only)'}</p></div>
+        <p className="text-sm text-muted-foreground">Sandbox review records authors and independent approvers. Factory publication uses the factory release workspace. Your roles: {data.roles.length ? data.roles.join(', ') : 'none (author only)'}</p></div>
       <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
         <div className="rounded-md border border-border divide-y divide-border">
           {data.revisions.length === 0 && <div className="p-4 text-sm text-muted-foreground">No saved revisions yet. Save a draft from any engineering page.</div>}

@@ -33,6 +33,8 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 
 export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server(
   async ({ next }) => {
+    const mode = process.env['EMS_MODE'];
+    if (mode && mode !== 'sandbox') throw new Error('The reference sandbox is disabled in this environment.');
     
     const SUPABASE_URL = process.env['SUPABASE_URL'];
     const SUPABASE_PUBLISHABLE_KEY = process.env['SUPABASE_PUBLISHABLE_KEY'];

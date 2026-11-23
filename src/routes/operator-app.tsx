@@ -1,9 +1,12 @@
+import { openFactoryStudio } from "@/lib/studio/legacy-route";
 import { StudioPage } from '@/components/engineering/studio-page';
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Hand, Zap, Cpu, ArrowRight } from "lucide-react";
 import { useMes } from "@/lib/mes-store";
 
 export const Route = createFileRoute("/operator-app")({
+  beforeLoad: ({ context, location }) => openFactoryStudio(context.ems.mode, location.searchStr, "screens", "operator"),
+
   head: () => ({
     meta: [
       { property: "og:title", content: "Operator-App · Engineering Portal" },

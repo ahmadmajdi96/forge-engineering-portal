@@ -1,0 +1,164 @@
+openapi: 3.1.0
+info:
+  title: ManuQube EMS factory API
+  version: 0.1.0
+  description: Native factory draft, revision, release and QA API. Fixture release actions are available in isolated local environments.
+paths:
+  /api/ems/health:
+    get:
+      responses:
+        "200": { description: Native schema and delivery heartbeat are ready }
+        "503": { description: A runtime dependency is unavailable }
+  /api/ems/auth/start:
+    get:
+      parameters:
+        - { name: next, in: query, schema: { type: string, maxLength: 1600 } }
+      responses:
+        "303": { description: Redirected to the configured AMS authorization endpoint }
+        "503": { description: EMS federation is unavailable }
+  /api/ems/auth/callback:
+    get:
+      parameters:
+        - { name: state, in: query, required: true, schema: { type: string } }
+        - { name: code, in: query, required: true, schema: { type: string } }
+      responses:
+        "303": { description: Session issued after PKCE, issuer, audience and nonce checks }
+        "401": { description: Invalid or expired identity evidence }
+  /api/ems/auth/fixture:
+    post:
+      description: Local loopback fixture only. Origin must match EMS_PUBLIC_ORIGIN.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string }
+                next: { type: string }
+      responses:
+        "303": { description: Isolated fixture session issued }
+        "401": { description: Fixture authorization failed }
+        "404": { description: Fixture mode is disabled }
+  /api/ems/auth/sign-out:
+    post:
+      security: [{ session: [] }]
+      responses:
+        "303": { description: Local EMS session closed }
+        "403": { description: Request origin is unauthorized }
+  /api/ems/workspace:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/Site"
+        - { name: workspace, in: query, required: true, schema: { $ref: "#/components/schemas/Workspace" } }
+      security: [{ session: [] }]
+      responses:
+        "200":
+          description: Latest immutable revision or revision zero for an empty workspace
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [revision, payload]
+                properties:
+                  revision: { type: integer, minimum: 0 }
+                  payload: { type: [object, "null"] }
+        "401": { description: Sign-in required }
+        "403": { description: Factory access denied }
+    put:
+      security: [{ session: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [site, workspace, expected, payload, reason]
+              properties:
+                site: { $ref: "#/components/schemas/Site" }
+                workspace: { $ref: "#/components/schemas/Workspace" }
+                expected: { type: integer, minimum: 0 }
+                payload: { type: object, description: Zod-validated workspace document }
+                reason: { type: string, minLength: 3, maxLength: 500 }
+      responses:
+        "200": { description: Revision and audit entry committed }
+        "400": { description: Document failed schema or relationship validation }
+        "403": { description: Factory edit permission or exact origin is missing }
+        "409": { description: Expected revision is stale }
+        "413": { description: Document exceeds the byte limit }
+  /api/ems/releases:
+    get:
+      parameters: [{ $ref: "#/components/parameters/Site" }]
+      security: [{ session: [] }]
+      responses:
+        "200": { description: Bounded list of recent release records for the site }
+        "403": { description: Factory release view is denied }
+    post:
+      security: [{ session: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [site, action, reason]
+              properties:
+                site: { $ref: "#/components/schemas/Site" }
+                action: { enum: [submit, approve, publish] }
+                reason: { type: string, minLength: 3, maxLength: 500 }
+                app: { type: string }
+                revision: { type: integer, minimum: 1 }
+                id: { type: string, format: uuid }
+                expected: { enum: [submitted, approved] }
+              allOf:
+                - if: { properties: { action: { const: submit } } }
+                  then: { required: [app, revision] }
+                  else: { required: [id, expected] }
+      responses:
+        "200": { description: Transition and evidence committed }
+        "400": { description: Invalid request or application }
+        "403": { description: Required scope or author/reviewer action is denied }
+        "409": { description: Release content or stage is incompatible }
+        "503": { description: Required live approval evidence is unavailable }
+  /api/ems/artifact:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/Site"
+        - { name: id, in: query, required: true, schema: { type: string, format: uuid } }
+      security: [{ session: [] }]
+      responses:
+        "200": { description: Exact published signed package as a JSON attachment }
+        "404": { description: Package does not exist in the permitted site }
+  /api/ems/qa:
+    get:
+      parameters: [{ $ref: "#/components/parameters/Site" }]
+      security: [{ session: [] }]
+      responses:
+        "200": { description: Audited and timestamped evidence summary for the scoped site }
+        "401": { description: Anonymous or revoked session }
+        "403": { description: Exact Admin QA permission is required }
+  /api/public/integrations/ack:
+    post:
+      parameters:
+        - { name: X-EMS-Consumer, in: header, required: true, schema: { type: string } }
+        - { name: X-EMS-Signature, in: header, required: true, schema: { type: string, pattern: "^[a-f0-9]{64}$" } }
+        - { name: X-EMS-Timestamp, in: header, required: true, schema: { type: string, pattern: "^[0-9]{10}$" } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "./acknowledgement.schema.json"
+      responses:
+        "200": { description: Decision recorded or identical acknowledgement already applied }
+        "401": { description: Sender could not be authenticated }
+        "409": { description: Binding, duplicate content, or final decision conflict }
+components:
+  securitySchemes:
+    session: { type: apiKey, in: cookie, name: ems_session }
+  parameters:
+    Site: { name: site, in: query, required: true, schema: { $ref: "#/components/schemas/Site" } }
+  schemas:
+    Site: { type: string, pattern: "^[a-z][a-z0-9-]{1,63}$" }
+    Workspace: { enum: [spatial, studio, process] }

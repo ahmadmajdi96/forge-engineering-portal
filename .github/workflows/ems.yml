@@ -1,0 +1,54 @@
+name: EMS verification
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun run lint:ems
+      - run: bun run test
+      - run: bun run build
+      - run: bun run build:node
+  local-stack:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+      - run: bun install --frozen-lockfile
+      - run: ./scripts/bootstrap-local.sh
+      - run: EMS_SOURCE_REVISION="$GITHUB_SHA" docker compose up --build -d --wait
+      - run: EMS_TEST_FIXTURES=1 ./scripts/smoke-test.sh
+      - run: bunx playwright install --with-deps chromium
+      - run: bun run test:browser
+      - run: bun run scripts/ops/assignment-acceptance.ts .ems/fixture-acceptance-release.json .ems/fixture-acceptance-assignment.json
+      - run: ./scripts/build-edge.sh
+      - run: bun run scripts/edge-local-acceptance.ts .ems/fixture-acceptance-release.json .ems/fixture-release.pub .output/edge/service.mjs .ems/fixture-acceptance-assignment.json
+      - run: docker compose --profile edge-test up --build -d
+      - run: |
+          curl --retry 8 --retry-connrefused --retry-delay 1 -fsS http://127.0.0.1:3100/health
+          ./scripts/backup.sh .ems/backup.dump
+          ./scripts/restore-isolated.sh .ems/backup.dump
+      - if: failure()
+        run: docker compose logs --tail=100
+      - if: always()
+        run: docker compose --profile edge-test down -v

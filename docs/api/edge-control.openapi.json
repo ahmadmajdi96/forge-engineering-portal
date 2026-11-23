@@ -1,0 +1,114 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "ManuQube EMS local edge control",
+    "version": "1.0.0",
+    "description": "Local node service. Verification binds signed application content, exact deployment target and activation decision. Fleet intake and hardware commands require separate authorized adapters."
+  },
+  "servers": [{ "url": "http://127.0.0.1:3100" }],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Read local service readiness",
+        "responses": { "200": { "description": "Includes explicit fixture mode" } }
+      }
+    },
+    "/api/player": {
+      "get": {
+        "summary": "Read current verified kiosk slot",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["operator", "hmi"], "default": "operator" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fixture mode and active application definition or null. Contains no assignment secrets."
+          },
+          "409": { "description": "The runtime cannot read verified content" }
+        }
+      }
+    },
+    "/v1/stage": {
+      "post": {
+        "summary": "Verify and durably stage a signed package for this node",
+        "security": [{ "transport": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["release", "deployment"],
+                "properties": {
+                  "release": { "$ref": "#/components/schemas/Envelope" },
+                  "deployment": { "$ref": "#/components/schemas/Envelope" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Current staging status" },
+          "401": { "description": "Local transport authorization required" },
+          "409": { "description": "Package or deployment rejected" }
+        }
+      }
+    },
+    "/v1/activate": {
+      "post": {
+        "summary": "Apply signed activation or rollback at the run boundary",
+        "security": [{ "transport": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/Envelope" } }
+          }
+        },
+        "responses": {
+          "200": { "description": "Active, deferred or rolled back" },
+          "401": { "description": "Local transport authorization required" },
+          "409": { "description": "Activation authority or state rejected" }
+        }
+      }
+    },
+    "/v1/readback": {
+      "get": {
+        "summary": "Read signed local node state",
+        "security": [{ "transport": [] }],
+        "responses": {
+          "200": {
+            "description": "Signed node-scoped readback",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/Envelope" } }
+            }
+          },
+          "401": { "description": "Local transport authorization required" },
+          "409": { "description": "Current readback unavailable" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": { "transport": { "type": "http", "scheme": "bearer" } },
+    "schemas": {
+      "Envelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["keyId", "contentDigest", "signature", "value"],
+        "properties": {
+          "keyId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,95}$" },
+          "contentDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "signature": { "type": "string", "pattern": "^[A-Za-z0-9_-]{86}$" },
+          "value": {
+            "type": "object",
+            "description": "Exact purpose-specific schema in src/lib/edge/protocol.ts"
+          }
+        }
+      }
+    }
+  }
+}

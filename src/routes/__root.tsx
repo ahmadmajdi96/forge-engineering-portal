@@ -13,6 +13,8 @@ import { useEffect, type ReactNode } from "react";
 import { StoreProvider } from "@/lib/store";
 import { MesProvider } from "@/lib/mes-store";
 import { Toaster } from "@/components/ui/sonner";
+import { FactoryShell } from "@/components/engineering/factory-shell";
+import { emsSession } from "@/lib/production/session.functions";
 import { Shell } from "@/components/Shell";
 import { EngineeringProvider } from "@/lib/engineering/context";
 import appCss from "../styles.css?url";
@@ -98,6 +100,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
+  beforeLoad: async () => ({ ems: await emsSession() }),
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
@@ -119,7 +122,11 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 function RootComponent() {
-  const { queryClient } = Route.useRouteContext();
+  const { queryClient, ems } = Route.useRouteContext();
+
+  if (ems.mode !== "sandbox") {
+    return <QueryClientProvider client={queryClient}><FactoryShell session={ems} /><Toaster /></QueryClientProvider>;
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
