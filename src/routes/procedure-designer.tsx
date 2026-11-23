@@ -1,4 +1,3 @@
-import { openFactoryStudio } from "@/lib/studio/legacy-route";
 import type { Dict } from "@/lib/store";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
@@ -10,8 +9,6 @@ import { newId } from "@/lib/store";
 type Step = { id: string; title: string; instruction: string; evidence: "none" | "camera" | "measurement" | "scan" | "confirm"; min?: number; max?: number; unit?: string };
 
 export const Route = createFileRoute("/procedure-designer")({
-  beforeLoad: ({ context, location }) => openFactoryStudio(context.ems.mode, location.searchStr, "workflow", "procedure"),
-
   head: () => ({ meta: [
     { name: "twitter:card", content: "summary" },
     { property: "og:type", content: "website" },

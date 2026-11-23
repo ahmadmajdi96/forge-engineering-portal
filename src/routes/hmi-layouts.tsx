@@ -1,4 +1,3 @@
-import { openFactoryStudio } from "@/lib/studio/legacy-route";
 import {HmiDesigner} from '@/components/engineering/reference-studio';
 import type { Dict } from "@/lib/store";
 import { createFileRoute } from "@tanstack/react-router";
@@ -11,8 +10,6 @@ import { newId } from "@/lib/store";
 type Tile = { id: string; label: string; binding: string; type: "kpi" | "button" | "status" | "text" };
 
 export const Route = createFileRoute("/hmi-layouts")({
-  beforeLoad: ({ context, location }) => openFactoryStudio(context.ems.mode, location.searchStr, "screens", "hmi"),
-
   head: () => ({ meta: [
     { name: "twitter:card", content: "summary" },
     { property: "og:type", content: "website" },

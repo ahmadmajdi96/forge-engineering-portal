@@ -10,7 +10,7 @@ export const Route = createFileRoute("/api/ems/health")({
           return new Response("Unavailable", { status: 503 });
         try {
           const [migration] =
-            await database()`select 1 from public.ems_migration_ledger where name = '0004_assignments.sql'`;
+            await database()`select 1 from public.ems_migration_ledger where name = '0005_engineering.sql'`;
           const [worker] =
             await database()`select 1 from ems.worker_heartbeat where service = 'delivery' and state <> 'error'
         and checked_at > now() - interval '45 seconds'`;

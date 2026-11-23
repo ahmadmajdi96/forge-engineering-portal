@@ -1,3 +1,7 @@
+import {useEngineering} from "@/lib/engineering/context";
+import {engineeringHistory} from "@/lib/production/workspace.functions";
+import {reviewEngineering} from "@/lib/production/engineering-review.functions";
+import {useQuery,useMutation} from "@tanstack/react-query";
 import { createFileRoute } from '@tanstack/react-router';
 import { useCallback, useEffect, useState } from 'react';
 import { useServerFn } from '@tanstack/react-start';
@@ -15,7 +19,7 @@ export const Route = createFileRoute('/approvals')({
     { property: 'og:description', content: 'E-signature approval chain for engineering revisions.' },
     { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary' },
   ] }),
-  component: ApprovalsPage,
+  component: ApprovalWorkspace,
 });
 
 type Data = Awaited<ReturnType<typeof listApprovals>>;
@@ -70,4 +74,23 @@ function ApprovalsPage() {
         </div>}
       </div>
     </div>);
+}
+
+function ApprovalWorkspace() {
+  const {native, site} = useEngineering();
+  return native ? <EngineeringReviews site={site}/> : <ApprovalsPage/>;
+}
+function EngineeringReviews({site}:{site:string|undefined}) {
+  const [reason,setReason]=useState("");
+  const history = useQuery({queryKey:["engineering-reviews",site],enabled:!!site,
+    queryFn:()=>engineeringHistory({data:{site:site!}})});
+  const decision=useMutation({mutationFn:(value:"Approved"|"Rejected")=>
+    reviewEngineering({data:{site:site!,revision:history.data![0]!.revision,decision:value,reason}}),
+    onSuccess:async()=>{setReason("");await history.refetch();},onError:e=>toast.error(e.message)});
+  return <section className="space-y-4"><h1 className="font-display text-2xl font-semibold">Approval Chain</h1>
+    {history.error && <p role="alert">{history.error.message}</p>}
+    {history.data?.length===0 && <p>No saved engineering revisions for this factory.</p>}
+    {history.data?.map(row=><div className="rounded-lg border bg-card p-4" key={row.id}><strong>Revision {row.revision}</strong> · {row.lifecycle}<p>{row.reason}</p></div>)}
+    {history.data?.[0]?.lifecycle==="In Review" && <div className="space-y-2"><Input aria-label="Review reason" value={reason} onChange={e=>setReason(e.target.value)} placeholder="Review reason"/>{(["Approved","Rejected"] as const).map(value=><Button key={value} disabled={decision.isPending || reason.trim().length<3} onClick={()=>decision.mutate(value)}>{value==="Approved"?"Approve":"Reject"}</Button>)}</div>}
+  </section>;
 }

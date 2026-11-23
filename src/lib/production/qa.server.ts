@@ -19,6 +19,7 @@ const expectedMigrations = [
   "0002_release_delivery.sql",
   "0003_evidence.sql",
   "0004_assignments.sql",
+  "0005_engineering.sql",
 ];
 
 function verifyLatestSignature(

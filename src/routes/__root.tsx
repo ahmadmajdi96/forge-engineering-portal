@@ -1,3 +1,4 @@
+import { retainSearchParams, useRouterState } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -100,6 +101,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
+  validateSearch: (params): {site?:string} => typeof params["site"] === "string" ? {site:params["site"]} : {},
+  search: {middlewares:[retainSearchParams(["site"])]},
   beforeLoad: async () => ({ ems: await emsSession() }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -109,7 +112,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" data-ems-mode={Route.useRouteContext().ems?.mode}>
       <head>
         <HeadContent />
       </head>
@@ -124,15 +127,18 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient, ems } = Route.useRouteContext();
 
-  if (ems.mode !== "sandbox") {
+  const search = useRouterState({select: state => state.location.searchStr});
+  const requested = new URLSearchParams(search).get("site");
+  const site = ems.identity?.sites.find(s => s.key === requested)?.key ?? ems.identity?.sites[0]?.key;
+  if (ems.mode !== "sandbox" && !ems.identity) {
     return <QueryClientProvider client={queryClient}><FactoryShell session={ems} /><Toaster /></QueryClientProvider>;
   }
 
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <StoreProvider>
-        <MesProvider><EngineeringProvider><Shell /><Toaster /></EngineeringProvider></MesProvider>
+      <StoreProvider key={site} nativeName={ems.identity?.name} site={site}>
+        <MesProvider><EngineeringProvider key={site} native={!!ems.identity} site={site}><Shell identity={ems.identity ?? undefined} site={site} /><Toaster /></EngineeringProvider></MesProvider>
       </StoreProvider>
     </QueryClientProvider>
   );

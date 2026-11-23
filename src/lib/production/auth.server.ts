@@ -343,9 +343,10 @@ async function sitePermissions(session: Session, site: Site) {
       "ems.factory_assignments.view",
     ];
     return session.subject === "reviewer"
-      ? [...common, releasePermission.approve, releasePermission.publish]
+      ? [...common, "ems.engineering.review", releasePermission.approve, releasePermission.publish]
       : [
           ...common,
+          "ems.engineering.edit",
           "ems.factory_layout.edit",
           "ems.application_studio.edit",
           "ems.factory_process.edit",

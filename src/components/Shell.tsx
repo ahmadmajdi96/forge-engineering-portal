@@ -14,7 +14,9 @@ import {
   SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger,
 } from "@/components/ui/sidebar";
 
-type NavItem = { title: string; url: "/" | "/lines" | "/stations" | "/live" | "/operator" | "/operator-apps" | "/step-templates" | "/workstations" | "/machines" | "/operator-app" | "/hmi" | "/changes" | "/analytics" | "/reports" | "/line-engineering" | "/asset-steps" | "/station-connectivity" | "/edge-app-studio" | "/release-readiness" | "/registry" | "/process-routes" | "/mes-integration" | "/integrations" | "/approvals" | "/edge-fleet" | "/diagnostics" | "/screen-editor" | "/hmi-layouts" | "/deployments" | "/commissioning"; icon: typeof Boxes };
+import type { EmsIdentity } from "@/lib/production/contracts";
+
+type NavItem = { title: string; url: "/factory-layout" | "/factory-process" | "/application-studio" | "/factory-releases" | "/factory-assignment" | "/admin/qa" | "/" | "/lines" | "/stations" | "/live" | "/operator" | "/operator-apps" | "/step-templates" | "/workstations" | "/machines" | "/operator-app" | "/hmi" | "/changes" | "/analytics" | "/reports" | "/line-engineering" | "/asset-steps" | "/station-connectivity" | "/edge-app-studio" | "/release-readiness" | "/registry" | "/process-routes" | "/mes-integration" | "/integrations" | "/approvals" | "/edge-fleet" | "/diagnostics" | "/screen-editor" | "/hmi-layouts" | "/deployments" | "/commissioning"; icon: typeof Boxes };
 const GROUPS: { label: string; items: NavItem[] }[] = [
   { label: "Overview", items: [{ title: "Overview", url: "/", icon: LayoutDashboard }] },
   { label: "Asset Engineering", items: [
@@ -111,7 +113,16 @@ function SignIn() {
   );
 }
 
-function AppSidebar() {
+const factoryGroup = { label: "Factory Engineering", items: [
+  { title: "Factory layout", url: "/factory-layout", icon: Boxes },
+  { title: "Factory process routes", url: "/factory-process", icon: GitBranch },
+  { title: "Application Studio", url: "/application-studio", icon: LayoutGrid },
+  { title: "Factory releases", url: "/factory-releases", icon: ListChecks },
+  { title: "Factory assignments", url: "/factory-assignment", icon: Network },
+  { title: "Admin QA", url: "/admin/qa", icon: BarChart3 },
+] } satisfies (typeof GROUPS)[number];
+type NativeProps = { identity?: EmsIdentity | undefined; site?: string | undefined };
+function AppSidebar({identity, site}: NativeProps) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const isActive = (url: string) => path === url || (url !== "/" && path.startsWith(`${url}/`));
   const { session } = useStore();
@@ -127,7 +138,7 @@ function AppSidebar() {
         </Link>
       </SidebarHeader>
       <SidebarContent className="px-2">
-        {GROUPS.map((g) => (
+        {(identity ? [...GROUPS, factoryGroup] : GROUPS).map((g) => (
           <SidebarGroup key={g.label}>
             <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">{g.label}</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -135,7 +146,7 @@ function AppSidebar() {
                 {g.items.map((item) => (
                   <SidebarMenuItem key={item.url}>
                     <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title} className="h-10 rounded-lg data-[active=true]:border data-[active=true]:border-primary/30 data-[active=true]:bg-primary/10 data-[active=true]:text-primary">
-                      <Link to={item.url} className="flex items-center gap-3"><item.icon className="h-4 w-4 shrink-0" /><span className="truncate">{item.title}</span></Link>
+                      <Link to={item.url} search={site ? {site} : {}} className="flex items-center gap-3"><item.icon className="h-4 w-4 shrink-0" /><span className="truncate">{item.title}</span></Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
@@ -148,7 +159,7 @@ function AppSidebar() {
         <div className="rounded-xl border border-border/60 bg-card/60 p-3 group-data-[collapsible=icon]:hidden">
           <div className="flex items-center gap-2 text-xs">
             <span className={`status-dot animate-pulse-glow ${session?.source === "hub" ? "text-success" : "text-warning"}`} />
-            <span className="font-medium">{session?.source === "verified" ? "Verified sandbox account" : session?.source === "hub" ? "Legacy access session" : "Demo access"}</span>
+            <span className="font-medium">{identity ? "Factory workspace" : session?.source === "verified" ? "Verified sandbox account" : session?.source === "hub" ? "Legacy access session" : "Demo access"}</span>
           </div>
           <p className="mt-1 text-[10px] text-warning">MES preview · sample data · not connected</p>
         </div>
@@ -159,12 +170,12 @@ function AppSidebar() {
 
 const initials = (n: string) => n.split(/[\s@.]+/).filter(Boolean).map((p) => p[0]).join("").slice(0, 2).toUpperCase();
 
-function TopBar() {
+function TopBar({identity, site}: NativeProps) {
   const { session, setSession, theme, toggleTheme } = useStore();
   const path = useRouterState({ select: (r) => r.location.pathname });
-  const current = GROUPS.flatMap((g) => g.items.map((i) => ({ ...i, group: g.label }))).find((i) => (i.url === "/" ? path === "/" : path.startsWith(i.url)));
-  if (!session) return null;
-  const name = session.name ?? session.email;
+  const current = [...GROUPS, factoryGroup].flatMap((g) => g.items.map((i) => ({ ...i, group: g.label }))).find((i) => (i.url === "/" ? path === "/" : path.startsWith(i.url)));
+  if (!identity && !session) return null;
+  const name = identity?.name ?? session?.name ?? session?.email ?? "Member";
   const btn = "grid h-9 w-9 place-items-center rounded-lg border border-border/60 bg-card/60 text-muted-foreground transition";
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/60 bg-background/70 px-4 backdrop-blur-xl">
@@ -175,27 +186,28 @@ function TopBar() {
         <span className="text-foreground">{current?.title ?? "Page"}</span>
       </div>
       <div className="ml-auto flex items-center gap-2">
+        {identity && <select aria-label="Factory" className="rounded-lg border bg-card p-1 text-sm" value={site ?? ""} onChange={event => { const url = new URL(window.location.href); url.searchParams.set("site", event.target.value); window.location.assign(url.href); }}>{identity.sites.map(s => <option key={s.key} value={s.key}>{s.name}</option>)}</select>}
         <button onClick={toggleTheme} aria-label="Toggle theme" className={`${btn} hover:text-foreground`}>{theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}</button>
         <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-card/60 px-2 py-1">
           <div className="grid h-6 w-6 place-items-center rounded-md bg-gradient-to-br from-primary to-info text-[10px] font-bold text-primary-foreground">{initials(name)}</div>
-          <div className="hidden text-xs leading-tight sm:block"><div className="font-medium">{name}</div><div className="text-[10px] text-muted-foreground">{session.roles[0] ?? "Member"}</div></div>
+          <div className="hidden text-xs leading-tight sm:block"><div className="font-medium">{name}</div><div className="text-[10px] text-muted-foreground">{session?.roles[0] ?? "Member"}</div></div>
         </div>
-        <Button variant="ghost" onClick={() => {void supabase.auth.signOut();setSession(null);}} title="Sign out" aria-label="Sign out" className={`${btn} hover:text-destructive`}><LogOut className="h-4 w-4" /></Button>
+        {identity ? <form method="post" action="/api/ems/auth/sign-out"><Button title="Sign out" aria-label="Sign out" className={btn} variant="ghost"><LogOut className="h-4 w-4" /></Button></form> : <Button variant="ghost" onClick={() => {void supabase.auth.signOut();setSession(null);}} title="Sign out" aria-label="Sign out" className={`${btn} hover:text-destructive`}><LogOut className="h-4 w-4" /></Button>}
       </div>
     </header>
   );
 }
 
-export function Shell() {
+export function Shell(props: NativeProps) {
   const { session, setSession } = useStore();
-  useEffect(() => { const {data:{subscription}}=supabase.auth.onAuthStateChange((event,s)=>{if(s&&(event==='SIGNED_IN'||event==='INITIAL_SESSION'))setSession({email:s.user.email??'Verified user',roles:['Viewer'],permissions:[],source:'verified'});if(event==='SIGNED_OUT')setSession(null);});return()=>subscription.unsubscribe();},[]);
-  if (!session) return <SignIn />;
+  useEffect(() => { if (props.identity) return; const {data:{subscription}}=supabase.auth.onAuthStateChange((event,s)=>{if(s&&(event==='SIGNED_IN'||event==='INITIAL_SESSION'))setSession({email:s.user.email??'Verified user',roles:['Viewer'],permissions:[],source:'verified'});if(event==='SIGNED_OUT')setSession(null);});return()=>subscription.unsubscribe();},[]);
+  if (!props.identity && !session) return <SignIn />;
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background text-foreground">
-        <AppSidebar />
+        <AppSidebar {...props} />
         <div className="flex min-w-0 flex-1 flex-col">
-          <TopBar />
+          <TopBar {...props} />
           <main className="min-h-0 flex-1 p-4 lg:p-6"><Outlet /></main>
         </div>
       </div>

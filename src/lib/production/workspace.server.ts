@@ -1,3 +1,4 @@
+import { modelSchema, validateModel } from "@/lib/engineering/model";
 import { z } from "zod";
 import { canonical } from "@/lib/integrations/adapters";
 import { spatialDocumentSchema } from "@/lib/spatial/model";
@@ -28,6 +29,12 @@ async function validateWorkspace(input: Scope, payload: unknown) {
   }
   if (!raw || Buffer.byteLength(raw) > maximumDocumentBytes)
     throw new EmsError(413, "Workspace document exceeds its size limit.");
+  if (input.workspace === "engineering") {
+    const document = z.object({model: modelSchema, lifecycle: z.enum(["Draft", "In Review"])}).parse(payload);
+    if (document.lifecycle === "In Review" && validateModel(document.model).length)
+      throw new EmsError(400, "Resolve engineering validation blockers before review.");
+    return document;
+  }
   if (input.workspace === "spatial") {
     const model = spatialDocumentSchema.parse(payload);
     if (model.siteCode !== input.site)

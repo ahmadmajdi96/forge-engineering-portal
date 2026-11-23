@@ -1,6 +1,3 @@
-import { openFactoryStudio } from "@/lib/studio/legacy-route";
 import {createFileRoute} from '@tanstack/react-router';
 import {ScreenEditor} from '@/components/engineering/reference-studio';
-export const Route=createFileRoute('/screen-editor')({
-  beforeLoad: ({ context, location }) => openFactoryStudio(context.ems.mode, location.searchStr, "screens"),
-head:()=>({meta:[{title:'Screen editor · Engineering Portal'},{name:'description',content:'Design operator screens with typed bindings and isolated tablet previews.'},{property:'og:title',content:'Screen editor · Engineering Portal'},{property:'og:description',content:'Design operator screens with typed bindings and isolated tablet previews.'},{property:'og:type',content:'website'},{name:'twitter:card',content:'summary'}]}),component:ScreenEditor});
+export const Route=createFileRoute('/screen-editor')({head:()=>({meta:[{title:'Screen editor · Engineering Portal'},{name:'description',content:'Design operator screens with typed bindings and isolated tablet previews.'},{property:'og:title',content:'Screen editor · Engineering Portal'},{property:'og:description',content:'Design operator screens with typed bindings and isolated tablet previews.'},{property:'og:type',content:'website'},{name:'twitter:card',content:'summary'}]}),component:ScreenEditor});

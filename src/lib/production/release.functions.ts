@@ -38,3 +38,16 @@ export const updateFactoryRelease = createServerFn({ method: "POST" })
     const { transitionRelease } = await import("./releases.server");
     return transitionRelease(getRequest(), data);
   });
+
+export const deliveryHistory = createServerFn({method:"POST"})
+  .inputValidator(input => siteScope.parse(input))
+  .handler(async ({data}) => {
+    const {getRequest}=await import("@tanstack/react-start/server");
+    const {requirePermission}=await import("./auth.server");
+    const {database}=await import("./db.server");
+    await requirePermission(getRequest(),data.site,"ems.factory_releases.view");
+    const rows=await database()<{event_id:string; consumer:string;release_id:string;send_state:string;business_state:string;attempts:number}[]>`
+      select event_id,consumer,release_id,send_state,business_state,attempts from ems.outbox
+      where site=${data.site} order by created_at desc,event_id limit 100`;
+    return [...rows];
+  });
