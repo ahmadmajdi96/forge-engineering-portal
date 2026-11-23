@@ -1,3 +1,4 @@
+import {WorkspaceHistory} from './workspace-history';
 import {AddRecord,RecordActions,useRecords} from './record-editor';
 import {useState} from 'react';
 import {Link} from '@tanstack/react-router';
@@ -6,12 +7,165 @@ import {Button} from '@/components/ui/button';
 import {useEngineering} from '@/lib/engineering/context';
 import {Surface,ReferencePage,ScopeSelectors,RefTabs,RefTable,KeyValues,Notice,StationList,Badge,DetailLinks,DraftDialog} from './reference-ui';
 
-export function EngineeringOverview(){const {model,select,issues}=useEngineering();return <ReferencePage title="Engineering Overview" sub="Asset engineering, dependencies, and release readiness for deployment"><ScopeSelectors/><div className="ref-kpis">{[[Layers,'Station mappings',`${model.stations.filter(s=>s.operation).length} / ${model.stations.length}`,true],[Settings2,'Mandatory process bindings',`${model.stations.filter(s=>s.app&&s.challengeBound).length} / ${model.stations.length}`,false],[Server,'Edge targets',String(model.records.filter(r=>r.kind==='node'&&!r.archived).length),true],[AlertTriangle,'Release blockers',String(issues.length),false]].map(([Icon,label,value,ok],i)=>{const I=Icon as typeof Layers;return <div className="ref-kpi" key={String(label)}><I size={30} className={i===3?'text-destructive':'text-info'}/><div><span>{String(label)}</span><strong>{String(value)}</strong></div>{i!==3&&(ok?<CheckCircle2 size={24} className="text-success"/>:<AlertTriangle size={24} className="text-warning"/>)}</div>;})}</div><div className="ref-overview-grid"><div className="ref-stack"><Surface title={<><Network/>Line & Dependency Summary</>} sub={`${model.scope} / ${model.name}`}><div className="ref-summary-halves"><KeyValues items={[["Production release (illustrative)",<><CheckCircle2 size={14} className="text-success"/>r3 · Confirmed</>],["Engineering draft (staged)",<><FileText size={14}/>r4 · Under Review</>],["Scope",`${model.stations.length} stations`],["Edge targets","1 (line controller)"]]}/><div><b>Dependency coverage (draft r4)</b>{[['Station mappings',`${model.stations.filter(s=>s.operation).length} / ${model.stations.length}`],['Process bindings (mandatory)','5 / 6'],['Edge target assignment','1 / 1'],['Required workflows','4 / 6']].map(([k,v])=><div className="ref-coverage" key={k}><CheckCircle2 size={14} className="text-success"/><span>{k}</span><b>{v}</b></div>)}</div></div></Surface><Surface title={<><AlertTriangle className="text-destructive"/>Release Blockers (Draft r4)</>} sub="Items that must be resolved before approval and deployment" actions={<><Button variant="outline" size="sm" asChild><Link to="/release-readiness"><Search size={14}/>Inspect blockers</Link></Button><Button size="sm" asChild><Link to="/release-readiness"><ExternalLink size={14}/>Open release</Link></Button></>}><RefTable headers={['#','Station','Issue','Details','Draft']} rows={issues.map((issue,i)=>[i+1,<strong>{issue.object}</strong>,<span className="ref-icon-text"><AlertTriangle size={14} className="text-destructive"/>{issue.message}</span>,issue.category,<Badge>r4</Badge>])}/></Surface><Surface title={<><Network/>Stations ({model.name})</>} sub="Configured station list and control mode (draft r4)"><div className="ref-station-tiles">{model.stations.map(s=><Button variant="outline" key={s.id} asChild onClick={()=>select(s.id)}><Link to="/workstations"><Box size={19}/><span>{s.id}<strong>{s.name.replace(' (CCP)','').replace(' & Palletize','')}</strong></span><Badge tone={s.mode==='automatic'?'cyan':'neutral'}>{s.mode.toUpperCase()}</Badge></Link></Button>)}</div></Surface></div><Surface title={<><FileText/>Review Queue</>} sub="Engineering items pending review and approval" className="ref-review-queue">{[['Line Configuration Update','Station & workflow changes','Process Engineer'],['CCP Workflow Assignment','Metal detector (ST-104)','Quality Engineer'],['Instrument Calibration Package','Raw intake scale (ST-101)','Automation Engineer']].map(([title,desc,role])=><Link to="/changes" className="ref-review-item" key={title}><FileText size={22}/><div><strong>r4 – {title}</strong><small>L-01 MixerLineA · {desc}</small></div><Badge>{role}</Badge></Link>)}</Surface></div></ReferencePage>;}
+const engineeringSteps = [
+  {to:'/line-engineering', title:'Configure the line', detail:'Set the topology, production steps and station assignments.', icon:Network},
+  {to:'/process-routes', title:'Design a process', detail:'Map operations and material flow across stations.', icon:Settings2},
+  {to:'/edge-app-studio', title:'Edit the operator workflow', detail:'Build screens, bindings and operator steps.', icon:Monitor},
+] as const;
 
-export function AssetHierarchy(){const {model,selected}=useEngineering();const s=model.stations.find(s=>s.id===selected)??model.stations[3];const [tab,setTab]=useState('Containment'),[dialog,setDialog]=useState(false);if(!s)return null;return <ReferencePage title="Asset Model / Hierarchy" sub={`${model.scope} / ${model.name}`} actions={<DetailLinks/>}><div className="ref-hierarchy-grid"><StationList tree/><Surface title={<><Settings2/> {s.id} {s.name.replace(' (CCP)','')} <Badge tone="good">r3 ACTIVE</Badge><Badge>r4 DRAFT</Badge></>} sub={`${model.scope} / ${model.name}`} actions={<><Button variant="outline" size="sm" onClick={()=>setDialog(true)}><FileText size={14}/>Create Draft</Button><Button size="sm" onClick={()=>setDialog(true)}><Check size={14}/>Submit for Approval</Button></>}><RefTabs items={['Containment','Material flow','External IDs','Revision history']} value={tab} onChange={setTab}/>{tab==='Containment'?<><div className="ref-containment-grid"><div className="ref-containment-bands">{[[Network,'Logical station',s.id,'Type','Station','Operating mode',s.mode,'Purpose','Metal detection (product)'],[Box,'Physical equipment',s.equipment[0]??'MD-104','Category','Metal detector','Manufacturer','Mettler-Toledo','Model','Safeline IQ4'],[Monitor,'Terminal','TERM-'+s.id.slice(3),'Type','HMI / Operator','IP address','10.20.1.104','Location','Line control panel'],[Server,'Edge node','EDGE-RUH-01','Type','Edge runtime','Role','Line control (L-01)','Version','v2.6.0']].map(([Icon,label,id,...rest])=>{const I=Icon as typeof Network;return <div className="ref-containment-band" key={String(label)}><I size={26}/><div><small>{String(label)}</small><b>{String(id)}</b></div>{[0,2,4].map(i=><div key={i}><small>{String(rest[i])}</small><span>{String(rest[i+1])}</span></div>)}</div>;})}</div><div className="ref-stack"><Surface title="External identity map" sub="Mappings to external manufacturing systems"><div className="ref-identity"><Network size={19}/><b>MES resource</b><Badge>MES-{s.id}</Badge><Badge tone="good">Accepted · sample</Badge></div></Surface><Surface title="Revision summary"><div className="ref-version-pair"><div className="approved"><Badge tone="good">r3</Badge> <b>Active (illustrative)</b><KeyValues items={[["Approved","2025-01-10 09:24"],["Deployed","2025-01-10 10:05"],["Change","Baseline configuration"]]}/></div><div><Badge>r4</Badge> <b>Draft (Editing)</b><KeyValues items={[["Created","2025-01-14 14:37"],["Status","In Draft"],["Change","Update signal mapping and throughput"]]}/></div></div></Surface></div></div><Surface title="Draft proposals (r4)" sub="Proposed engineering changes (not active). Review and submit for approval."><RefTable headers={['Scope','Parameter','Current (r3)','Proposed (r4)','Impact']} rows={[[<span className="ref-icon-text"><Radio size={17}/>Signal mapping</span>,'Reject signal source','I/O 0.4','I/O 0.6',<Badge tone="cyan">Configuration</Badge>],['Process parameter','Throughput (nominal)','5,000 kg/h','5,500 kg/h',<Badge tone="cyan">Performance</Badge>]]}/></Surface></>:tab==='External IDs'?<Surface title="External identity map"><KeyValues items={[["Stable station identity",s.id],["Proposed MES operation",s.operation],["Acknowledgement","Not verified — disconnected"]]}/></Surface>:tab==='Material flow'?<Surface title="Material flow"><div className="ref-mini-flow">{model.stations.map(v=><span key={v.id}>{v.id}<ArrowRight size={15}/></span>)}</div><Button variant="outline" asChild><Link to="/line-engineering">Open topology</Link></Button></Surface>:<Surface title="Revision history"><RefTable headers={['Revision','Lifecycle','Scope']} rows={[["r4","Draft","Proposed configuration"],["r3","Illustrative baseline","Reference design only"]]}/><Button variant="outline" asChild><Link to="/changes">Open saved revision history</Link></Button></Surface>}<Notice><b>Engineering draft only</b><p>This is a proposal (r4) and does not modify live production. Approval via Change Control is required, and deployment is a separate step.</p></Notice></Surface></div><DraftDialog open={dialog} onClose={()=>setDialog(false)}/></ReferencePage>;}
+const factorySteps = [
+  {to:'/factory-layout', title:'Place factory assets', detail:'Arrange the floor plan and inspect it in 3D.', icon:Box},
+  {to:'/factory-process', title:'Build a factory route', detail:'Connect placed assets into a process sequence.', icon:Network},
+  {to:'/application-studio', title:'Author an application', detail:'Validate the operator application and save a revision.', icon:Monitor},
+  {to:'/factory-releases', title:'Review and publish', detail:'Inspect the submitted application revision and its evidence.', icon:ShieldCheck},
+  {to:'/factory-assignment', title:'Assign a release', detail:'Select a published release for an eligible target.', icon:Server},
+] as const;
 
-export function StationComposition(){const {model,selected}=useEngineering();const s=model.stations.find(s=>s.id===selected)??model.stations[3];const [tab,setTab]=useState('Equipment');if(!s)return null;const suffix=s.id.slice(3),parts=model.records.filter(r=>!r.archived&&r.parent===s.id&&['equipment','terminal'].includes(r.kind)).map(r=>[r.name,r.id,r.kind==='terminal'?Monitor:Radio] as const);return <ReferencePage title="Station Composition Editor" sub={`Define logical station composition, assign physical assets, and configure capabilities. · ${s.id} ${s.name}`} actions={<ScopeSelectors/>}><DetailLinks/><div className="ref-composition-grid"><StationList/><div className="ref-stack"><RefTabs items={['Equipment','Process','Apps','Signals','History']} value={tab} onChange={setTab}/>{tab==='Equipment'?<Surface title={`Logical Station · ${s.id} ${s.name.replace(' (CCP)','')}`} actions={<><Badge tone="cyan">Draft r4</Badge><AddRecord kind="equipment"/></>}><div className="ref-composition-diagram"><div className="ref-logical-node"><Server size={21}/><b>{s.id}</b><strong>{s.name.replace(' (CCP)','')}</strong><small>(Logical Station)</small></div><div className="ref-composition-branches">{parts.map(([role,id,Icon])=><Link to={Icon===Monitor?'/terminals':'/machines'} key={id}><Icon size={21}/><span>{role}</span><Badge>{id}</Badge></Link>)}</div></div><h3 className="ref-section-label">Effective Assignments</h3><p className="ref-sub">Current and planned physical asset assignments for this logical station.</p><RefTable headers={['Asset ID','Role','Valid from','Valid to','Calibration eligibility']} rows={parts.map(([role,id],i)=>[<strong>{id}</strong>,role,'2024-11-01 00:00','— (Current)',i===0||i===2?<span className="ref-icon-text"><Check size={14} className="text-success"/>Eligible</span>:'— Not eligible'])}/><div className="ref-replacement"><div><h3>Detector Asset Details</h3><KeyValues items={[["Asset ID","MD-"+suffix],["Serial No.","MD-8842"],["Status",<Badge tone="good">In Service · sample</Badge>]]}/></div><ArrowRight size={20}/><div><h3>Proposed Replacement</h3><KeyValues items={[["Asset ID","MD-"+suffix+"B"],["Serial No.","—"],["Status",<Badge tone="warn">Pending Review</Badge>]]}/></div></div></Surface>:<Surface title={`${tab} · ${s.id}`}>{tab==='Process'?<KeyValues items={[["Operation",s.operation],["Tracking",s.tracking],["Workflow",s.challengeBound?'Assigned in draft':'Missing CCP workflow assignment']]}/>:tab==='Apps'?<KeyValues items={[["Application",s.app],["Edge host","EDGE-RUH-01"],["Production deployment","Not verified"]]}/>:<Button variant="outline" asChild><Link to={tab==='Signals'?'/station-connectivity':'/changes'}>Open {tab.toLowerCase()}</Link></Button>}</Surface>}</div><aside className="ref-stack"><Surface title="Station Capabilities">{['Metal inspection','Reject verification','CCP challenge'].map(c=><div className="ref-capability" key={c}><CheckCircle2 size={18}/>{c}</div>)}</Surface><Surface title="Edge Runtime"><div className="ref-runtime"><Server size={30}/><div><strong>EDGE-RUH-01</strong><small>Hosts the station runtime (not a machine component).</small></div><Badge tone="good">Runtime</Badge></div></Surface><Surface title="Change & Deployment"><div className="ref-lifecycle"><span className="current">Draft<b>r4</b></span><span>Approval<b>Pending</b></span><span>Deployment<b>Not Deployed</b></span></div><Notice>Engineering drafts do not directly modify live production. Changes are applied only after approval and deployment.</Notice></Surface><Surface title="Assignment Rules"><Notice tone="good"><b>No exclusive assignment conflicts.</b><p>Each physical asset is assigned to this station only for the specified validity period (illustrative).</p></Notice></Surface></aside></div></ReferencePage>;}
+const issueEditors = {
+  Registry:'/registry', Mapping:'/asset-steps', Equipment:'/workstations', Process:'/process-routes',
+  Signals:'/station-connectivity', Workflow:'/edge-app-studio', Policy:'/command-policy',
+} as const;
 
+export function EngineeringOverview() {
+  const {model,workspaceModel,select,issues,revision,native,site} = useEngineering();
+  const stations = model.stations;
+  const mappings = stations.filter(station=>station.operation).length;
+  const bindings = stations.filter(station=>station.app && station.challengeBound).length;
+  const nodes = workspaceModel.records.filter(record=>record.kind==='node' && !record.archived).length;
+  const metrics = [
+    {label:'Station mappings',value:`${mappings} / ${stations.length}`,icon:Layers},
+    {label:'Process bindings',value:`${bindings} / ${stations.length}`,icon:Settings2},
+    {label:'Workspace edge targets',value:nodes,icon:Server},
+    {label:'Workspace design issues',value:issues.length,icon:AlertTriangle},
+  ];
+  const steps = native && site ? factorySteps : engineeringSteps;
+  return <ReferencePage title="Engineering Overview" sourceLabel={native ? "Factory engineering draft" : "Sandbox engineering draft"} sub="Configure the production line, resolve design issues and review saved revisions.">
+    <ScopeSelectors/>
+    <div className="ref-kpis">{metrics.map(({icon:Icon,label,value})=><div className="ref-kpi" key={label}>
+      <Icon aria-hidden="true" size={25} className={label==='Workspace design issues' && issues.length?'text-warning':'text-info'}/>
+      <div><span>{label}</span><strong>{value}</strong></div>
+    </div>)}</div>
+    <div className="ref-overview-grid">
+      <div className="ref-stack">
+        <Surface title={<><Network/>Line configuration</>} sub={`${model.scope} / ${model.name}`}
+          actions={<Button variant="outline" size="sm" asChild><Link to="/line-engineering">Edit topology<ArrowRight size={14}/></Link></Button>}>
+          <KeyValues items={[
+            ['Stations', stations.length],
+            ['Control mode', `${stations.filter(station=>station.mode==='automatic').length} automatic · ${stations.filter(station=>station.mode==='manual').length} manual`],
+            ['Saved workspace revision', revision ? `r${revision}` : 'No revision loaded'],
+          ]}/>
+        </Surface>
+        <Surface title={<><AlertTriangle/>Workspace design issues</>} sub="Open the editor for the affected object."
+          actions={<Button variant="outline" size="sm" asChild><Link to="/release-readiness">Review readiness<ArrowRight size={14}/></Link></Button>}>
+          {issues.length ? <RefTable headers={['Object','Issue','Editor']} rows={issues.map(issue=>{
+            const target=issueEditors[issue.category as keyof typeof issueEditors] ?? '/release-readiness';
+            const station=workspaceModel.stations.find(item=>item.id===issue.object);
+            return [<strong>{issue.object}</strong>,issue.message,<Link className="ref-issue-link" to={target}
+              onClick={()=>{if(station) select(station.id);}}>{issue.category}<ArrowRight size={13}/></Link>];
+          })}/> : <p className="ref-empty"><CheckCircle2 size={16}/>No engineering validation issues in this workspace.</p>}
+        </Surface>
+        <Surface title={<><Network/>Stations</>} sub={model.name}>
+          {stations.length ? <div className="ref-station-tiles">{stations.map(station=>
+            <Button variant="outline" key={station.id} asChild><Link to="/workstations" onClick={()=>select(station.id)}>
+              <Box size={19}/><span>{station.id}<strong>{station.name}</strong></span><Badge tone={station.mode==='automatic'?'cyan':'neutral'}>{station.mode}</Badge>
+            </Link></Button>)}</div> : <p className="ref-empty">No stations configured for this line. <Link className="ref-issue-link" to="/line-engineering">Configure line</Link></p>}
+        </Surface>
+      </div>
+      <div className="ref-stack">
+        <Surface title={native && site ? 'Factory engineering workflow' : 'Engineering workflow'}>
+          <nav aria-label="Engineering workflow"><ol className="ref-journey">{steps.map(({to,title,detail,icon:Icon})=>
+            <li key={to}><Link to={to} search={site ? {site} : {}}><Icon size={18} aria-hidden="true"/>
+              <span><strong>{title}</strong><small>{detail}</small></span><ArrowRight size={15} aria-hidden="true"/></Link></li>)}</ol></nav>
+        </Surface>
+        <Surface title="Engineering reviews">
+          <Link to="/approvals" className="ref-issue-link">Open approval chain<ArrowRight size={15}/></Link>
+        </Surface>
+      </div>
+    </div>
+  </ReferencePage>;
+}
+
+function EmptyStationPage({title}:{title:string}) {
+  return <ReferencePage title={title}><ScopeSelectors/><Surface title="No stations on this line">
+    <Button asChild variant="outline"><Link to="/line-engineering">Configure line<ArrowRight size={14}/></Link></Button>
+  </Surface></ReferencePage>;
+}
+export function AssetHierarchy() {
+  const {model,selected,revision,lineId} = useEngineering();
+  const station = model.stations.find(item=>item.id===selected) ?? model.stations[0];
+  const [tab,setTab]=useState('Containment');
+  const [dialog,setDialog]=useState<'draft'|'review'|null>(null);
+  if (!station) return <EmptyStationPage title="Asset Model / Hierarchy"/>;
+  const records=model.records.filter(item=>!item.archived && item.parent===station.id);
+  const assets=records.filter(item=>item.kind==='equipment'||item.kind==='terminal'||item.kind==='node');
+  const mappings=records.filter(item=>item.kind==='mapping');
+  const changes=records.filter(item=>item.kind==='change');
+  const mappingList=mappings.length ? <KeyValues items={mappings.map(record=>[record.name,record.binding||'Unbound'])}/> : <p className="ref-empty">No external IDs mapped to this station.</p>;
+  return <ReferencePage title="Asset Model / Hierarchy" sub={`${model.scope} / ${model.name}`} actions={<DetailLinks/>}>
+    <div className="ref-hierarchy-grid"><StationList tree/><Surface title={<><Settings2/>{station.id} {station.name}<Badge>Working draft</Badge></>}
+      sub={`${lineId} · ${model.name}`} actions={<div className="ref-actions">
+        <Button variant="outline" size="sm" onClick={()=>setDialog('draft')}><FileText size={14}/>Save draft</Button>
+        <Button size="sm" onClick={()=>setDialog('review')}><Check size={14}/>Submit for review</Button>
+      </div>}>
+      <RefTabs items={['Containment','Material flow','External IDs','Revision history']} value={tab} onChange={setTab}/>
+      {tab==='Containment'?<>
+        <div className="ref-containment-grid"><div className="ref-containment-bands">
+          <div className="ref-containment-band"><Network size={26}/><div><small>Logical station</small><b>{station.id}</b></div><div><small>Control mode</small>{station.mode}</div><div><small>Operation</small>{station.operation||'Unbound'}</div></div>
+          {assets.map(asset=><div className="ref-containment-band" key={asset.kind+asset.id}>
+            {asset.kind==='equipment'?<Box size={24}/>:asset.kind==='node'?<Server size={24}/>:<Monitor size={24}/>}
+            <div><small>{asset.kind}</small><b>{asset.name}</b></div><div><small>Asset ID</small>{asset.id}</div><div><small>Revision</small>{asset.version||'Unspecified'}</div>
+          </div>)}
+          {!assets.length && <p className="ref-empty px-3">No asset records assigned. <Link to="/workstations" className="ref-issue-link">Configure station</Link></p>}
+        </div><div className="ref-stack">
+          <Surface title="External identity map">{mappingList}</Surface>
+          <Surface title="Revision summary"><KeyValues items={[['Last loaded revision',revision?`r${revision}`:'No saved revision loaded'],['Change reason',model.reason||'No reason entered']]}/></Surface>
+        </div></div>
+        <Surface title="Draft proposals">
+          {changes.length?<RefTable headers={['Change','Description','Revision']} rows={changes.map(change=>[change.name,change.description,change.version])}/>:<p className="ref-empty">No draft proposals recorded for this station.</p>}
+        </Surface>
+      </>:tab==='External IDs'?<Surface title="External identity map">{mappingList}<Button variant="outline" asChild><Link to="/mes-integration">Review mappings</Link></Button></Surface>
+      :tab==='Material flow'?<Surface title="Material flow"><div className="ref-mini-flow">{model.stations.map((item,index)=><span key={item.id}>{item.id}{index<model.stations.length-1 && <ArrowRight size={15}/>}</span>)}</div><Button variant="outline" asChild><Link to="/line-engineering">Open topology</Link></Button></Surface>
+      :<WorkspaceHistory/>}
+    </Surface></div>
+    <DraftDialog open={dialog!==null} review={dialog==='review'} onClose={()=>setDialog(null)}/>
+  </ReferencePage>;
+}
+
+export function StationComposition() {
+  const {model,selected,revision,workspaceModel} = useEngineering();
+  const station = model.stations.find(item=>item.id===selected) ?? model.stations[0];
+  const [tab,setTab]=useState('Equipment');
+  if (!station) return <EmptyStationPage title="Station Composition Editor"/>;
+  const children=model.records.filter(record=>!record.archived && record.parent===station.id);
+  const parts=children.filter(record=>record.kind==='equipment'||record.kind==='terminal');
+  const commands=children.filter(record=>record.kind==='command');
+  const hosts=children.filter(record=>record.kind==='node');
+  const conflicts=station.equipment.filter(id=>workspaceModel.stations.some(other=>other.id!==station.id&&other.equipment.includes(id)));
+  return <ReferencePage title="Station Composition Editor" sub={`${station.id} · ${station.name}`} actions={<ScopeSelectors/>}>
+    <DetailLinks/><div className="ref-composition-grid"><StationList/><div className="ref-stack">
+      <RefTabs items={['Equipment','Process','Apps','Signals','History']} value={tab} onChange={setTab}/>
+      {tab==='Equipment'?<Surface title={`Logical station · ${station.name}`} actions={<AddRecord kind="equipment"/>}>
+        <div className="ref-composition-diagram"><div className="ref-logical-node"><Server size={21}/><b>{station.id}</b><strong>{station.name}</strong><small>Logical station</small></div>
+          <div className="ref-composition-branches">{parts.map(asset=><Link to={asset.kind==='terminal'?'/terminals':'/machines'} key={asset.kind+asset.id}>
+            {asset.kind==='terminal'?<Monitor size={21}/>:<Box size={21}/>}<span>{asset.name}</span><Badge>{asset.id}</Badge>
+          </Link>)}</div></div>
+        <h3 className="ref-section-label">Asset assignments</h3>
+        {parts.length?<RefTable headers={['Asset ID','Role','Binding','Revision','Actions']} rows={parts.map(asset=>[asset.id,asset.name,asset.binding||'Unbound',asset.version,<RecordActions record={asset}/>])}/>
+          :<p className="ref-empty">Add an equipment record to configure this station’s assets.</p>}
+        {!!station.equipment.filter(id=>!parts.some(part=>part.id===id)).length && <KeyValues items={[['Other assigned IDs',station.equipment.filter(id=>!parts.some(part=>part.id===id)).join(', ')]]}/>}
+      </Surface>:tab==='History'?<WorkspaceHistory/>:<Surface title={`${tab} · ${station.id}`}>
+        {tab==='Process'?<><KeyValues items={[['Operation',station.operation||'Unbound'],['Tracking',station.tracking],['Challenge workflow',station.challengeBound?'Assigned in draft':'Unassigned']]}/>
+          <Button variant="outline" asChild><Link to="/asset-steps">Configure production steps</Link></Button></>
+          :tab==='Apps'?<><KeyValues items={[['Application',station.app||'Unbound']]}/><Button variant="outline" asChild><Link to="/edge-app-studio">Edit workflow</Link></Button></>
+          :<Button variant="outline" asChild><Link to="/station-connectivity">Inspect signal bindings</Link></Button>}
+      </Surface>}
+    </div><aside className="ref-stack">
+      <Surface title="Station capabilities"><KeyValues items={[['Configured commands',commands.length],['Equipment records',parts.filter(part=>part.kind==='equipment').length],['Terminal records',parts.filter(part=>part.kind==='terminal').length]]}/></Surface>
+      <Surface title="Edge runtime">{hosts.length?<KeyValues items={hosts.map(host=>[host.name,host.version])}/>:<p className="ref-empty">No edge node assigned directly to this station.</p>}<Link to="/edge-fleet" className="ref-issue-link">Inspect fleet<ArrowRight size={14}/></Link></Surface>
+      <Surface title="Change & deployment"><KeyValues items={[['Engineering revision',revision?`r${revision}`:'No saved revision loaded']]}/><Link to="/deployments" className="ref-issue-link">View deployments<ArrowRight size={14}/></Link></Surface>
+      <Surface title="Assignment rules"><Notice tone={conflicts.length?'warn':'good'}>{conflicts.length?`Equipment also assigned to other stations: ${conflicts.join(', ')}`:'No duplicate equipment assignments found for this station.'}</Notice></Surface>
+    </aside></div></ReferencePage>;
+}
 export function EquipmentComponents(){
  const {model,selected,select}=useEngineering();const {rows:equipment,put}=useRecords('equipment');const station=model.stations.find(s=>s.id===selected)??model.stations[0];
  const [part,setPart]=useState(''),[tab,setTab]=useState('Details'),[dialog,setDialog]=useState(false);
@@ -26,4 +180,57 @@ export function EquipmentComponents(){
  </Surface>:<Notice>No equipment assigned to this station.</Notice>}</div><DraftDialog open={dialog} onClose={()=>setDialog(false)}/></ReferencePage>;
 }
 
-export function TerminalsPeripherals(){const {rows:allTerminals}=useRecords('terminal');const {selected,model}=useEngineering();const terminals=allTerminals.filter(r=>r.parent===selected);const station=model.stations.find(s=>s.id===selected);const [tab,setTab]=useState('Station Configuration'),[device,setDevice]=useState('SCALE-101'),[tested,setTested]=useState(false),[dialog,setDialog]=useState(false);const devices=terminals.map(r=>[r.id,r.name,Monitor] as const);return <ReferencePage title="Terminals & Peripherals" sub={`${model.name} · ${station?.id??''} ${station?.name??''} · ${station?.mode??''}`} actions={<ScopeSelectors/>}><DetailLinks/><RefTabs items={['Station Configuration','Connectivity','App Binding','Tests & Verification','Change History']} value={tab} onChange={setTab}/><div className="ref-terminal-grid"><div className="ref-stack"><Surface title={`Terminals & Peripherals (${selected})`} sub="Operational devices and edge host for Raw Intake" actions={<AddRecord kind="terminal"/>}><div className="ref-device-tiles">{devices.map(([id,label,Icon])=><Button variant="outline" key={id} onClick={()=>setDevice(id)} className={device===id?'is-selected':''}><Icon size={24}/><strong>{id}</strong><small>{label}</small><span className="text-success">● Online · sample</span></Button>)}</div></Surface><Surface title="Device Drivers" sub="Configured drivers, versions, unit support and verification status"><RefTable headers={['Device ID','Driver version','Unit support','Connection health','Last verified test']} rows={devices.map(([id],i)=>[<strong>{id}</strong>,['Panel Agent v1.8.4','Barcode Driver v3.6.2','Scale Driver v2.4.1','Label Driver v2.7.0','Edge Runtime v4.2.0'][i],['—','EAN-13, Code128, QR','kg','ZPL','App Hosting'][i],<span className="text-success">● Healthy · sample</span>,`2025-01-28 10:${12+i}`])}/></Surface><Surface title="App Binding" sub="Operational application and user access at this station"><div className="ref-app-binding"><Layers size={27}/><b>{station?.app||'Unassigned'}</b><Badge tone="cyan">Kiosk Mode</Badge><span>Individual worker sign-in</span></div><p className="ref-sub">Relevant Settings</p><div className="ref-icon-text"><Weight size={14}/>Scale Unit: kg <CheckCircle2 size={14}/>Stable-Reading Requirement: Enabled <Barcode size={14}/>Barcode Duplicate Filtering: Enabled</div></Surface></div><Surface title="Local Read-Test (Sandbox)" sub="On-demand simulated device test (no production impact)"><label>Test Target<select aria-label="Test target" value={device} onChange={e=>setDevice(e.target.value)}>{devices.map(([id,label])=><option key={id} value={id}>{id} ({label})</option>)}</select></label><Button variant="outline" className="ref-full-button" onClick={()=>setTested(true)}><Activity size={15}/>Run simulated read</Button><div className="ref-read-result"><h3><CheckCircle2 size={21}/>{tested?'Simulated read complete':'Illustrative read result'}</h3><KeyValues items={[["Measured Weight",<strong>12.480 kg</strong>],["Stability","Stable (±0.005 kg, 3 s)"],["Unit","kg"],["Timestamp","2025-01-28 10:14:27 · sample"]]}/></div><Surface title="Recent Reads (Sandbox)"><RefTable headers={['#','Weight (kg)','Status']} rows={['12.480','12.475','12.480'].map((w,i)=>[i+1,w,<Badge tone="good">Stable</Badge>])}/></Surface></Surface><Surface title="Station Configuration" sub="Draft vs. confirmed production configuration (illustrative)"><div className="ref-version-pair"><div className="draft"><Pencil size={21}/><b>Draft r4</b><small>Engineering (Editable)</small></div><div><Lock size={21}/><b>Production r3</b><small>Confirmed (sample)</small></div></div><RefTable headers={['Configuration item','Draft r4','Production r3']} rows={['App Binding','Kiosk Mode','Worker Sign-In','Scale Unit','Stable-Reading','Barcode Dup. Filter','Drivers (Key)'].map((k,i)=>[k,['Material Intake v2.3','Enabled','Individual','kg','Enabled','Enabled','Scan v3.6.2 / Scale v2.4.1'][i],['Material Intake v2.3','Enabled','Individual','kg','Enabled','Enabled','Scan v3.6.2 / Scale v2.4.1'][i]])}/><div className="ref-actions ref-terminal-actions"><Button variant="outline" onClick={()=>setTested(true)}><Activity size={15}/>Test in Sandbox</Button><Button onClick={()=>setDialog(true)}><Network size={15}/>Propose Binding Change</Button></div><Notice>Draft changes are for engineering validation only. To take effect in production, submit a change proposal for review and approval, then deploy as a new production version.</Notice></Surface></div><DraftDialog open={dialog} onClose={()=>setDialog(false)}/></ReferencePage>;}
+export function TerminalsPeripherals() {
+  const {model,selected,select,setModel,revision} = useEngineering();
+  const station = model.stations.find(item=>item.id===selected) ?? model.stations[0];
+  const [tab,setTab]=useState('Station Configuration');
+  const [deviceId,setDeviceId]=useState('');
+  const [dialog,setDialog]=useState(false);
+  const {rows,put}=useRecords('terminal');
+  if (!station) return <EmptyStationPage title="Terminals & Peripherals"/>;
+  const devices=rows.filter(device=>device.parent===station.id);
+  const device=devices.find(item=>item.id===deviceId) ?? devices[0];
+  return <ReferencePage title="Terminals & Peripherals" sub={`${model.name} · ${station.id} ${station.name}`} actions={<ScopeSelectors/>}>
+    <DetailLinks/>
+    <label className="ref-terminal-station">Station<select value={station.id} onChange={event=>select(event.target.value)}>
+      {model.stations.map(item=><option key={item.id} value={item.id}>{item.id} {item.name}</option>)}
+    </select></label>
+    <RefTabs items={['Station Configuration','Connectivity','App Binding','Tests & Verification','Change History']} value={tab} onChange={setTab}/>
+    {tab==='Change History'?<WorkspaceHistory/>:<div className="ref-terminal-grid">
+      <Surface title="Terminals & peripherals" sub={station.name} actions={<AddRecord kind="terminal"/>}>
+        <div className="ref-device-tiles">{devices.map(item=><Button variant="outline" key={item.id} onClick={()=>setDeviceId(item.id)}
+          aria-pressed={device?.id===item.id} className={device?.id===item.id?'is-selected':''}><Monitor size={24}/><strong>{item.id}</strong><small>{item.name}</small></Button>)}</div>
+        {!devices.length && <p className="ref-empty">No terminals assigned to this station.</p>}
+      </Surface>
+      {tab==='Station Configuration'?<Surface title="Station configuration">
+        <KeyValues items={[['Mode',station.mode],['Operation',station.operation||'Unbound'],['Application',station.app||'Unbound'],['Assigned devices',devices.length],['Saved workspace revision',revision?`r${revision}`:'No revision loaded']]}/>
+      </Surface>:tab==='App Binding'?<Surface title="Application binding">
+        <label>Station application<input value={station.app} onChange={e=>setModel({...model,stations:model.stations.map(item=>item.id===station.id?{...item,app:e.target.value}:item)})}/></label>
+        <Button variant="outline" className="mt-3" asChild><Link to="/edge-app-studio">Open workflow editor<ArrowRight size={14}/></Link></Button>
+      </Surface>:tab==='Connectivity'?<Surface title="Device connectivity" sub={device?.name}>
+        {device?<><label>Signal binding<input value={device.binding} onChange={e=>put({...device,binding:e.target.value})}/></label>
+          <KeyValues items={[['Device revision',device.version],['Unit',device.unit||'Unspecified'],['Live connection','Unverified']]}/></>
+          :<p>Select a station with a configured device.</p>}
+      </Surface>:device?<DeviceReadTest key={device.parent+device.id} device={device}/>:<Surface title="Local read test"><p>Select a station with a configured device.</p></Surface>}
+      <Surface title={device?.name??'Device details'} actions={device?<RecordActions record={device}/>:undefined}>
+        {device?<KeyValues items={[['Device ID',device.id],['Configured version',device.version],['Configured value',device.value||'Unspecified'],['Unit',device.unit||'Unspecified']]}/>:<p>No device selected.</p>}
+        <div className="ref-actions ref-terminal-actions"><Button onClick={()=>setDialog(true)}><Save size={15}/>Save draft</Button></div>
+      </Surface>
+    </div>}
+    <DraftDialog open={dialog} onClose={()=>setDialog(false)}/>
+  </ReferencePage>;
+}
+
+function DeviceReadTest({device}:{device:{name:string;value:string;unit:string;id:string}}) {
+  const [value,setValue]=useState(device.value);
+  const [reads,setReads]=useState<{value:string;time:string}[]>([]);
+  return <Surface title="Local read test" sub={`Simulate an input for ${device.name}.`}>
+    <form onSubmit={event=>{event.preventDefault(); if(value.trim())setReads([{value:value.trim(),time:new Date().toLocaleTimeString()},...reads].slice(0,8));}}>
+      <label>Simulated value{device.unit ? ` (${device.unit})` : ''}<input required value={value} onChange={event=>setValue(event.target.value)}/></label>
+      <Button variant="outline" type="submit" className="ref-full-button" disabled={!value.trim()}><Activity size={16}/>Run simulated read</Button>
+    </form>
+    <p role="status" className="ref-empty">{reads.length ? `Simulated input recorded for ${device.id}.` : 'No simulated reads for this device.'}</p>
+    {!!reads.length && <RefTable headers={['Time','Simulated value','Unit']} rows={reads.map(read=>[read.time,read.value,device.unit||'—'])}/>}
+    <Link to="/commissioning" className="ref-issue-link">Review commissioning evidence<ArrowRight size={14}/></Link>
+  </Surface>;
+}

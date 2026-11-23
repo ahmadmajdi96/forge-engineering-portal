@@ -22,8 +22,15 @@ function FactoryLayout() {
   const allowed = sites.some(({ key }) => key === currentSite);
 
   return (
-    <div className="mx-auto max-w-[1800px] space-y-4 p-3 sm:p-5">
-      <h1 className="text-2xl font-semibold tracking-tight">Factory layout</h1>
+    <div className="mx-auto min-w-0 max-w-[1800px] space-y-4">
+      <header>
+        <h1 className="font-display text-2xl font-semibold tracking-tight">Factory layout</h1>
+        {allowed && (
+          <p className="mt-1 text-sm text-muted-foreground">
+            {sites.find((s) => s.key === currentSite)?.name} · Layout workspace
+          </p>
+        )}
+      </header>
       {allowed ? (
         <FactoryWorkspace site={currentSite} key={currentSite} />
       ) : (

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 export const editorInput =
-  "min-h-9 min-w-0 rounded-md border border-input bg-background px-2.5 py-1.5 text-sm text-foreground";
+  "min-h-10 min-w-0 max-w-full rounded-md border border-input bg-background px-2.5 py-1.5 text-sm text-foreground";
 
 export function Field({
   label,
@@ -10,7 +10,7 @@ export function Field({
 }: {
   label: string;
   children: ReactNode;
-  hint?: string;
+  hint?: string | undefined;
 }) {
   return (
     <label className="grid min-w-0 gap-1 text-xs font-medium text-foreground">

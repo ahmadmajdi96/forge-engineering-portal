@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { WorkspaceLoading } from "@/components/engineering/workspace-loading";
+import { createFileRoute, useBlocker } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { siteKey } from "@/lib/production/contracts";
@@ -17,11 +18,14 @@ export const Route = createFileRoute("/factory-process")({
 });
 
 function FactoryProcess() {
-  const { site } = Route.useSearch();
+  const search = Route.useSearch();
+  const { ems } = Route.useRouteContext();
+  const site = search.site ?? ems.identity?.sites[0]?.key;
   const load = useQuery({
     queryKey: ["process", site],
     retry: false,
     enabled: !!site,
+    refetchOnWindowFocus: false,
     queryFn: async () => {
       const result = await loadFactoryWorkspace({ data: { site: site!, workspace: "process" } });
       return {
@@ -33,42 +37,105 @@ function FactoryProcess() {
     },
   });
   if (!site) return <p>Choose a factory.</p>;
-  if (load.isError) return <p role="alert">{load.error.message}</p>;
-  if (!load.data) return <p role="status">Loading process routes…</p>;
-  return <ProcessEditor key={site} site={site} initial={load.data} />;
+  if (load.isError && !load.data)
+    return (
+      <div className="eng-panel space-y-3">
+        <h1 className="font-display text-2xl font-semibold">Process routes</h1>
+        <p role="alert">{load.error.message}</p>
+        <Button variant="outline" onClick={() => void load.refetch()} disabled={load.isFetching}>
+          Retry loading routes
+        </Button>
+      </div>
+    );
+  if (!load.data)
+    return (
+      <section className="space-y-4">
+        <h1 className="font-display text-2xl font-semibold">Process routes</h1>
+        <WorkspaceLoading message="Loading process routes…" />
+      </section>
+    );
+  return (
+    <ProcessEditor
+      key={site}
+      site={site}
+      initial={load.data}
+      reload={async () => {
+        const result = await load.refetch({ throwOnError: true });
+        if (!result.data) throw new Error("The current process revision is unavailable.");
+        return result.data;
+      }}
+    />
+  );
 }
 
-const input = "min-h-9 rounded-md border bg-background px-2 py-1 text-sm";
+const input = "min-w-0 max-w-full min-h-10 rounded-md border bg-background px-2 py-1 text-sm";
 const identifiers = (value: string) =>
   value
     .split(",")
     .map((entry) => entry.trim())
     .filter(Boolean);
 
+type ProcessSnapshot = { revision: number; document: ProcessDocument };
+
 function ProcessEditor({
   site,
   initial,
+  reload,
 }: {
   site: string;
-  initial: { revision: number; document: ProcessDocument };
+  initial: ProcessSnapshot;
+  reload: () => Promise<ProcessSnapshot>;
 }) {
   const [draft, setDraft] = useState(initial.document);
   const [selection, select] = useState<string | null>(initial.document.routes[0]?.id ?? null);
-  const [revision, setRevision] = useState(initial.revision);
+  const [baseline, setBaseline] = useState(initial);
+  const [reason, setReason] = useState("");
+  const client = useQueryClient();
+  const revision = baseline.revision;
+  const dirty = draft !== baseline.document;
+  const [formVersion, resetForm] = useState(0);
+  useBlocker({
+    enableBeforeUnload: dirty,
+    shouldBlockFn: ({ current, next }) =>
+      dirty &&
+      (current.pathname !== next.pathname || current.search.site !== next.search.site) &&
+      !window.confirm("Discard the unsaved process draft and leave this factory?"),
+  });
   const [issues, setIssues] = useState<string[] | null>(null);
   const route = draft.routes.find((item) => item.id === selection);
   const save = useMutation({
-    mutationFn: () =>
+    mutationFn: (document: ProcessDocument) =>
       saveFactoryWorkspace({
         data: {
           site,
           workspace: "process",
-          payload: draft,
+          payload: document,
           expected: revision,
-          reason: "Saved process workspace draft",
+          reason: reason.trim(),
         },
       }),
-    onSuccess: ({ revision: nextRevision }) => setRevision(nextRevision),
+    onSuccess: ({ revision: nextRevision }, document) => {
+      const next = { revision: nextRevision, document };
+      setBaseline(next);
+      client.setQueryData(["process", site], next);
+      setReason("");
+    },
+  });
+  const recover = useMutation({
+    mutationFn: reload,
+    onSuccess: (snapshot) => {
+      setBaseline(snapshot);
+      setDraft(snapshot.document);
+      select(
+        snapshot.document.routes.find((item) => item.id === selection)?.id ??
+          snapshot.document.routes[0]?.id ??
+          null,
+      );
+      resetForm((n) => n + 1);
+      setIssues(null);
+      setReason("");
+      save.reset();
+    },
   });
   function change(update: Partial<ProcessRoute>) {
     setIssues(null);
@@ -99,31 +166,44 @@ function ProcessEditor({
   }
   return (
     <section className="space-y-4">
-      <header>
-        <h1 className="font-display text-2xl font-semibold">Process routes</h1>
-        <p className="text-sm text-muted-foreground">
-          Factory {site} · Revision {revision}
-        </p>
+      <header className="flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <h1 className="font-display text-2xl font-semibold">Process routes</h1>
+          <p className="text-sm text-muted-foreground">
+            {site} · {revision ? `Revision ${revision}` : "First draft"}
+          </p>
+        </div>
+        {dirty && (
+          <span
+            role="status"
+            className="rounded-md border border-border bg-muted px-2 py-1 text-xs"
+          >
+            Unsaved changes
+          </span>
+        )}
       </header>
-      <div className="flex flex-wrap gap-2">
-        <select
-          aria-label="Process route"
-          className={input}
-          value={selection ?? ""}
-          onChange={(event) => {
-            select(event.target.value);
-            setIssues(null);
-          }}
-        >
-          <option value="" disabled>
-            Choose a route
-          </option>
-          {draft.routes.map((item) => (
-            <option key={item.id} value={item.id}>
-              {item.name}
+      <div className="eng-panel flex flex-wrap items-end gap-3">
+        <label className="grid min-w-0 gap-1 text-xs font-medium">
+          Process route
+          <select
+            aria-label="Process route"
+            className={input}
+            value={selection ?? ""}
+            onChange={(event) => {
+              select(event.target.value);
+              setIssues(null);
+            }}
+          >
+            <option value="" disabled>
+              Choose a route
             </option>
-          ))}
-        </select>
+            {draft.routes.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
+          </select>
+        </label>
         <Button
           type="button"
           variant="outline"
@@ -132,21 +212,67 @@ function ProcessEditor({
         >
           Add route
         </Button>
-        <Button
-          type="button"
-          onClick={() => save.mutate()}
-          disabled={save.isPending || !draft.routes.length}
-        >
-          Save draft
-        </Button>
         {route && (
           <Button type="button" variant="outline" onClick={() => setIssues(validateRoute(route))}>
             Validate route
           </Button>
         )}
       </div>
-      {save.isError && <p role="alert">{save.error.message}</p>}
-      {save.isSuccess && <p role="status">Saved revision {revision}.</p>}
+      {!route && (
+        <p className="text-sm text-muted-foreground">
+          Add a route to define its entry step, station requirements and transitions.
+        </p>
+      )}
+      {draft.routes.length > 0 && (
+        <form
+          className="flex flex-wrap items-end gap-3 rounded-lg border bg-card p-3"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (dirty && !save.isPending && !recover.isPending && reason.trim().length >= 3)
+              save.mutate(draft);
+          }}
+        >
+          <label className="grid min-w-0 flex-1 gap-1 text-sm">
+            Revision reason
+            <input
+              className={input}
+              required
+              minLength={3}
+              maxLength={500}
+              value={reason}
+              placeholder="What changed in this revision?"
+              disabled={save.isPending}
+              onChange={(event) => setReason(event.target.value)}
+            />
+          </label>
+          <Button
+            type="submit"
+            disabled={!dirty || reason.trim().length < 3 || save.isPending || recover.isPending}
+          >
+            {save.isPending ? "Saving…" : "Save draft"}
+          </Button>
+        </form>
+      )}
+      {save.isSuccess && !dirty && <p role="status">Saved revision {revision}.</p>}
+      {save.isError && (
+        <div className="space-y-2 rounded-lg border border-destructive/50 p-3">
+          <p role="alert">{save.error.message}</p>
+          <Button
+            variant="outline"
+            disabled={recover.isPending || save.isPending}
+            onClick={() => {
+              if (
+                !dirty ||
+                window.confirm("Discard unsaved changes and reload the current server revision?")
+              )
+                recover.mutate();
+            }}
+          >
+            {recover.isPending ? "Loading…" : "Reload saved revision"}
+          </Button>
+          {recover.isError && <p role="alert">{recover.error.message}</p>}
+        </div>
+      )}
       {issues && (
         <div role="status" className="glass-panel rounded-lg p-3">
           {issues.length ? (
@@ -161,8 +287,12 @@ function ProcessEditor({
         </div>
       )}
       {route && (
-        <>
-          <div className="glass-panel grid gap-3 rounded-lg p-4 md:grid-cols-2">
+        <fieldset
+          disabled={recover.isPending}
+          aria-label="Process route definition"
+          className="min-w-0 space-y-4"
+        >
+          <div key={formVersion} className="glass-panel grid gap-3 rounded-lg p-4 md:grid-cols-2">
             <label className="grid gap-1 text-sm">
               Route name
               <input
@@ -219,7 +349,12 @@ function ProcessEditor({
             ))}
           </div>
           <section className="space-y-2">
-            <h2 className="text-lg font-semibold">Steps</h2>
+            <h2 className="text-lg font-semibold">
+              Steps{" "}
+              <span className="text-sm font-normal text-muted-foreground">
+                ({route.steps.length})
+              </span>
+            </h2>
             {route.steps.map((step) => {
               const put = (patch: Partial<typeof step>) =>
                 change({
@@ -229,7 +364,7 @@ function ProcessEditor({
                 });
               return (
                 <fieldset
-                  key={step.id}
+                  key={`${selection}-${formVersion}-${step.id}`}
                   className="grid gap-2 rounded-lg border p-3 sm:grid-cols-2 lg:grid-cols-3"
                 >
                   <legend className="px-1 text-sm">{step.name}</legend>
@@ -260,7 +395,7 @@ function ProcessEditor({
                     <input
                       className={input}
                       defaultValue={step.stationIds.join(", ")}
-                      onBlur={(event) => put({ stationIds: identifiers(event.target.value) })}
+                      onChange={(event) => put({ stationIds: identifiers(event.target.value) })}
                     />
                   </label>
                   <label className="grid gap-1 text-sm">
@@ -268,7 +403,7 @@ function ProcessEditor({
                     <input
                       className={input}
                       defaultValue={step.capabilities.join(", ")}
-                      onBlur={(event) => put({ capabilities: identifiers(event.target.value) })}
+                      onChange={(event) => put({ capabilities: identifiers(event.target.value) })}
                     />
                   </label>
                   <label className="grid gap-1 text-sm">
@@ -276,7 +411,7 @@ function ProcessEditor({
                     <input
                       className={input}
                       defaultValue={step.evidence.join(", ")}
-                      onBlur={(event) => put({ evidence: identifiers(event.target.value) })}
+                      onChange={(event) => put({ evidence: identifiers(event.target.value) })}
                     />
                   </label>
                   <label className="grid gap-1 text-sm">
@@ -308,15 +443,24 @@ function ProcessEditor({
                   <Button
                     variant="outline"
                     type="button"
-                    onClick={() =>
+                    onClick={() => {
+                      const links = route.transitions.filter(
+                        (edge) => edge.from === step.id || edge.to === step.id,
+                      ).length;
+                      if (
+                        !window.confirm(
+                          `Remove "${step.name}"${links ? ` and ${links} connected transition${links === 1 ? "" : "s"}` : ""} from this draft?`,
+                        )
+                      )
+                        return;
                       change({
                         steps: route.steps.filter((item) => item.id !== step.id),
                         transitions: route.transitions.filter(
                           (edge) => edge.from !== step.id && edge.to !== step.id,
                         ),
                         start: route.start === step.id ? "" : route.start,
-                      })
-                    }
+                      });
+                    }}
                   >
                     Remove step
                   </Button>
@@ -326,6 +470,7 @@ function ProcessEditor({
             <Button
               variant="outline"
               type="button"
+              disabled={route.steps.length >= 300}
               onClick={() => {
                 const id = crypto.randomUUID();
                 change({
@@ -350,7 +495,12 @@ function ProcessEditor({
             </Button>
           </section>
           <section className="space-y-2">
-            <h2 className="text-lg font-semibold">Transitions</h2>
+            <h2 className="text-lg font-semibold">
+              Transitions{" "}
+              <span className="text-sm font-normal text-muted-foreground">
+                ({route.transitions.length})
+              </span>
+            </h2>
             {route.transitions.map((edge, index) => {
               const put = (patch: Partial<typeof edge>) =>
                 change({
@@ -363,7 +513,10 @@ function ProcessEditor({
                   key={index}
                   className="grid gap-2 rounded-lg border p-3 sm:grid-cols-2 lg:grid-cols-4"
                 >
-                  <legend className="px-1 text-sm">Transition {index + 1}</legend>
+                  <legend className="px-1 text-sm">
+                    {route.steps.find((s) => s.id === edge.from)?.name ?? "Missing step"} →{" "}
+                    {route.steps.find((s) => s.id === edge.to)?.name ?? "Missing step"}
+                  </legend>
                   {(["from", "to"] as const).map((field) => (
                     <label key={field} className="grid gap-1 text-sm capitalize">
                       {field}
@@ -423,7 +576,7 @@ function ProcessEditor({
             <Button
               variant="outline"
               type="button"
-              disabled={route.steps.length < 2}
+              disabled={route.steps.length < 2 || route.transitions.length >= 1000}
               onClick={() =>
                 change({
                   transitions: [
@@ -442,7 +595,7 @@ function ProcessEditor({
               Add transition
             </Button>
           </section>
-        </>
+        </fieldset>
       )}
     </section>
   );

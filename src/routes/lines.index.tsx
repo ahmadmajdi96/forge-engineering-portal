@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { useAssetStore as useMes } from "@/lib/engineering/asset-store";
 import type { LineStatus, ProductionLine } from "@/lib/mes-data";
 import { StatusPill } from "@/components/status-pill";
-import { ResponsiveContainer, RadialBar, RadialBarChart, PolarAngleAxis } from "recharts";
 import { Factory, Plus, Pencil, ArrowRight, Cpu, Hand, SlidersHorizontal } from "lucide-react";
 import { EntityFormDialog, type Field } from "@/components/crud/entity-form-dialog";
 import { ConfirmDelete } from "@/components/crud/confirm-delete";
@@ -107,30 +106,26 @@ function LinesPage() {
         </select>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {lc.visible.map((line) => {
           const lineStations = store.stations.filter((station) => station.lineId === line.id).sort((a, b) => a.sequence - b.sequence);
           const automatic = lineStations.filter((station) => station.type === "automatic").length;
           const linkedWorkOrder = store.workOrders.find((order) => order.id === line.currentWorkOrder);
           return (
-            <article key={line.id} className="glass-panel rounded-lg p-5">
+            <article key={line.id} className="glass-panel min-w-0 rounded-lg p-4 sm:p-5">
               <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 text-xs text-muted-foreground"><Factory className="h-3.5 w-3.5" /><span className="font-mono">{line.id}</span><span>·</span><span className="truncate">{line.plant}</span></div>
                   <h2 className="mt-1 truncate text-lg font-semibold">{line.name}</h2>
-                  <p className="truncate text-xs text-muted-foreground">{line.product ?? "— no work order —"}</p>
+                  <p className="truncate text-xs text-muted-foreground">{line.product ?? "No work order linked"}</p>
                 </div>
                 <StatusPill status={line.status} />
               </div>
 
-              <div className="mt-4 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-4">
-                <div className="relative h-24 w-24">
-                  <ResponsiveContainer><RadialBarChart innerRadius="65%" outerRadius="100%" data={[{ value: line.oee, fill: "var(--color-primary)" }]} startAngle={90} endAngle={-270}><PolarAngleAxis type="number" domain={[0, 100]} tick={false} /><RadialBar dataKey="value" background={{ fill: "var(--color-muted)" }} cornerRadius={8} /></RadialBarChart></ResponsiveContainer>
-                  <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center"><span className="font-mono text-lg font-semibold">{line.oee}</span><span className="text-[9px] uppercase text-muted-foreground">OEE</span></div>
-                </div>
-                <div className="space-y-1.5 text-xs"><Metric label="Availability" value={line.availability} /><Metric label="Performance" value={line.performance} /><Metric label="Quality" value={line.quality} /></div>
-              </div>
-
+              <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                <div><dt className="text-muted-foreground">Planned target</dt><dd className="font-mono">{line.target.toLocaleString()}</dd></div>
+                <div><dt className="text-muted-foreground">Production telemetry</dt><dd>Disconnected</dd></div>
+              </dl>
               <div className="mt-4 rounded-lg border border-border/40 bg-background/40 p-2">
                 <div className="mb-1.5 flex flex-wrap items-center justify-between gap-1 text-[10px] uppercase text-muted-foreground"><span>Station flow · {lineStations.length}</span><span className="flex items-center gap-1"><Cpu className="h-3 w-3 text-primary" /> {automatic} auto · <Hand className="h-3 w-3 text-accent" /> {lineStations.length - automatic} manual</span></div>
                 <div className="flex min-w-0 items-center gap-1 overflow-x-auto">{lineStations.length === 0 && <span className="px-2 py-1 text-[11px] text-muted-foreground">No stations configured</span>}{lineStations.map((station, index) => <div key={station.id} className="flex items-center gap-1"><div className="grid h-9 min-w-9 place-items-center rounded-md border border-border/60 bg-card/60 px-2 text-[10px] font-mono" title={`${station.name} (${station.type})`}>{station.sequence}</div>{index < lineStations.length - 1 && <ArrowRight className="h-3 w-3 text-muted-foreground/60" />}</div>)}</div>
@@ -138,7 +133,7 @@ function LinesPage() {
 
               <div className="mt-4 border-t border-border/40 pt-3 text-xs">
                 <div className="flex justify-between gap-3"><span className="text-muted-foreground">Current WO</span>{linkedWorkOrder ? <Link to="/work-orders/$woId" params={{ woId: linkedWorkOrder.id }} className="font-mono text-primary hover:underline">{linkedWorkOrder.id}</Link> : <span className="font-mono text-muted-foreground" title={line.currentWorkOrder ? "Work-order profile is unavailable" : undefined}>{line.currentWorkOrder ?? "—"}</span>}</div>
-                <div className="mt-1 flex justify-between"><span className="text-muted-foreground">Output</span><span className="font-mono">{line.output.toLocaleString()} / {line.target.toLocaleString()}</span></div>
+
               </div>
 
               <LineOperatorAssignments lineId={line.id} compact />
@@ -158,8 +153,4 @@ function LinesPage() {
       {lc.pager}
     </div>
   );
-}
-
-function Metric({ label, value }: { label: string; value: number }) {
-  return <div><div className="flex justify-between"><span className="text-muted-foreground">{label}</span><span className="font-mono">{value}%</span></div><div className="mt-1 h-1 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary" style={{ width: `${Math.max(0, Math.min(100, value))}%` }} /></div></div>;
 }

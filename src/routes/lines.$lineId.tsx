@@ -294,8 +294,8 @@ function LineDetailPage() {
 
       {/* KPI strip */}
       <div className="grid gap-3 sm:grid-cols-4">
-        <KPI label="OEE" value={`${line.oee}%`} icon={<Gauge className="h-4 w-4" />} accent="primary" />
-        <KPI label="Output / Target" value={`${line.output.toLocaleString()} / ${line.target.toLocaleString()}`} icon={<Activity className="h-4 w-4" />} accent="info" />
+        <KPI label="OEE telemetry" value="Unavailable" icon={<Gauge className="h-4 w-4" />} accent="primary" />
+        <KPI label="Planned target" value={line.target.toLocaleString()} icon={<Activity className="h-4 w-4" />} accent="info" />
         <KPI label="Uptime" value={line.uptime} icon={<Clock className="h-4 w-4" />} accent="success" />
         <KPI label="Stations" value={`${lineStations.length}`} icon={<Cpu className="h-4 w-4" />} accent="accent" />
       </div>

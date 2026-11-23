@@ -288,7 +288,14 @@ export async function fixtureSignIn(request: Request) {
     name,
     new Date(Date.now() + 3600_000),
   );
-  return redirectResponse(returnPath(input.get("next")), [session]);
+  const next = returnPath(input.get("next"));
+  if (request.headers.get("accept") === "application/json") {
+    return Response.json(
+      { next },
+      { headers: { "cache-control": "no-store", "set-cookie": session } },
+    );
+  }
+  return redirectResponse(next, [session]);
 }
 
 export async function signOut(request: Request) {

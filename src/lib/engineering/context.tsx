@@ -1,5 +1,5 @@
 import { loadFactoryWorkspace, saveFactoryWorkspace } from "@/lib/production/workspace.functions";
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { makeModel, modelSchema, type EngineeringModel, validateModel } from "./model";
@@ -7,6 +7,8 @@ import { loadWorkspace, saveWorkspace } from "./workspace.functions";
 import { toast } from "sonner";
 type Context = {
   native: boolean;
+  dirty: boolean;
+  loadState: "loading" | "ready" | "error";
   site: string | undefined;
   workspaceModel: EngineeringModel;
   setWorkspaceModel: (m: EngineeringModel) => void;
@@ -19,21 +21,63 @@ type Context = {
   revision: number;
   authenticated: boolean;
   busy: boolean;
-  save: (review?: boolean) => Promise<void>;
+  save: (review?: boolean) => Promise<boolean>;
   reload: () => Promise<void>;
   issues: ReturnType<typeof validateModel>;
 };
 const C = createContext<Context | null>(null);
+function emptyWorkspace(site: string | undefined): EngineeringModel {
+  return {
+    name: "Factory engineering",
+    scope: site ?? "",
+    lines: [],
+    stations: [],
+    records: [],
+    signals: [],
+    steps: [],
+    routeEdges: [],
+    offline: "online-required",
+    offlineMinutes: 0,
+    mesAck: false,
+    edgeAck: false,
+    commissioned: false,
+    desired: "",
+    actual: "Unknown",
+    reason: "",
+    adapter: {
+      protocol: "OPC UA",
+      endpoint: "",
+      credentialRef: "",
+      securityMode: "SignAndEncrypt",
+      pollMs: 1000,
+    },
+  };
+}
 export function EngineeringProvider({
   children,
   native = false,
+  fixture = false,
   site,
 }: {
   children: ReactNode;
   native?: boolean;
+  fixture?: boolean;
   site?: string | undefined;
 }) {
-  const [model, setModel] = useState(makeModel);
+  const [model, setModel] = useState(() => (native ? emptyWorkspace(site) : makeModel()));
+  const [loadState, setLoadState] = useState<Context["loadState"]>(native ? "loading" : "ready");
+  const requestId = useRef(0);
+  const [baseline, setBaseline] = useState(model);
+  const dirty = native && loadState === "ready" && model !== baseline;
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
   const [selected, setSelected] = useState("ST-104");
   const [lineId, setLineId] = useState("L-01");
   function selectLine(id: string) {
@@ -54,15 +98,36 @@ export function EngineeringProvider({
   const readNative = useServerFn(loadFactoryWorkspace),
     writeNative = useServerFn(saveFactoryWorkspace);
   async function reload() {
-    try {
-      if (native) {
-        if (!site) return;
-        const r = await readNative({ data: { site, workspace: "engineering" } });
-        if (r.payload) setModel(modelSchema.parse((r.payload as { model: unknown }).model));
-        setRevision(r.revision);
-        setAuthenticated(true);
+    if (native) {
+      if (
+        dirty &&
+        !window.confirm("Discard unsaved engineering changes and load the saved revision?")
+      )
         return;
+      const request = ++requestId.current;
+      setLoadState("loading");
+      setAuthenticated(false);
+      try {
+        if (!site) throw new Error("No authorized factory.");
+        const result = await readNative({ data: { site, workspace: "engineering" } });
+        if (request !== requestId.current) return;
+        const next =
+          result.revision === 0 && result.payload === null
+            ? fixture
+              ? makeModel()
+              : emptyWorkspace(site)
+            : modelSchema.parse((result.payload as { model: unknown }).model);
+        setModel(next);
+        setBaseline(next);
+        setRevision(result.revision);
+        setAuthenticated(true);
+        setLoadState("ready");
+      } catch {
+        if (request === requestId.current) setLoadState("error");
       }
+      return;
+    }
+    try {
       const w = await load();
       if (w) {
         setId(w.id);
@@ -76,7 +141,9 @@ export function EngineeringProvider({
   useEffect(() => {
     if (native) {
       void reload();
-      return;
+      return () => {
+        requestId.current++;
+      };
     }
     let alive = true;
     void supabase.auth.getSession().then(({ data }) => {
@@ -105,12 +172,16 @@ export function EngineeringProvider({
   }, []);
   async function save(review = false) {
     if (!authenticated) {
-      toast.error("Sign in with a verified account to save a shared sandbox revision.");
-      return;
+      toast.error(
+        native
+          ? "Shared workspace access is required to save a revision."
+          : "Sign in with a verified account to save a shared sandbox revision.",
+      );
+      return false;
     }
     if (!model.reason.trim()) {
       toast.error("Enter a change reason before saving.");
-      return;
+      return false;
     }
     setBusy(true);
     try {
@@ -125,10 +196,11 @@ export function EngineeringProvider({
           },
         });
         setRevision(r.revision);
+        setBaseline(model);
         toast.success(
           review ? "Engineering revision submitted for review" : "Engineering revision saved",
         );
-        return;
+        return true;
       }
       const r = await write({
         data: {
@@ -144,8 +216,10 @@ export function EngineeringProvider({
       toast.success(
         review ? "Sandbox revision submitted for review" : "Immutable sandbox revision saved",
       );
+      return true;
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Save failed");
+      return false;
     } finally {
       setBusy(false);
     }
@@ -199,7 +273,10 @@ export function EngineeringProvider({
   return (
     <C.Provider
       value={{
-        native, site,
+        native,
+        site,
+        loadState,
+        dirty,
         workspaceModel: model,
         setWorkspaceModel: setModel,
         lineId: activeLine,

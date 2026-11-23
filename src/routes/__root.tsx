@@ -138,7 +138,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <StoreProvider key={site} nativeName={ems.identity?.name} site={site}>
-        <MesProvider><EngineeringProvider key={site} native={!!ems.identity} site={site}><Shell identity={ems.identity ?? undefined} site={site} /><Toaster /></EngineeringProvider></MesProvider>
+        <MesProvider><EngineeringProvider key={site} fixture={ems.mode === "local"} native={!!ems.identity} site={site}><Shell identity={ems.identity ?? undefined} site={site} /><Toaster /></EngineeringProvider></MesProvider>
       </StoreProvider>
     </QueryClientProvider>
   );

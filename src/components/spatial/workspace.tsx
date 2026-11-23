@@ -1,3 +1,4 @@
+import { WorkspaceLoading } from "@/components/engineering/workspace-loading";
 import {
   lazy,
   Suspense,
@@ -132,29 +133,22 @@ export function FactoryWorkspace({ site }: { site: string }) {
       mounted = false;
     };
   }, [site, attempt]);
-  if (!snapshot)
+  if (error)
     return (
       <div className={panel + " min-h-36"}>
-        {error ? (
-          <>
-            <p role="alert" className="text-sm text-destructive">
-              {error}
-            </p>
-            <button
-              type="button"
-              className={button + " mt-3"}
-              onClick={() => setAttempt((value) => value + 1)}
-            >
-              Retry
-            </button>
-          </>
-        ) : (
-          <p role="status" className="text-sm text-muted-foreground">
-            Loading factory layout…
-          </p>
-        )}
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+        <button
+          type="button"
+          className={button + " mt-3"}
+          onClick={() => setAttempt((value) => value + 1)}
+        >
+          Retry loading layout
+        </button>
       </div>
     );
+  if (!snapshot) return <WorkspaceLoading message="Loading factory layout…" />;
   return <LayoutEditor key={site} site={site} initial={snapshot} />;
 }
 
@@ -203,6 +197,11 @@ function LayoutEditor({ site, initial }: { site: string; initial: Snapshot }) {
   const scope = spaces.get(scopeId) ?? firstFloor ?? siteNode;
   const selectedFloor = scope && floorOf(spaces, scope.id);
   const floor = selectedFloor?.floor;
+  const [revisionTools, setRevisionTools] = useState(false);
+  const [viewTools, setViewTools] = useState(false);
+  const [compactPanel, setCompactPanel] = useState<"library" | "scene" | "properties">(
+    floor ? "scene" : "library",
+  );
   const stations = document.spaces.filter(
     (node) =>
       node.kind === "station" && selectedFloor && isWithin(spaces, node.id, selectedFloor.id),
@@ -605,81 +604,103 @@ function LayoutEditor({ site, initial }: { site: string; initial: Snapshot }) {
             {readonlyView ? "Saved design" : "Authoring draft"} · revision {baseline.revision}
           </div>
           <div className="mt-1 text-xs text-muted-foreground">
-            {dirty ? "Unsaved changes" : "All changes saved"} · {document.occurrences.length}{" "}
-            placements · {issueTotal} findings
+            {dirty
+              ? "Unsaved changes"
+              : baseline.revision
+                ? "All changes saved"
+                : "No saved revision yet"}{" "}
+            · {document.occurrences.length} placements · {issueTotal} findings
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            className={button}
-            type="button"
-            aria-pressed={readonlyView}
-            onClick={() => setReadonlyView((value) => !value)}
-          >
-            {readonlyView ? "Edit draft" : "View saved design"}
-          </button>
-          <button
-            className={button}
-            type="button"
-            disabled={readonlyView || !draft.before.length}
-            onClick={() => dispatch({ type: "undo" })}
-          >
-            <Undo2 size={15} /> Undo
-          </button>
-          <button
-            className={button}
-            type="button"
-            disabled={readonlyView || !draft.after.length}
-            onClick={() => dispatch({ type: "redo" })}
-          >
-            <Redo2 size={15} /> Redo
-          </button>
-          <button
-            className={button}
-            type="button"
-            onClick={() => download(document, baseline.revision)}
-          >
-            Download JSON
-          </button>
-          <label className={button + " cursor-pointer"}>
-            Recover draft
-            <input
-              type="file"
-              accept=".json,application/json"
-              className="sr-only"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) void recover(file);
-                event.target.value = "";
-              }}
-            />
-          </label>
-        </div>
-        <form
-          onSubmit={(event) => {
-            void save(event);
-          }}
-          className="flex w-full flex-wrap items-end gap-2"
+        <button
+          type="button"
+          className={button + " sm:hidden"}
+          aria-expanded={revisionTools}
+          aria-controls="layout-revision-tools"
+          onClick={() => setRevisionTools((value) => !value)}
         >
-          <Field name="Revision reason">
-            <input
-              className={control + " w-60 max-w-full"}
-              disabled={readonlyView || busy}
-              required
-              minLength={3}
-              maxLength={500}
-              value={reason}
-              onChange={(event) => setReason(event.target.value)}
-            />
-          </Field>
-          <button
-            type="submit"
-            className={primary}
-            disabled={readonlyView || !dirty || !!pendingHead || busy}
+          Save &amp; revisions
+        </button>
+        <div
+          id="layout-revision-tools"
+          className={revisionTools ? "contents" : "hidden sm:contents"}
+        >
+          <div className="flex flex-wrap gap-2">
+            <button
+              className={button}
+              type="button"
+              aria-pressed={readonlyView}
+              onClick={() => setReadonlyView((value) => !value)}
+            >
+              {readonlyView ? "Edit draft" : "View saved design"}
+            </button>
+            <button
+              className={button}
+              type="button"
+              disabled={readonlyView || !draft.before.length}
+              onClick={() => dispatch({ type: "undo" })}
+            >
+              <Undo2 size={15} /> Undo
+            </button>
+            <button
+              className={button}
+              type="button"
+              disabled={readonlyView || !draft.after.length}
+              onClick={() => dispatch({ type: "redo" })}
+            >
+              <Redo2 size={15} /> Redo
+            </button>
+            <button
+              className={button}
+              type="button"
+              onClick={() => download(document, baseline.revision)}
+            >
+              Download JSON
+            </button>
+            <label
+              className={
+                button + " cursor-pointer focus-within:outline-2 focus-within:outline-ring"
+              }
+            >
+              Recover draft
+              <input
+                type="file"
+                accept=".json,application/json"
+                className="sr-only"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) void recover(file);
+                  event.target.value = "";
+                }}
+              />
+            </label>
+          </div>
+          <form
+            onSubmit={(event) => {
+              void save(event);
+            }}
+            className="flex w-full flex-wrap items-end gap-2"
           >
-            {busy ? "Saving…" : "Save workspace"}
-          </button>
-        </form>
+            <Field name="Revision reason">
+              <input
+                className={control + " w-60 max-w-full"}
+                disabled={readonlyView || busy}
+                required
+                minLength={3}
+                maxLength={500}
+                value={reason}
+                onChange={(event) => setReason(event.target.value)}
+              />
+            </Field>
+            <button
+              type="submit"
+              className={primary}
+              disabled={readonlyView || !dirty || !!pendingHead || busy}
+            >
+              {busy ? "Saving…" : "Save workspace"}
+            </button>
+          </form>
+        </div>
         {feedback && (
           <p
             role={feedback.error ? "alert" : "status"}
@@ -709,8 +730,29 @@ function LayoutEditor({ site, initial }: { site: string; initial: Snapshot }) {
         )}
       </div>
 
-      <div className="grid gap-3 xl:grid-cols-[13.5rem_minmax(0,1fr)_17rem]">
-        <aside aria-label="Spatial hierarchy and library" className="space-y-3">
+      <nav
+        aria-label="Layout workspace panels"
+        className="grid grid-cols-3 gap-1 rounded-lg border border-border bg-card p-1 xl:hidden"
+      >
+        {(["library", "scene", "properties"] as const).map((id) => (
+          <button
+            type="button"
+            key={id}
+            aria-controls={`layout-${id}`}
+            aria-pressed={compactPanel === id}
+            onClick={() => setCompactPanel(id)}
+            className={`min-h-10 rounded-md px-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring ${compactPanel === id ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}
+          >
+            {{ library: "Hierarchy", scene: "Views", properties: "Properties" }[id]}
+          </button>
+        ))}
+      </nav>
+      <div className="grid min-w-0 gap-3 xl:grid-cols-[13.5rem_minmax(0,1fr)_17rem]">
+        <aside
+          id="layout-library"
+          aria-label="Spatial hierarchy and library"
+          className={`min-w-0 space-y-3 ${compactPanel === "library" ? "" : "hidden xl:block"}`}
+        >
           <div className={panel}>
             <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
               <Layers3 aria-hidden="true" size={16} /> Factory hierarchy
@@ -787,7 +829,11 @@ function LayoutEditor({ site, initial }: { site: string; initial: Snapshot }) {
           )}
         </aside>
 
-        <section aria-label="Factory scene" className="min-w-0 space-y-3">
+        <section
+          id="layout-scene"
+          aria-label="Factory scene"
+          className={`min-w-0 space-y-3 ${compactPanel === "scene" ? "" : "hidden xl:block"}`}
+        >
           {floor && selectedFloor ? (
             <>
               <div className={panel + " space-y-2"}>
@@ -804,130 +850,146 @@ function LayoutEditor({ site, initial }: { site: string; initial: Snapshot }) {
                     <option value="perspective">Perspective</option>
                     <option value="orthographic">Orthographic</option>
                   </select>
-                  <select
-                    className={control}
-                    aria-label="Connection overlay"
-                    value={overlay}
-                    onChange={(event) => setOverlay(event.target.value as typeof overlay)}
+                  <button
+                    type="button"
+                    className={button + " sm:hidden"}
+                    aria-expanded={viewTools}
+                    aria-controls="layout-view-tools"
+                    onClick={() => setViewTools((value) => !value)}
                   >
-                    <option value="all">All connections</option>
-                    <option value="none">Hide connections</option>
-                    {connectionKinds.map((kind) => (
-                      <option key={kind} value={kind}>
-                        {kind}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    className={control}
-                    aria-label="Layer filter"
-                    value={layer}
-                    onChange={(event) => setLayer(event.target.value)}
-                  >
-                    <option value="">All layers</option>
-                    {distinctLayers.map((item) => (
-                      <option key={item} value={item}>
-                        {item}
-                      </option>
-                    ))}
-                  </select>
+                    View tools
+                  </button>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  {!readonlyView && (
-                    <>
-                      <select
-                        className={control}
-                        aria-label="Transform tool"
-                        value={gizmo}
-                        onChange={(event) => setGizmo(event.target.value as typeof gizmo)}
-                      >
-                        <option value="translate">Move</option>
-                        <option value="rotate">Rotate</option>
-                      </select>
-                      <select
-                        className={control}
-                        aria-label="Grid snap distance"
-                        value={moveSnap}
-                        onChange={(event) => setMoveSnap(Number(event.target.value))}
-                      >
-                        <option value={0}>Grid snap off</option>
-                        <option value={0.05}>Grid · 0.05 m</option>
-                        <option value={0.1}>Grid · 0.10 m</option>
-                        <option value={0.5}>Grid · 0.50 m</option>
-                        <option value={1}>Grid · 1 m</option>
-                      </select>
-                      <select
-                        className={control}
-                        aria-label="Angle snap"
-                        value={angleSnap}
-                        onChange={(event) => setAngleSnap(Number(event.target.value))}
-                      >
-                        <option value={0}>Angle snap off</option>
-                        <option value={5}>Angle · 5°</option>
-                        <option value={15}>Angle · 15°</option>
-                        <option value={45}>Angle · 45°</option>
-                      </select>
-                    </>
-                  )}
-                  <button
-                    className={button}
-                    type="button"
-                    aria-pressed={showHidden}
-                    onClick={() => setShowHidden((value) => !value)}
-                  >
-                    Show hidden
-                  </button>
-                  <button
-                    className={button}
-                    type="button"
-                    aria-pressed={isolate}
-                    disabled={!activeSelection.length && !isolate}
-                    onClick={() => setIsolate((value) => !value)}
-                  >
-                    Isolate
-                  </button>
-                  <button
-                    className={button}
-                    type="button"
-                    aria-pressed={transparent}
-                    onClick={() => setTransparent((value) => !value)}
-                  >
-                    Transparency
-                  </button>
-                  <button
-                    className={button}
-                    type="button"
-                    aria-pressed={section}
-                    onClick={() => setSection((value) => !value)}
-                  >
-                    Section
-                  </button>
-                  {section && (
-                    <label className="flex items-center gap-2 text-xs">
-                      Height{" "}
-                      <input
-                        className={control + " w-20"}
-                        aria-label="Section height in metres"
-                        type="number"
-                        min="0"
-                        max={floor.size.y}
-                        step="0.05"
-                        value={sectionHeight}
-                        onChange={(event) => setSectionHeight(Number(event.target.value))}
-                      />{" "}
-                      m
-                    </label>
-                  )}
-                  {selectedRecord?.template.subcomponents.length ? (
+                <div
+                  id="layout-view-tools"
+                  className={viewTools ? "space-y-2" : "hidden space-y-2 sm:block"}
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <select
+                      className={control}
+                      aria-label="Connection overlay"
+                      value={overlay}
+                      onChange={(event) => setOverlay(event.target.value as typeof overlay)}
+                    >
+                      <option value="all">All connections</option>
+                      <option value="none">Hide connections</option>
+                      {connectionKinds.map((kind) => (
+                        <option key={kind} value={kind}>
+                          {kind}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      className={control}
+                      aria-label="Layer filter"
+                      value={layer}
+                      onChange={(event) => setLayer(event.target.value)}
+                    >
+                      <option value="">All layers</option>
+                      {distinctLayers.map((item) => (
+                        <option key={item} value={item}>
+                          {item}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {!readonlyView && (
+                      <>
+                        <select
+                          className={control}
+                          aria-label="Transform tool"
+                          value={gizmo}
+                          onChange={(event) => setGizmo(event.target.value as typeof gizmo)}
+                        >
+                          <option value="translate">Move</option>
+                          <option value="rotate">Rotate</option>
+                        </select>
+                        <select
+                          className={control}
+                          aria-label="Grid snap distance"
+                          value={moveSnap}
+                          onChange={(event) => setMoveSnap(Number(event.target.value))}
+                        >
+                          <option value={0}>Grid snap off</option>
+                          <option value={0.05}>Grid · 0.05 m</option>
+                          <option value={0.1}>Grid · 0.10 m</option>
+                          <option value={0.5}>Grid · 0.50 m</option>
+                          <option value={1}>Grid · 1 m</option>
+                        </select>
+                        <select
+                          className={control}
+                          aria-label="Angle snap"
+                          value={angleSnap}
+                          onChange={(event) => setAngleSnap(Number(event.target.value))}
+                        >
+                          <option value={0}>Angle snap off</option>
+                          <option value={5}>Angle · 5°</option>
+                          <option value={15}>Angle · 15°</option>
+                          <option value={45}>Angle · 45°</option>
+                        </select>
+                      </>
+                    )}
                     <button
                       className={button}
                       type="button"
-                      aria-pressed={exploded}
-                      onClick={() => setExploded((value) => !value)}
+                      aria-pressed={showHidden}
+                      onClick={() => setShowHidden((value) => !value)}
                     >
-                      Explode assembly
+                      Show hidden
                     </button>
-                  ) : null}
+                    <button
+                      className={button}
+                      type="button"
+                      aria-pressed={isolate}
+                      disabled={!activeSelection.length && !isolate}
+                      onClick={() => setIsolate((value) => !value)}
+                    >
+                      Isolate
+                    </button>
+                    <button
+                      className={button}
+                      type="button"
+                      aria-pressed={transparent}
+                      onClick={() => setTransparent((value) => !value)}
+                    >
+                      Transparency
+                    </button>
+                    <button
+                      className={button}
+                      type="button"
+                      aria-pressed={section}
+                      onClick={() => setSection((value) => !value)}
+                    >
+                      Section
+                    </button>
+                    {section && (
+                      <label className="flex items-center gap-2 text-xs">
+                        Height{" "}
+                        <input
+                          className={control + " w-20"}
+                          aria-label="Section height in metres"
+                          type="number"
+                          min="0"
+                          max={floor.size.y}
+                          step="0.05"
+                          value={sectionHeight}
+                          onChange={(event) => setSectionHeight(Number(event.target.value))}
+                        />{" "}
+                        m
+                      </label>
+                    )}
+                    {selectedRecord?.template.subcomponents.length ? (
+                      <button
+                        className={button}
+                        type="button"
+                        aria-pressed={exploded}
+                        onClick={() => setExploded((value) => !value)}
+                      >
+                        Explode assembly
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
               </div>
               <Suspense
@@ -1006,7 +1068,11 @@ function LayoutEditor({ site, initial }: { site: string; initial: Snapshot }) {
           )}
         </section>
 
-        <aside aria-label="Placement properties" className="space-y-3">
+        <aside
+          id="layout-properties"
+          aria-label="Placement properties"
+          className={`min-w-0 space-y-3 ${compactPanel === "properties" ? "" : "hidden xl:block"}`}
+        >
           <div className={panel}>
             <h2 className="text-sm font-semibold">Placements · {scopedRecords.length}</h2>
             <div className="mt-2 max-h-48 space-y-1 overflow-auto">

@@ -1,4 +1,5 @@
-import { useEffect, useReducer, useState } from "react";
+import { WorkspaceLoading } from "@/components/engineering/workspace-loading";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { useBlocker } from "@tanstack/react-router";
 import { z } from "zod";
 import { useServerFn } from "@tanstack/react-start";
@@ -34,6 +35,22 @@ import { StudioBindingsEditor } from "./bindings-editor";
 import { editorInput, Field } from "./editor-fields";
 import { StudioScreenEditor, VariantSelect } from "./screen-editor";
 import { StudioWorkflowEditor } from "./workflow-editor";
+
+const validationEditors = {
+  screens: "screens",
+  widgets: "screens",
+  components: "screens",
+  entry: "workflow",
+  nodes: "workflow",
+  transitions: "workflow",
+  signals: "bindings",
+  variables: "bindings",
+  dependencies: "bindings",
+  media: "bindings",
+  capabilities: "bindings",
+  connectorIds: "bindings",
+  evidenceIds: "bindings",
+} satisfies Record<string, StudioPane>;
 
 const workspaceReply = z.object({ revision: z.number().int().nonnegative(), payload: z.unknown() });
 
@@ -179,6 +196,7 @@ function WorkspaceStudio({
       : edits.current.applications.find((item) => !requestedKind || item.kind === requestedKind));
   const pane = initialPane ?? "screens";
 
+  const loaded = useRef(false);
   const workspaceSite = site?.key;
   useEffect(() => {
     if (!workspaceSite) return;
@@ -188,6 +206,7 @@ function WorkspaceStudio({
         const value = workspaceReply.parse(reply);
         const next = value.payload === null ? empty : studioWorkspaceSchema.parse(value.payload);
         if (!current) return;
+        loaded.current = true;
         edit({ type: "reset", workspace: next });
         setSaved(next);
         setRevision(value.revision);
@@ -197,9 +216,12 @@ function WorkspaceStudio({
         if (!current) return;
         setStatus({
           type: "error",
-          text: "Could not load this factory’s Studio. Check your site access and try again.",
+          text:
+            refresh > 0 && loaded.current
+              ? "Reload failed. Your current draft is still available. Retry or export a copy."
+              : "Could not load this factory’s Studio. Check your site access and try again.",
         });
-        setFetchState("failed");
+        setFetchState(loaded.current ? "ready" : "failed");
       });
     return () => {
       current = false;
@@ -339,12 +361,7 @@ function WorkspaceStudio({
     : null;
   const visibleValidation = validation?.source === app ? validation : null;
 
-  if (fetchState === "loading")
-    return (
-      <p role="status" className="eng-panel text-sm text-muted-foreground">
-        Loading factory applications…
-      </p>
-    );
+  if (fetchState === "loading") return <WorkspaceLoading message="Loading factory applications…" />;
   if (fetchState === "failed")
     return (
       <section className="eng-panel grid justify-items-start gap-2">
@@ -352,7 +369,7 @@ function WorkspaceStudio({
           {status?.text}
         </p>
         <Button type="button" variant="outline" onClick={reload}>
-          Retry
+          Retry loading applications
         </Button>
       </section>
     );
@@ -379,43 +396,49 @@ function WorkspaceStudio({
               </select>
             </Field>
           )}
-          <form
-            className="flex flex-wrap items-end gap-2"
-            onSubmit={(event) => {
-              event.preventDefault();
-              addApplication();
-            }}
+          <details
+            open={!edits.current.applications.length}
+            className="min-w-0 max-w-full rounded-md border border-border/70 bg-background/50 px-3 py-1"
           >
-            <Field label="New application name">
-              <input
-                className={editorInput}
-                value={newName}
-                maxLength={120}
-                onChange={(event) => setNewName(event.target.value)}
-              />
-            </Field>
-            <Field label="Application type">
-              <select
-                className={editorInput}
-                value={newKind}
-                onChange={(event) => setNewKind(event.target.value as StudioDefinition["kind"])}
-              >
-                {Object.entries(kinds).map(([key, label]) => (
-                  <option key={key} value={key}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Button
-              type="submit"
-              variant="outline"
-              disabled={!newName.trim() || edits.current.applications.length >= 100}
+            <summary className="cursor-pointer py-2 text-sm font-medium">New application</summary>
+            <form
+              className="flex min-w-0 flex-wrap items-end gap-2 border-t py-3"
+              onSubmit={(event) => {
+                event.preventDefault();
+                addApplication();
+              }}
             >
-              <Plus />
-              Create application
-            </Button>
-          </form>
+              <Field label="New application name">
+                <input
+                  className={editorInput}
+                  value={newName}
+                  maxLength={120}
+                  onChange={(event) => setNewName(event.target.value)}
+                />
+              </Field>
+              <Field label="Application type">
+                <select
+                  className={editorInput}
+                  value={newKind}
+                  onChange={(event) => setNewKind(event.target.value as StudioDefinition["kind"])}
+                >
+                  {Object.entries(kinds).map(([key, label]) => (
+                    <option key={key} value={key}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Button
+                type="submit"
+                variant="outline"
+                disabled={!newName.trim() || edits.current.applications.length >= 100}
+              >
+                <Plus />
+                Create application
+              </Button>
+            </form>
+          </details>
         </div>
         {terminal && (
           <p className="text-sm text-muted-foreground">
@@ -478,7 +501,14 @@ function WorkspaceStudio({
             <div className="flex flex-wrap items-end gap-2">
               {!sandbox && (
                 <>
-                  <Field label="Change reason">
+                  <Field
+                    label="Change reason"
+                    hint={
+                      dirty && reason.trim().length < 3
+                        ? "Enter at least three characters to save."
+                        : undefined
+                    }
+                  >
                     <input
                       className={editorInput}
                       value={reason}
@@ -531,14 +561,30 @@ function WorkspaceStudio({
                     {visibleValidation.issues.length === 1 ? "issue" : "issues"}
                   </p>
                   <ul className="grid max-h-64 gap-1 overflow-auto text-sm">
-                    {visibleValidation.issues.map((issue, index) => (
-                      <li key={index}>
-                        <span className="font-mono text-xs text-muted-foreground">
-                          {issue.path}
-                        </span>{" "}
-                        {issue.message}
-                      </li>
-                    ))}
+                    {visibleValidation.issues.map((issue, index) => {
+                      const field = issue.path.split(".")[0] ?? "";
+                      const editor = validationEditors[field as keyof typeof validationEditors];
+                      return (
+                        <li key={index}>
+                          <span className="font-mono text-xs text-muted-foreground">
+                            {issue.path}
+                          </span>{" "}
+                          {issue.message}
+                          {editor && (
+                            <button
+                              type="button"
+                              className="ml-2 min-h-9 rounded px-1 text-sm font-medium text-primary underline underline-offset-2"
+                              onClick={() => {
+                                selectPane(editor);
+                                document.getElementById("studio-views")?.focus();
+                              }}
+                            >
+                              Open {panes.find((item) => item.key === editor)?.label}
+                            </button>
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               ) : (
@@ -549,7 +595,12 @@ function WorkspaceStudio({
                 </p>
               ))}
           </section>
-          <nav className="flex flex-wrap gap-2" aria-label="Studio views">
+          <nav
+            id="studio-views"
+            tabIndex={-1}
+            className="grid scroll-mt-20 grid-cols-2 gap-2 rounded-lg border border-border bg-card p-2 sm:grid-cols-4"
+            aria-label="Studio views"
+          >
             {panes.map(({ key, label, icon: Icon }) => (
               <Button
                 key={key}

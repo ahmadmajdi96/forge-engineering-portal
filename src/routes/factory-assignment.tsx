@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { z } from "zod";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { applicationKind, identifier, type AppKind, type Assignment } from "@/lib/edge/assignment";
@@ -13,16 +14,17 @@ import { siteKey } from "@/lib/production/contracts";
 
 export const Route = createFileRoute("/factory-assignment")({
   head: () => ({ meta: [{ title: "Application assignments · Engineering Portal" }] }),
-  validateSearch: (search) => ({
-    site: siteKey.safeParse(search["site"]).data,
-    node: identifier.safeParse(search["node"]).data,
-    terminal: identifier.safeParse(search["terminal"]).data,
-    kind: applicationKind.safeParse(search["kind"]).data,
+  validateSearch: z.object({
+    site: siteKey.optional().catch(undefined),
+    release: z.string().uuid().optional().catch(undefined),
+    node: identifier.optional().catch(undefined),
+    terminal: identifier.optional().catch(undefined),
+    kind: applicationKind.optional().catch(undefined),
   }),
   component: FactoryAssignments,
 });
 
-const fieldClass = "min-h-10 rounded-md border bg-background p-2";
+const fieldClass = "w-full min-w-0 max-w-full min-h-10 rounded-md border bg-background p-2";
 const selectorLabels: Record<(typeof selectorKeys)[number], string> = {
   lineId: "Line",
   stationId: "Station",
@@ -34,12 +36,15 @@ const selectorLabels: Record<(typeof selectorKeys)[number], string> = {
 
 function FactoryAssignments() {
   const search = Route.useSearch();
-  if (!search.site)
+  const { ems } = Route.useRouteContext();
+  const site = search.site ?? ems.identity?.sites[0]?.key;
+  if (!site)
     return <p role="status">Choose an authorized factory to manage its application assignments.</p>;
   return (
     <ScopedAssignments
-      key={search.site}
-      site={search.site}
+      key={JSON.stringify([site, search.release, search.node, search.terminal, search.kind])}
+      site={site}
+      initialRelease={search.release}
       initialNode={search.node}
       terminal={search.terminal}
       initialKind={search.kind ?? "operator"}
@@ -61,10 +66,12 @@ function downloadFixtureAssignment(record: Assignment) {
 function ScopedAssignments({
   site,
   initialNode,
+  initialRelease,
   terminal,
   initialKind,
 }: {
   site: string;
+  initialRelease?: string | undefined;
   initialNode?: string | undefined;
   terminal?: string | undefined;
   initialKind: AppKind;
@@ -73,7 +80,7 @@ function ScopedAssignments({
   const [pages, setPages] = useState<(string | null)[]>([null]);
   const [node, setNode] = useState(initialNode ?? "");
   const [kind, setKind] = useState<AppKind>(initialKind);
-  const [releaseId, setRelease] = useState("");
+  const [releaseId, setRelease] = useState(initialRelease ?? "");
   const [configRevision, setConfigRevision] = useState("config-1");
   const [reason, setReason] = useState("");
   const [selectors, setSelectors] = useState<(typeof selectorKeys)[number][]>([
@@ -91,7 +98,7 @@ function ScopedAssignments({
   const targets =
     records.data?.targets.filter(({ context }) => !terminal || context.terminalId === terminal) ??
     [];
-  const candidate = targets.find(({ context }) => context.nodeId === node) ?? targets[0];
+  const candidate = node ? targets.find(({ context }) => context.nodeId === node) : targets[0];
   const result = useMutation({
     mutationFn: () => {
       if (!candidate) throw new Error("Choose an enrolled target.");
@@ -109,7 +116,7 @@ function ScopedAssignments({
           kind,
           releaseId,
           configRevision,
-          selectors,
+          selectors: selectors.filter((field) => !!candidate.context[field]),
           effectiveFrom: from,
           effectiveUntil: until,
           reason,
@@ -138,10 +145,11 @@ function ScopedAssignments({
     setFormError("");
     save.mutate({ from, until });
   }
+  const hasRelease = records.data?.releases.some((r) => r.id === releaseId);
   const selectedFields = selectorKeys.filter((field) => candidate?.context[field]);
 
   return (
-    <section className="max-w-6xl space-y-5">
+    <section className="min-w-0 max-w-6xl space-y-5 [overflow-wrap:anywhere]">
       <header>
         <h1 className="font-display text-2xl font-semibold">Application assignments</h1>
         <p className="text-sm text-muted-foreground">
@@ -149,7 +157,14 @@ function ScopedAssignments({
         </p>
       </header>
       {records.isPending && <p role="status">Loading assignments…</p>}
-      {records.isError && <p role="alert">{records.error.message}</p>}
+      {records.isError && (
+        <div role="alert">
+          {records.error.message}{" "}
+          <Button variant="outline" onClick={() => void records.refetch()}>
+            Retry
+          </Button>
+        </div>
+      )}
       {records.isSuccess && (
         <>
           {targets.length === 0 && (
@@ -159,12 +174,55 @@ function ScopedAssignments({
                 : "This factory has no current scoped edge targets."}
             </p>
           )}
+          {!!node && !candidate && targets.length > 0 && (
+            <div className="space-y-2 rounded-lg border p-3" role="status">
+              <p>The selected node is no longer enrolled in this scope.</p>
+              <label className="grid min-w-0 gap-1 text-sm">
+                Choose an enrolled target
+                <select
+                  className={fieldClass}
+                  value=""
+                  onChange={(e) => {
+                    setNode(e.target.value);
+                    result.reset();
+                  }}
+                >
+                  <option value="" disabled>
+                    Choose a target
+                  </option>
+                  {targets.map(({ context }) => (
+                    <option key={context.nodeId} value={context.nodeId}>
+                      {context.nodeId} · {context.terminalId}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          )}
+          {records.data.releases.length === 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed p-4 text-sm">
+              <span>Publish a signed package before creating an assignment.</span>
+              <Button asChild variant="outline">
+                <Link to="/factory-releases" search={{ site }}>
+                  Open factory releases
+                </Link>
+              </Button>
+            </div>
+          )}
+          {initialRelease &&
+            !hasRelease &&
+            initialRelease === releaseId &&
+            records.data.releases.length > 0 && (
+              <p role="status">
+                The linked package is unavailable in this factory. Choose a published release.
+              </p>
+            )}
           {candidate && (
             <form
-              className="glass-panel grid gap-4 rounded-lg p-4 sm:grid-cols-2"
+              className="glass-panel grid min-w-0 grid-cols-1 gap-4 rounded-lg p-4 sm:grid-cols-2"
               onSubmit={submit}
             >
-              <label className="grid gap-1 text-sm">
+              <label className="grid min-w-0 gap-1 text-sm">
                 Target node
                 <select
                   className={fieldClass}
@@ -181,7 +239,7 @@ function ScopedAssignments({
                   ))}
                 </select>
               </label>
-              <label className="grid gap-1 text-sm">
+              <label className="grid min-w-0 gap-1 text-sm">
                 Runtime slot
                 <select
                   className={fieldClass}
@@ -195,12 +253,12 @@ function ScopedAssignments({
                   <option value="hmi">HMI</option>
                 </select>
               </label>
-              <label className="grid gap-1 text-sm">
+              <label className="grid min-w-0 gap-1 text-sm">
                 Published package
                 <select
                   className={fieldClass}
                   required
-                  value={releaseId}
+                  value={hasRelease ? releaseId : ""}
                   onChange={(event) => setRelease(event.target.value)}
                 >
                   <option value="">Choose a release</option>
@@ -211,7 +269,7 @@ function ScopedAssignments({
                   ))}
                 </select>
               </label>
-              <label className="grid gap-1 text-sm">
+              <label className="grid min-w-0 gap-1 text-sm">
                 Configuration revision
                 <input
                   className={fieldClass}
@@ -242,7 +300,7 @@ function ScopedAssignments({
                   ))}
                 </div>
               </fieldset>
-              <label className="grid gap-1 text-sm">
+              <label className="grid min-w-0 gap-1 text-sm">
                 Effective from (local time)
                 <input
                   className={fieldClass}
@@ -254,7 +312,7 @@ function ScopedAssignments({
                   Leave blank to start now.
                 </span>
               </label>
-              <label className="grid gap-1 text-sm">
+              <label className="grid min-w-0 gap-1 text-sm">
                 Effective until (local time, optional)
                 <input className={fieldClass} name="end" type="datetime-local" />
               </label>
@@ -270,8 +328,15 @@ function ScopedAssignments({
                 />
               </label>
               <div className="flex flex-wrap gap-2 sm:col-span-2">
-                <Button type="submit" disabled={save.isPending || !releaseId || !selectors.length}>
-                  Assign package
+                <Button
+                  type="submit"
+                  disabled={
+                    save.isPending ||
+                    !hasRelease ||
+                    !selectedFields.some((field) => selectors.includes(field))
+                  }
+                >
+                  {save.isPending ? "Assigning…" : "Assign package"}
                 </Button>
                 <Button
                   type="button"
@@ -279,7 +344,7 @@ function ScopedAssignments({
                   disabled={result.isPending}
                   onClick={() => result.mutate()}
                 >
-                  Resolve current assignment
+                  {result.isPending ? "Resolving…" : "Resolve current assignment"}
                 </Button>
               </div>
             </form>
@@ -294,7 +359,12 @@ function ScopedAssignments({
               {save.error.message}
             </p>
           )}
-          {save.isSuccess && <p role="status">Assignment recorded.</p>}
+          {save.isSuccess && (
+            <p role="status">
+              Assignment recorded. Resolve the current assignment to check which package applies
+              now.
+            </p>
+          )}
           {result.isError && (
             <p role="alert" className="text-destructive">
               {result.error.message}
