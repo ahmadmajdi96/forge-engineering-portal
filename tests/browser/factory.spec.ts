@@ -12,14 +12,16 @@ test("factory renderer, saved layout and protected QA", async ({ page, request }
   await page.getByLabel("Fixture access token").fill(key!);
   await page.getByRole("button", { name: "Sign in to fixture" }).click();
   await expect(page.getByRole("heading", { name: "Factory layout", exact: true })).toBeVisible();
-  await page.getByRole("link", {name:"Overview", exact:true}).click();
-  await expect(page.getByRole("heading", {name:"Engineering Overview", exact:true})).toBeVisible();
-  await page.getByRole("button", {name:"Toggle theme"}).click();
+  await page.getByRole("link", { name: "Overview", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Engineering Overview", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Toggle theme" }).click();
   await expect(page.locator("html")).not.toHaveClass(/dark/);
-  await page.getByRole("button", {name:"Toggle theme"}).click();
-  await page.getByRole("link", {name:"Edge App Studio", exact:true}).click();
+  await page.getByRole("button", { name: "Toggle theme" }).click();
+  await page.getByRole("link", { name: "Edge App Studio", exact: true }).click();
   await expect(page).toHaveURL(/edge-app-studio/);
-  await page.getByRole("link", {name:"Factory layout", exact:true}).click();
+  await page.getByRole("link", { name: "Factory layout", exact: true }).click();
   const canvas = page.locator("canvas").first();
   await expect(canvas).toBeVisible();
   expect(
@@ -59,15 +61,15 @@ test("original and factory sidebar destinations render after sign-in", async ({ 
   await page.goto("/");
   await page.getByLabel("Fixture access token").fill(key!);
   await page.getByRole("button", { name: "Sign in to fixture" }).click();
-  await expect(page.getByRole("heading", {name:"Engineering Overview"})).toBeVisible();
-  const routes = await page.locator('[data-sidebar="menu-button"][href]').evaluateAll(
-    nodes => nodes.map(node => node.getAttribute("href")!),
-  );
+  await expect(page.getByRole("heading", { name: "Engineering Overview" })).toBeVisible();
+  const routes = await page
+    .locator('[data-sidebar="menu-button"][href]')
+    .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("href")!));
   expect(routes.length).toBeGreaterThan(30);
   for (const href of routes) {
     await page.goto(href);
     await expect(page.locator("main").last(), href).toBeVisible();
-    await expect(page.getByText("This page didn't load", {exact:true}), href).toHaveCount(0);
-    expect(new URL(page.url()).pathname, href).toBe(new URL(href,page.url()).pathname);
+    await expect(page.getByText("This page didn't load", { exact: true }), href).toHaveCount(0);
+    expect(new URL(page.url()).pathname, href).toBe(new URL(href, page.url()).pathname);
   }
 });

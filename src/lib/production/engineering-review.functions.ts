@@ -20,7 +20,9 @@ export const reviewEngineering = createServerFn({ method: "POST" })
     sameOrigin(request);
     const { actor } = await requirePermission(request, data.site, "ems.engineering.review");
     await database().begin(async (tx) => {
-      const [revision] = await tx<{actor:string;digest:string;lifecycle:string}[]>`select r.actor, r.digest, r.payload->>'lifecycle' as lifecycle
+      const [revision] = await tx<
+        { actor: string; digest: string; lifecycle: string }[]
+      >`select r.actor, r.digest, r.payload->>'lifecycle' as lifecycle
         from ems.workspaces w join ems.revisions r on r.site=w.site and r.workspace=w.key and r.revision=w.head
         where w.site=${data.site} and w.key='engineering' and r.revision=${data.revision} for update of w`;
       if (!revision || revision.lifecycle !== "In Review")

@@ -15,7 +15,7 @@
     "build:node": "vite build -c vite.docker.config.ts",
     "typecheck": "tsc --noEmit",
     "test:browser": "playwright test",
-    "lint:ems": "eslint src/lib/{production,spatial,studio,edge} src/components/{spatial,studio} src/components/engineering/factory-shell.tsx src/routes/{factory-*,application-studio.tsx,admin,api/ems,api/public/integrations/ack.ts} scripts/**/*.ts scripts/*.ts tests/browser playwright.config.ts"
+    "lint:ems": "eslint src/lib/production src/lib/spatial src/lib/studio src/lib/edge src/components/spatial src/components/studio src/components/engineering/factory-shell.tsx src/routes/factory-* src/routes/application-studio.tsx src/routes/admin src/routes/api/ems src/routes/api/public/integrations/ack.ts scripts/**/*.ts scripts/*.ts tests/browser playwright.config.ts"
   },
   "overrides": {
     "rolldown": "1.2.1"
