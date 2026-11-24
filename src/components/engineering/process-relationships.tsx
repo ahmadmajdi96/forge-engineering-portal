@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { ProcessDiagram } from "./process-diagram";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,38 @@ export function StepRelationships({
           r.parent === lineId ||
           catalog.design?.stations.some((s) => s.id === r.parent && s.lineId === lineId)),
     ) ?? [];
+  const logical = step.engineeringStationIds ?? [];
+  const designStations = (catalog.design?.stations ?? []).filter(
+    (s) => !lineId || s.lineId === lineId,
+  );
+  const assigned = new Set([
+    ...logical,
+    ...step.stationIds.map((id) => stations.find((s) => s.id === id)?.engineeringId),
+  ]);
+  const signals = (catalog.design?.signals ?? []).filter(
+    (s) => assigned.has(s.stationId) && s.access === "Read",
+  );
+  const source = signals.find((s) => s.key === step.completionSignal);
+  const consumers = step.consumers ?? [];
+  const choices: { label: string; value: NonNullable<Step["consumers"]>[number] }[] = [];
+  if (source) {
+    for (const app of catalog.applications)
+      for (const s of app.signals) {
+        const type =
+          source.type === "Boolean" ? "boolean" : source.type === "Enum" ? "text" : "number";
+        if (s.type === type && s.unit === source.unit)
+          choices.push({
+            label: app.name + " · " + s.name,
+            value: { kind: "studio", appId: app.id, signalId: s.id },
+          });
+      }
+    for (const r of catalog.design?.records ?? [])
+      if (r.kind === "mapping" && !r.archived && r.binding && r.parent === source.stationId)
+        choices.push({
+          label: "MES · " + r.name + " → " + r.binding,
+          value: { kind: "mes", mappingId: r.id },
+        });
+  }
   const matches = stations.filter((s) => includes(s.id + " " + (s.engineeringId ?? ""), s.label));
   return (
     <fieldset className="col-span-full space-y-2 rounded-md border p-3">
@@ -68,7 +101,157 @@ export function StepRelationships({
       {catalog.designStatus && (
         <p className="text-xs text-muted-foreground">{catalog.designStatus}</p>
       )}
-      <div className="text-sm font-medium">Assigned layout stations</div>
+      <label className="engineering-picker-field">
+        Assign engineering station
+        <select
+          value=""
+          disabled={!catalog.design || assigned.size >= 25}
+          onChange={(e) =>
+            e.target.value && put({ engineeringStationIds: [...logical, e.target.value] })
+          }
+        >
+          <option value="">Choose station</option>
+          {designStations
+            .filter((s) => !assigned.has(s.id) && includes(s.id, s.name))
+            .slice(0, 100)
+            .map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name} · {s.mode.replace("semi_auto", "semi-automatic")}
+              </option>
+            ))}
+        </select>
+      </label>
+      {logical.map((id) => (
+        <div className="flex items-center gap-2" key={id}>
+          <Link
+            className="ref-issue-link"
+            to="/stations/$stationId"
+            params={{ stationId: id }}
+            search={{ site: catalog.site, engLine: lineId, engStation: id }}
+          >
+            {designStations.find((s) => s.id === id)?.name ?? "Unresolved station"} · {id}
+          </Link>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => put({ engineeringStationIds: logical.filter((s) => s !== id) })}
+          >
+            Unassign
+          </Button>
+        </div>
+      ))}
+      <label className="engineering-picker-field">
+        Station participation
+        <select
+          value={step.participation ?? ""}
+          onChange={(e) =>
+            put({ participation: (e.target.value || undefined) as Step["participation"] })
+          }
+        >
+          <option value="">Choose rule</option>
+          <option value="any">Any one eligible station</option>
+          <option value="all">All assigned stations required</option>
+        </select>
+      </label>
+      <label className="engineering-picker-field">
+        Operator role
+        <input
+          maxLength={160}
+          value={step.operatorRole ?? ""}
+          onChange={(e) => put({ operatorRole: e.target.value })}
+        />
+      </label>
+      <label className="engineering-picker-field">
+        Operator and machine handoff
+        <textarea
+          maxLength={1000}
+          value={step.handoff ?? ""}
+          onChange={(e) => put({ handoff: e.target.value })}
+        />
+      </label>
+      <label className="engineering-picker-field">
+        Completion signal
+        <select
+          value={step.completionSignal ?? ""}
+          onChange={(e) => put({ completionSignal: e.target.value || undefined })}
+        >
+          <option value="">No machine completion signal</option>
+          {step.completionSignal && !signals.some((s) => s.key === step.completionSignal) && (
+            <option value={step.completionSignal}>{step.completionSignal} · unresolved</option>
+          )}
+          {signals.map((s) => (
+            <option key={s.key}>{s.key}</option>
+          ))}
+        </select>
+      </label>
+      {step.completionSignal && (
+        <div className="space-y-2">
+          <label className="engineering-picker-field">
+            Add signal consumer
+            <select
+              value=""
+              onChange={(e) => {
+                const choice = choices[Number(e.target.value)];
+                if (choice) put({ consumers: [...consumers, choice.value] });
+              }}
+            >
+              <option value="">Choose app input or MES mapping</option>
+              {choices.map((choice, i) => (
+                <option
+                  key={i}
+                  value={i}
+                  disabled={consumers.some(
+                    (c) => JSON.stringify(c) === JSON.stringify(choice.value),
+                  )}
+                >
+                  {choice.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {catalog.studioStatus && <p>{catalog.studioStatus}</p>}
+          {!choices.length && (
+            <p>
+              No matching app input or MES mapping. Match the input type and unit in Studio, or
+              configure a MES mapping for this station.
+            </p>
+          )}
+        </div>
+      )}
+      {consumers.map((c, i) => (
+        <div key={i} className="flex flex-wrap items-center gap-2">
+          {c.kind === "studio" ? (
+            <Link
+              className="ref-issue-link"
+              to="/application-studio"
+              search={{ site: catalog.site, app: c.appId, view: "bindings" }}
+            >
+              {c.appId} · {c.signalId}
+            </Link>
+          ) : (
+            <Link
+              className="ref-issue-link"
+              to="/mes-integration"
+              search={{
+                site: catalog.site,
+                engLine: lineId,
+                engStation: source?.stationId,
+                mapping: c.mappingId,
+              }}
+            >
+              {c.mappingId}
+            </Link>
+          )}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => put({ consumers: consumers.filter((_, n) => n !== i) })}
+          >
+            Remove consumer
+          </Button>
+        </div>
+      ))}
+      <div className="text-sm font-medium">Layout station assignments</div>
       {step.stationIds.map((id) => (
         <div key={id} className="flex flex-wrap items-center gap-2 text-sm">
           <span>
@@ -97,7 +280,9 @@ export function StepRelationships({
         >
           <option value="">Select a placed station</option>
           {matches
-            .filter((s) => !step.stationIds.includes(s.id))
+            .filter(
+              (s) => !step.stationIds.includes(s.id) && !logical.includes(s.engineeringId ?? ""),
+            )
             .slice(0, 100)
             .map((s) => (
               <option key={s.id} value={s.id}>

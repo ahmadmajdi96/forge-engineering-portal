@@ -30,10 +30,11 @@ function stationFields(lines: { id: string; name: string }[], templates: { id: s
     { name: "name", label: "Name", type: "text", required: true },
     { name: "lineId", label: "Line", type: "select", required: true,
       options: lines.map((l) => ({ value: l.id, label: `${l.id} · ${l.name}` })) },
-    { name: "sequence", label: "Sequence # (same number = parallel in same step)", type: "number", required: true },
+    { name: "sequence", label: "Station display order", type: "number", required: true },
     { name: "type", label: "Type", type: "select", required: true, options: [
       { value: "manual", label: "Manual (operator)" },
       { value: "automatic", label: "Automatic (machine)" },
+      { value: "semi_auto", label: "Semi-automatic (operator and machine)" },
     ]},
     { name: "status", label: "Configured state", type: "select", required: true, options: [
       { value: "running", label: "running" },
@@ -48,42 +49,42 @@ function stationFields(lines: { id: string; name: string }[], templates: { id: s
       section: "Step templates",
       options: templates.map((t) => ({ value: t.id, label: `${t.id} · ${t.name}` })) },
 
-    { name: "machine_model", label: "Machine model", type: "text", section: "Machine (automatic only)",
-      visibleWhen: { field: "type", equals: "automatic" } },
-    { name: "machine_vendor", label: "Vendor", type: "text", visibleWhen: { field: "type", equals: "automatic" } },
+    { name: "machine_model", label: "Machine model", type: "text", section: "Machine (machine-assisted stations)",
+      visibleWhen: { field: "type", equals: ["automatic", "semi_auto"] } },
+    { name: "machine_vendor", label: "Vendor", type: "text", visibleWhen: { field: "type", equals: ["automatic", "semi_auto"] } },
     { name: "machine_ipAddress", label: "IP address", type: "text", placeholder: "10.0.0.10",
-      visibleWhen: { field: "type", equals: "automatic" } },
+      visibleWhen: { field: "type", equals: ["automatic", "semi_auto"] } },
     { name: "machine_port", label: "Port", type: "number", placeholder: "4840",
-      visibleWhen: { field: "type", equals: "automatic" } },
+      visibleWhen: { field: "type", equals: ["automatic", "semi_auto"] } },
     { name: "machine_protocol", label: "Protocol", type: "select",
       options: protocols.map((p) => ({ value: p, label: p })),
-      visibleWhen: { field: "type", equals: "automatic" } },
-    { name: "machine_firmware", label: "Firmware", type: "text", visibleWhen: { field: "type", equals: "automatic" } },
+      visibleWhen: { field: "type", equals: ["automatic", "semi_auto"] } },
+    { name: "machine_firmware", label: "Firmware", type: "text", visibleWhen: { field: "type", equals: ["automatic", "semi_auto"] } },
     { name: "machine_receivedDataTypes", label: "Received data types", type: "textarea", span: 2,
       placeholder: "temp_c,pressure_bar,rpm,vibration",
-      visibleWhen: { field: "type", equals: "automatic" } },
+      visibleWhen: { field: "type", equals: ["automatic", "semi_auto"] } },
     { name: "machine_sentDataTypes", label: "Sent data types", type: "textarea", span: 2,
       placeholder: "setpoint_rpm,recipe_id,start,stop",
-      visibleWhen: { field: "type", equals: "automatic" } },
+      visibleWhen: { field: "type", equals: ["automatic", "semi_auto"] } },
 
     { name: "machine_outputKind", label: "Output kind", type: "select",
-      section: "Output (automatic only)",
+      section: "Output (machine-assisted stations)",
       options: [
         { value: "none", label: "No output" },
         { value: "text", label: "Text (e.g. PASS/FAIL, reading)" },
         { value: "file", label: "File (e.g. inspection image)" },
       ],
-      visibleWhen: { field: "type", equals: "automatic" } },
+      visibleWhen: { field: "type", equals: ["automatic", "semi_auto"] } },
     { name: "machine_outputLabel", label: "Output label / filename pattern", type: "text",
       placeholder: "inspection_{lot}.png",
-      visibleWhen: { field: "type", equals: "automatic" } },
+      visibleWhen: { field: "type", equals: ["automatic", "semi_auto"] } },
     { name: "machine_outputProtocol", label: "Decision protocol", type: "select",
       options: protocols.map((p) => ({ value: p, label: p })),
-      visibleWhen: { field: "type", equals: "automatic" } },
+      visibleWhen: { field: "type", equals: ["automatic", "semi_auto"] } },
     { name: "machine_acceptCommand", label: "Accept command", type: "text", placeholder: "ACK / PASS",
-      visibleWhen: { field: "type", equals: "automatic" } },
+      visibleWhen: { field: "type", equals: ["automatic", "semi_auto"] } },
     { name: "machine_rejectCommand", label: "Reject command", type: "text", placeholder: "NAK / REJECT",
-      visibleWhen: { field: "type", equals: "automatic" } },
+      visibleWhen: { field: "type", equals: ["automatic", "semi_auto"] } },
   ];
 }
 
@@ -122,7 +123,7 @@ export function fromFlatStation(v: any): Station {
     oee: Number(v.oee) || 0,
     templateIds: Array.isArray(v.templateIds) ? v.templateIds : [],
   };
-  if (v.type === "automatic" && (v.machine_model || v.machine_vendor || v.machine_ipAddress)) {
+  if (v.type !== "manual" && (v.machine_model || v.machine_vendor || v.machine_ipAddress)) {
     base.machine = {
       model: v.machine_model,
       vendor: v.machine_vendor,
@@ -172,7 +173,7 @@ function StationsPage() {
         <div>
           <h1 className="font-display text-2xl font-semibold tracking-tight">Stations</h1>
           <p className="text-sm text-muted-foreground">
-            {counts.total} stations · {counts.automatic} automatic · {counts.manual} manual
+            {counts.total} stations · {counts.automatic} automatic · {counts.manual} manual · {counts.total - counts.automatic - counts.manual} semi-automatic
           </p>
         </div>
         <EntityFormDialog<Station>
@@ -199,7 +200,7 @@ function StationsPage() {
           {store.lines.map((l) => <option key={l.id} value={l.id}>{l.id} · {l.name}</option>)}
         </select>
         <div className="flex gap-1">
-          {(["all", "automatic", "manual"] as const).map((t) => (
+          {(["all", "automatic", "manual", "semi_auto"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTypeFilter(t)}
@@ -207,7 +208,7 @@ function StationsPage() {
                 typeFilter === t ? "border-primary/50 bg-primary/15 text-primary" : "border-border/60 bg-card/60 text-muted-foreground hover:text-foreground"
               }`}
             >
-              {t}
+              {t === "semi_auto" ? "Semi-automatic" : t}
             </button>
           ))}
         </div>

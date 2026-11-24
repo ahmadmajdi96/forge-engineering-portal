@@ -28,7 +28,7 @@ const sections = [
       { title: "Production Steps", url: "/asset-steps", icon: ListChecks },
       { title: "Process & Routes", url: "/process-routes", icon: GitBranch },
       {
-        title: "Factory process routes",
+        title: "Line sections and routes",
         url: "/factory-process",
         icon: GitBranch,
         access: "ems.factory_process.view",

@@ -70,6 +70,7 @@ type Props = {
   floor: Floor;
   visible: VisualRecord[];
   connections: Connection[];
+  signalPaths?: import("@/lib/spatial/process-trace").SignalPath[] | undefined;
   artifacts: SpatialArtifact[];
   selection: string[];
   mode: Projection;
@@ -566,6 +567,42 @@ function createScene(
       objects.add(mesh);
     }
 
+    // A logical signal may span several physical network segments.
+    const flowVertices: Vector3[] = [];
+    for (const path of props.signalPaths ?? []) {
+      const a = byId.get(path.from),
+        b = byId.get(path.to);
+      if (!a || !b) continue;
+      const start = vec(a.record.position),
+        end = vec(b.record.position);
+      start.y += (a.record.sizeOverride ?? a.template.size).y;
+      end.y += (b.record.sizeOverride ?? b.template.size).y;
+      const lift = Math.max(start.y, end.y) + 0.45;
+      const head = new Vector3(end.x, lift, end.z),
+        tail = new Vector3(start.x, lift, start.z);
+      const dir = head.clone().sub(tail).normalize();
+      const wing = new Vector3(-dir.z, 0, dir.x).multiplyScalar(0.12);
+      const base = head.clone().addScaledVector(dir, -Math.min(0.35, head.distanceTo(tail) / 2));
+      flowVertices.push(
+        start,
+        tail,
+        tail,
+        head,
+        head,
+        end,
+        base.clone().add(wing),
+        head,
+        head,
+        base.clone().sub(wing),
+      );
+    }
+    if (flowVertices.length)
+      links.add(
+        new LineSegments(
+          new BufferGeometry().setFromPoints(flowVertices),
+          new LineBasicMaterial({ color: 0x6ed9cc }),
+        ),
+      );
     for (const link of props.connections) {
       const from = byId.get(link.from.occurrenceId),
         to = byId.get(link.to.occurrenceId);
@@ -664,6 +701,7 @@ function createScene(
       !previous ||
       previous.visible !== props.visible ||
       previous.connections !== props.connections ||
+      previous.signalPaths !== props.signalPaths ||
       previous.artifacts !== props.artifacts ||
       previous.section !== props.section ||
       previous.transparent !== props.transparent ||
@@ -924,6 +962,7 @@ export default function SpatialScene(props: Props) {
     floor,
     visible,
     connections,
+    signalPaths,
     artifacts,
     selection,
     mode,
@@ -944,6 +983,7 @@ export default function SpatialScene(props: Props) {
     floor,
     visible,
     connections,
+    signalPaths,
     artifacts,
     selection,
     mode,

@@ -86,6 +86,13 @@ export async function writeWorkspace(
     )
       await requirePermission(request, input.site, editPermission.studio);
   }
+  if (input.workspace === "process") {
+    const steps = (payload as ProcessDocument).routes.flatMap((r) => r.steps);
+    if (steps.some((s) => s.engineeringStationIds?.length || s.completionSignal))
+      await requirePermission(request, input.site, viewPermission.engineering);
+    if (steps.some((s) => s.consumers?.some((c) => c.kind === "studio")))
+      await requirePermission(request, input.site, viewPermission.studio);
+  }
   const serialized = canonical(JSON.parse(JSON.stringify(payload)));
   const digest = hash(serialized);
   // The expected revision is immutable. Checking grants before locking the head also
@@ -100,7 +107,7 @@ export async function writeWorkspace(
   return database().begin(async (tx) => {
     // Take the cross-workspace lock before either head so simultaneous edits cannot
     // validate against different versions of the same physical relationship.
-    if (["spatial", "engineering", "process"].includes(input.workspace))
+    if (["spatial", "engineering", "process", "studio"].includes(input.workspace))
       await tx`select pg_advisory_xact_lock(hashtext('ems/spatial-engineering'), hashtext(${input.site}))`;
     await tx`insert into ems.workspaces (site, key) values (${input.site}, ${input.workspace}) on conflict do nothing`;
     const [current] = await tx<
@@ -202,7 +209,7 @@ export async function writeWorkspace(
         }
       }
     }
-    if (["process", "spatial", "engineering"].includes(input.workspace)) {
+    if (["process", "spatial", "engineering", "studio"].includes(input.workspace)) {
       // Compare against the saved relationships so legacy drafts can still be corrected incrementally.
       const [processRow] = await tx<{ payload: ProcessDocument }[]>`
         select r.payload from ems.workspaces w join ems.revisions r on w.site=r.site and w.key=r.workspace and w.head=r.revision
@@ -212,7 +219,12 @@ export async function writeWorkspace(
         input.workspace === "process" ? (payload as ProcessDocument) : beforeProcess;
       if (
         afterProcess.routes.some(
-          (route) => route.lineId || route.steps.some((step) => step.operationId),
+          (route) =>
+            route.lineId ||
+            route.steps.some(
+              (step) =>
+                step.operationId || step.engineeringStationIds?.length || step.completionSignal,
+            ),
         )
       ) {
         const [designRow] = await tx<{ model: unknown }[]>`
@@ -223,13 +235,18 @@ export async function writeWorkspace(
           where w.site=${input.site} and w.key='spatial'`;
         const beforeDesign = designRow ? modelSchema.parse(designRow.model) : null;
         const beforeSpaces = layoutRow?.spaces ?? [];
-        const known = processLinkProblems(beforeProcess, beforeDesign, beforeSpaces);
+        const [studioRow] = await tx<{ payload: unknown }[]>`
+          select r.payload from ems.workspaces w join ems.revisions r on w.site=r.site and w.key=r.workspace and w.head=r.revision
+          where w.site=${input.site} and w.key='studio'`;
+        const beforeStudio = studioRow ? studioWorkspaceSchema.parse(studioRow.payload) : null;
+        const known = processLinkProblems(beforeProcess, beforeDesign, beforeSpaces, beforeStudio);
         const problems = processLinkProblems(
           afterProcess,
           input.workspace === "engineering"
             ? (payload as { model: EngineeringModel }).model
             : beforeDesign,
           input.workspace === "spatial" ? (payload as SpatialDocument).spaces : beforeSpaces,
+          input.workspace === "studio" ? studioWorkspaceSchema.parse(payload) : beforeStudio,
         );
         for (const [key, message] of problems)
           if (!known.has(key)) throw new EmsError(409, message);

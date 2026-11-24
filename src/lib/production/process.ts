@@ -11,7 +11,29 @@ const stepSchema = z
     id: key,
     name: z.string().trim().min(1).max(160),
     operationId: key.optional(),
+    // Legacy stationIds refer to spatial nodes. Logical assignments can precede placement.
     stationIds: z.array(key).max(25),
+    engineeringStationIds: z.array(key).max(25).optional(),
+    participation: z.enum(["any", "all"]).optional(),
+    sectionId: key.optional(),
+    operatorRole: z.string().trim().max(160).optional(),
+    handoff: z.string().trim().max(1000).optional(),
+    consumers: z
+      .array(
+        z.discriminatedUnion("kind", [
+          z
+            .object({
+              kind: z.literal("studio"),
+              appId: z.string().min(1).max(96),
+              signalId: z.string().min(1).max(96),
+            })
+            .strict(),
+          z.object({ kind: z.literal("mes"), mappingId: z.string().min(1).max(180) }).strict(),
+        ]),
+      )
+      .max(40)
+      .optional(),
+    completionSignal: z.string().trim().min(1).max(160).optional(),
     capabilities: z.array(key).max(25),
     evidence: z.array(key).max(25),
     expectedSeconds: z.number().int().min(0).max(86400),
@@ -42,6 +64,10 @@ const routeSchema = z
     product: reference.nullable(),
     recipe: reference.nullable(),
     start: z.union([key, z.literal("")]),
+    sections: z
+      .array(z.object({ id: key, name: z.string().trim().min(1).max(160) }).strict())
+      .max(100)
+      .optional(),
     steps: z.array(stepSchema).max(300),
     transitions: z.array(transitionSchema).max(1000),
   })
@@ -53,6 +79,35 @@ export const processDocumentSchema = z
   })
   .strict()
   .superRefine(({ routes }, context) => {
+    for (const route of routes) {
+      const sections = new Set((route.sections ?? []).map((section) => section.id));
+      if (
+        sections.size !== (route.sections?.length ?? 0) ||
+        route.steps.some((step) => step.sectionId && !sections.has(step.sectionId))
+      )
+        context.addIssue({
+          code: "custom",
+          message: "Each section needs a unique identity and its steps must refer to that section.",
+        });
+      for (const step of route.steps) {
+        const consumers = step.consumers ?? [];
+        if (
+          consumers.length &&
+          (!step.completionSignal ||
+            new Set(consumers.map((c) => JSON.stringify(c))).size !== consumers.length)
+        )
+          context.addIssue({
+            code: "custom",
+            message: "Consumers need a source signal and must be unique.",
+          });
+        const ids = step.engineeringStationIds ?? [];
+        if (new Set(ids).size !== ids.length || ids.length + step.stationIds.length > 25)
+          context.addIssue({
+            code: "custom",
+            message: "Choose up to 25 distinct station assignments per step.",
+          });
+      }
+    }
     if (new Set(routes.map((route) => route.id)).size !== routes.length)
       context.addIssue({
         code: "custom",
@@ -94,7 +149,18 @@ export function validateRoute(route: ProcessRoute) {
         !outgoing.some((edge) => edge.outcome === "failure" && !edge.condition))
     )
       issues.push(step.name + " needs default success and failure paths.");
-    if (step.outcome === "operation" && step.stationIds.length === 0)
+    if (
+      step.outcome === "operation" &&
+      (step.engineeringStationIds?.length || step.sectionId) &&
+      (step.engineeringStationIds?.length ?? 0) + step.stationIds.length > 1 &&
+      !step.participation
+    )
+      issues.push(step.name + " needs a participation rule for its stations.");
+    if (
+      step.outcome === "operation" &&
+      !step.engineeringStationIds?.length &&
+      step.stationIds.length === 0
+    )
       issues.push(step.name + " needs an assigned station.");
   }
   const seen = new Set<string>();

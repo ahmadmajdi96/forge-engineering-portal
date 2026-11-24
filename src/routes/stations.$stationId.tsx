@@ -1,3 +1,4 @@
+import { useProcessRevision } from "@/lib/production/use-process-revision";
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,8 @@ function StationProfile() {
   const { stationId } = Route.useParams();
   const {
     workspaceModel: model,
+    actions,
+    authenticated,
     selected,
     select,
     loadState,
@@ -52,6 +55,8 @@ function StationProfile() {
     revision,
     issues,
   } = useEngineering();
+  const canSeeRoutes = authenticated && actions.includes("ems.factory_process.view");
+  const processes = useProcessRevision(site ?? "", canSeeRoutes);
   const store = useAssetStore();
   const station = model.stations.find((s) => s.id === stationId),
     line = model.lines.find((l) => l.id === station?.lineId && !l.archived);
@@ -133,7 +138,7 @@ function StationProfile() {
               ["Station identifier", station.id],
               ["Production line", line.name],
               ["Location", line.plant || "Unassigned"],
-              ["Control mode", station.mode],
+              ["Control mode", station.mode.replace("semi_auto", "semi-automatic")],
               ["Tracking", station.tracking],
               [
                 "Configured cycle time",
@@ -150,6 +155,54 @@ function StationProfile() {
           />
         </Surface>
         <AssignedApplications stationId={station.id} />
+        {canSeeRoutes && (
+          <Surface
+            title="Assigned route steps"
+            sub={processes.data ? "Process revision " + processes.data.revision : undefined}
+          >
+            {processes.isError ? (
+              <p role="alert">Process routes could not be loaded.</p>
+            ) : processes.isPending ? (
+              <p role="status">Loading routes…</p>
+            ) : (
+              (() => {
+                const matches = processes.data.document.routes.flatMap((route) =>
+                  route.steps
+                    .filter((step) => step.engineeringStationIds?.includes(station.id))
+                    .map((step) => ({ route, step })),
+                );
+                return matches.length ? (
+                  <ul>
+                    {matches.map(({ route, step }) => (
+                      <li key={route.id + "/" + step.id}>
+                        <Link
+                          className="ref-issue-link"
+                          to="/factory-process"
+                          search={{
+                            site: site ?? undefined,
+                            engLine: route.lineId,
+                            routeId: route.id,
+                            stepId: step.id,
+                          }}
+                        >
+                          {[
+                            route.name,
+                            route.sections?.find((section) => section.id === step.sectionId)?.name,
+                            step.name,
+                          ]
+                            .filter(Boolean)
+                            .join(" / ")}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No route steps have a direct engineering assignment to this station.</p>
+                );
+              })()
+            )}
+          </Surface>
+        )}
       </div>
       <Surface title="Equipment and connected hardware">
         {hardware.length ? (

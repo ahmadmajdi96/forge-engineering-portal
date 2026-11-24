@@ -1,4 +1,4 @@
-import { processLinkProblems } from "./process-links";
+import { processLinkProblems, stationHandoffIssues } from "./process-links";
 import { createPrivateKey, randomUUID } from "node:crypto";
 import {
   compileApplication,
@@ -134,7 +134,14 @@ export async function submitRelease(
     if (processDesign) {
       const process = processDocumentSchema.parse(processDesign);
       if (
-        process.routes.some((route) => route.lineId || route.steps.some((step) => step.operationId))
+        process.routes.some(
+          (route) =>
+            route.lineId ||
+            route.steps.some(
+              (step) =>
+                step.operationId || step.engineeringStationIds?.length || step.completionSignal,
+            ),
+        )
       ) {
         const [engineering] = await tx<(BaselineRef & { details: unknown })[]>`
           select r.workspace as object, r.revision::text, r.digest, r.payload->'model' as details
@@ -144,9 +151,18 @@ export async function submitRelease(
           throw new EmsError(409, "The linked engineering revision is unavailable.");
         const { modelSchema } = await import("@/lib/engineering/model");
         const model = modelSchema.parse(engineering.details);
-        const issues = processLinkProblems(process, model, Array.isArray(spatial) ? spatial : []);
+        const issues = processLinkProblems(
+          process,
+          model,
+          Array.isArray(spatial) ? spatial : [],
+          studioWorkspaceSchema.parse(revision.payload),
+        );
         const [problem] = issues.values();
         if (problem) throw new EmsError(409, problem);
+        for (const route of process.routes) {
+          const issue = stationHandoffIssues(route, model)[0];
+          if (issue) throw new EmsError(409, issue);
+        }
         baselines.push(engineering);
       }
       const stations = new Set<string>();

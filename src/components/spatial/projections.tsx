@@ -16,6 +16,7 @@ type Props = {
   floor: { size: Vector; reference: FloorReference | null };
   records: VisualRecord[];
   connections: Connection[];
+  signalPaths?: import("@/lib/spatial/process-trace").SignalPath[] | undefined;
   selected: string[];
   mode: "plan" | "elevation";
   onSelect: (id: string, multi: boolean) => void;
@@ -44,6 +45,7 @@ export const SpatialProjection = memo(function SpatialProjection({
   floor,
   records,
   connections,
+  signalPaths,
   selected,
   mode,
   onSelect,
@@ -72,6 +74,16 @@ export const SpatialProjection = memo(function SpatialProjection({
         viewBox={`${-pad} ${-pad} ${width + pad * 2} ${height + pad * 2}`}
       >
         <defs>
+          <marker
+            id={id + "-signal"}
+            markerWidth="6"
+            markerHeight="6"
+            refX="5"
+            refY="3"
+            orient="auto"
+          >
+            <path d="M0 0 L6 3 L0 6 Z" fill="#61e4cb" />
+          </marker>
           <pattern id={id} patternUnits="userSpaceOnUse" width={grid} height={grid}>
             <path
               d={`M ${grid} 0 L 0 0 0 ${grid}`}
@@ -195,6 +207,35 @@ export const SpatialProjection = memo(function SpatialProjection({
             >
               <title>
                 {link.kind} · {a.label} to {b.label}
+              </title>
+            </line>
+          );
+        })}
+        {signalPaths?.map((path) => {
+          const source = byId.get(path.from),
+            sink = byId.get(path.to);
+          if (!source || !sink) return null;
+          const point = (item: VisualRecord) =>
+            project({
+              ...item.record.position,
+              y: item.record.position.y + (item.record.sizeOverride ?? item.template.size).y,
+            });
+          const [x1, y1] = point(source),
+            [x2, y2] = point(sink);
+          return (
+            <line
+              key={JSON.stringify([path.from, path.to])}
+              x1={x1}
+              y1={y1}
+              x2={x2}
+              y2={y2}
+              stroke="#61e4cb"
+              strokeWidth={stroke}
+              markerEnd={`url(#${id}-signal)`}
+              pointerEvents="none"
+            >
+              <title>
+                Configured signal from {source.record.label} to {sink.record.label}
               </title>
             </line>
           );

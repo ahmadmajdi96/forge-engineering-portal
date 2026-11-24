@@ -173,7 +173,7 @@ export function AssetStepsPage() {
                 >
                   <option value="">Unspecified</option>
                   <option value="manual">Manual</option>
-                  <option value="automatic">Automatic</option>
+                  <option value="automatic">Automatic</option><option value="semi_auto">Semi-automatic</option>
                 </select>
               </label>
               <label>

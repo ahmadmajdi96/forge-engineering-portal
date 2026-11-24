@@ -1,21 +1,25 @@
+import { stationHandoffIssues } from "@/lib/production/process-links";
+import { LineSections } from "@/components/engineering/line-sections";
 import { useProcessCatalog } from "@/lib/engineering/process-catalog";
 import { RouteGraph, StepRelationships } from "@/components/engineering/process-relationships";
 import { WorkspaceLoading } from "@/components/engineering/workspace-loading";
-import { createFileRoute, useBlocker } from "@tanstack/react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, Link, useBlocker } from "@tanstack/react-router";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { siteKey } from "@/lib/production/contracts";
-import {
-  processDocumentSchema,
-  validateRoute,
-  type ProcessDocument,
-  type ProcessRoute,
-} from "@/lib/production/process";
-import { loadFactoryWorkspace, saveFactoryWorkspace } from "@/lib/production/workspace.functions";
+import { validateRoute, type ProcessDocument, type ProcessRoute } from "@/lib/production/process";
+import { useProcessRevision } from "@/lib/production/use-process-revision";
+import { saveFactoryWorkspace } from "@/lib/production/workspace.functions";
 
 export const Route = createFileRoute("/factory-process")({
-  validateSearch: (search) => ({ site: siteKey.safeParse(search["site"]).data }),
+  validateSearch: (
+    search,
+  ): { site?: string | undefined; routeId?: string | undefined; stepId?: string | undefined } => ({
+    site: siteKey.safeParse(search["site"]).data,
+    routeId: typeof search["routeId"] === "string" ? search["routeId"] : undefined,
+    stepId: typeof search["stepId"] === "string" ? search["stepId"] : undefined,
+  }),
   component: FactoryProcess,
 });
 
@@ -23,21 +27,7 @@ function FactoryProcess() {
   const search = Route.useSearch();
   const { ems } = Route.useRouteContext();
   const site = search.site ?? ems.identity?.sites[0]?.key;
-  const load = useQuery({
-    queryKey: ["process", site],
-    retry: false,
-    enabled: !!site,
-    refetchOnWindowFocus: false,
-    queryFn: async () => {
-      const result = await loadFactoryWorkspace({ data: { site: site!, workspace: "process" } });
-      return {
-        revision: result.revision,
-        document: result.payload
-          ? processDocumentSchema.parse(result.payload)
-          : { version: 1 as const, routes: [] },
-      };
-    },
-  });
+  const load = useProcessRevision(site ?? "", !!site);
   if (!site) return <p>Choose a factory.</p>;
   if (load.isError && !load.data)
     return (
@@ -58,7 +48,9 @@ function FactoryProcess() {
     );
   return (
     <ProcessEditor
-      key={site}
+      key={JSON.stringify([site, search.engLine, search.routeId, search.stepId])}
+      initialRouteId={search.routeId}
+      initialStepId={search.stepId}
       permissions={ems.identity?.sites.find((item) => item.key === site)?.actions ?? []}
       lineContext={search.engLine}
       site={site}
@@ -84,19 +76,25 @@ type ProcessSnapshot = { revision: number; document: ProcessDocument };
 function ProcessEditor({
   site,
   permissions,
+  initialRouteId,
+  initialStepId,
   lineContext,
   initial,
   reload,
 }: {
   site: string;
   permissions: string[];
+  initialRouteId?: string | undefined;
+  initialStepId?: string | undefined;
   lineContext?: string | undefined;
   initial: ProcessSnapshot;
   reload: () => Promise<ProcessSnapshot>;
 }) {
   const catalog = useProcessCatalog(site, permissions);
   const [draft, setDraft] = useState(initial.document);
-  const [selection, select] = useState<string | null>(initial.document.routes[0]?.id ?? null);
+  const [selection, select] = useState<string | null>(
+    initialRouteId ?? initial.document.routes[0]?.id ?? null,
+  );
   const [baseline, setBaseline] = useState(initial);
   const [reason, setReason] = useState("");
   const client = useQueryClient();
@@ -107,15 +105,15 @@ function ProcessEditor({
     enableBeforeUnload: dirty,
     shouldBlockFn: ({ current, next }) =>
       dirty &&
-      (current.pathname !== next.pathname || current.search.site !== next.search.site) &&
+      (current.pathname !== next.pathname ||
+        current.search.site !== next.search.site ||
+        current.search.engLine !== next.search.engLine) &&
       !window.confirm("Discard the unsaved process draft and leave this factory?"),
   });
   const [issues, setIssues] = useState<string[] | null>(null);
-  const visibleRoutes = draft.routes.filter(
-    (item) => !lineContext || !item.lineId || item.lineId === lineContext,
-  );
+  const visibleRoutes = draft.routes.filter((item) => !lineContext || item.lineId === lineContext);
   const route = visibleRoutes.find((item) => item.id === selection) ?? visibleRoutes[0];
-  const [focus, setFocus] = useState("");
+  const [focus, setFocus] = useState(initialStepId ?? "");
   const activeStep =
     route?.steps.find((step) => step.id === focus) ??
     route?.steps.find((step) => step.id === route.start) ??
@@ -226,12 +224,25 @@ function ProcessEditor({
           type="button"
           variant="outline"
           onClick={addRoute}
-          disabled={draft.routes.length >= 50}
+          disabled={
+            draft.routes.length >= 50 ||
+            save.isPending ||
+            !permissions.includes("ems.factory_process.edit")
+          }
         >
           Add route
         </Button>
         {route && (
-          <Button type="button" variant="outline" onClick={() => setIssues(validateRoute(route))}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() =>
+              setIssues([
+                ...validateRoute(route),
+                ...(catalog.design ? stationHandoffIssues(route, catalog.design) : []),
+              ])
+            }
+          >
             Validate route
           </Button>
         )}
@@ -241,7 +252,7 @@ function ProcessEditor({
           Add a route to define its entry step, station requirements and transitions.
         </p>
       )}
-      {draft.routes.length > 0 && (
+      {permissions.includes("ems.factory_process.edit") && draft.routes.length > 0 && (
         <form
           className="flex flex-wrap items-end gap-3 rounded-lg border bg-card p-3"
           onSubmit={(event) => {
@@ -320,12 +331,32 @@ function ProcessEditor({
         </div>
       )}
       {route && (
+        <>
+          {activeStep && !dirty && permissions.includes("ems.factory_layout.view") && (
+            <Link
+              className="ref-issue-link"
+              to="/factory-layout"
+              search={{ site, line: route.lineId, traceRoute: route.id, traceStep: activeStep.id }}
+            >
+              Trace {activeStep.name} in 3D
+            </Link>
+          )}
+          <LineSections
+            key={route.id}
+            route={route}
+            readOnly={recover.isPending || !permissions.includes("ems.factory_process.edit")}
+            change={change}
+            visit={setFocus}
+          />
+        </>
+      )}
+      {route && <RouteGraph route={route} current={activeStep} visit={setFocus} />}
+      {route && (
         <fieldset
-          disabled={recover.isPending}
+          disabled={recover.isPending || !permissions.includes("ems.factory_process.edit")}
           aria-label="Process route definition"
           className="min-w-0 space-y-4"
         >
-          <RouteGraph route={route} current={activeStep} visit={setFocus} />
           <div
             key={route.id + "-" + formVersion}
             className="glass-panel grid gap-3 rounded-lg p-4 md:grid-cols-2"
@@ -454,6 +485,21 @@ function ProcessEditor({
                         <option value="operation">Operation</option>
                         <option value="complete">Complete</option>
                         <option value="failed">Failed</option>
+                      </select>
+                    </label>
+                    <label className="grid gap-1 text-sm">
+                      Process section
+                      <select
+                        className={input}
+                        value={step.sectionId ?? ""}
+                        onChange={(e) => put({ sectionId: e.target.value || undefined })}
+                      >
+                        <option value="">Unassigned</option>
+                        {route.sections?.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.name}
+                          </option>
+                        ))}
                       </select>
                     </label>
                     <StepRelationships

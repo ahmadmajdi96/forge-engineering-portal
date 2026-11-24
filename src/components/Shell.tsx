@@ -152,6 +152,25 @@ function SignIn() {
 }
 
 type NativeProps = { identity?: EmsIdentity | undefined; site?: string | undefined };
+
+const secondaryPages = new Set([
+  "/line-engineering",
+  "/asset-steps",
+  "/process-routes",
+  "/step-templates",
+  "/workstations",
+  "/command-policy",
+  "/edge-app-studio",
+  "/operator-apps",
+  "/procedure-designer",
+  "/screen-editor",
+  "/hmi-layouts",
+  "/analytics",
+  "/reports",
+  "/diagnostics",
+  "/approvals",
+  "/changes",
+]);
 function AppSidebar({ identity, site }: NativeProps) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();
@@ -161,13 +180,21 @@ function AppSidebar({ identity, site }: NativeProps) {
   const [filter, setFilter] = useState("");
   const searchInput = useRef<HTMLInputElement>(null);
   const groups = workspaceGroups(identity?.sites.find((s) => s.key === site));
+  const [morePages, setMorePages] = useState(false);
+
   const effectiveFilter = !isMobile && sidebarState === "collapsed" ? "" : filter;
   const words = effectiveFilter.trim().toLowerCase().split(/\s+/);
   const matchingGroups = groups
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) =>
-        words.every((word) => (item.title + " " + group.label).toLowerCase().includes(word)),
+      items: group.items.filter(
+        (item) =>
+          (!identity ||
+            morePages ||
+            !!effectiveFilter.trim() ||
+            isActive(item.url) ||
+            !secondaryPages.has(item.url)) &&
+          words.every((word) => (item.title + " " + group.label).toLowerCase().includes(word)),
       ),
     }))
     .filter((group) => group.items.length > 0);
@@ -253,6 +280,16 @@ function AppSidebar({ identity, site }: NativeProps) {
       </SidebarHeader>
       <SidebarContent className="px-2">
         <nav aria-label="Engineering workspaces">
+          {identity && !effectiveFilter.trim() && (
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-expanded={morePages}
+              onClick={() => setMorePages(!morePages)}
+            >
+              {morePages ? "Show primary pages" : "Show all workspaces"}
+            </Button>
+          )}
           {!matchingGroups.length && (
             <div className="px-2 py-4 text-sm">
               <p role="status">No matching workspaces.</p>

@@ -67,6 +67,9 @@ function LineDetailPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {native && actions.includes("ems.factory_process.view") && <Button asChild><Link to="/factory-process" search={{site, engLine:lineId}}>Design sections and steps</Link></Button>}
+          <Button asChild variant="outline"><Link to="/station-connectivity" search={{site, engLine:lineId}}>Connectivity</Link></Button>
+          <Button asChild variant="outline"><Link to="/release-readiness" search={{site, engLine:lineId}}>Readiness</Link></Button>
           {native && actions.includes("ems.factory_layout.view") && (
             <Button asChild variant="outline">
               <Link

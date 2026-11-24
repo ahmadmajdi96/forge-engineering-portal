@@ -20,6 +20,7 @@ test("factory renderer, saved layout and protected QA", async ({ page, request }
   await page.getByRole("button", { name: "Toggle theme" }).click();
   await expect(page.locator("html")).not.toHaveClass(/dark/);
   await page.getByRole("button", { name: "Toggle theme" }).click();
+  await page.getByRole("button", { name: "Show all workspaces" }).click();
   await page.getByRole("link", { name: "Edge App Studio", exact: true }).click();
   await expect(page).toHaveURL(/edge-app-studio/);
   await page.getByRole("link", { name: "Factory layout", exact: true }).click();
@@ -81,6 +82,7 @@ test("original and factory sidebar destinations render after sign-in", async ({ 
   await page.getByLabel("Fixture access token").fill(key!);
   await page.getByRole("button", { name: "Sign in to fixture" }).click();
   await expect(page.getByRole("heading", { name: "Engineering Overview" })).toBeVisible();
+  await page.getByRole("button", { name: "Show all workspaces" }).click();
   const routes = await page
     .locator('[data-sidebar="menu-button"][href]')
     .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("href")!));

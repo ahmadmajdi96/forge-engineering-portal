@@ -27,7 +27,7 @@ export const lines: ProductionLine[] = [
 ];
 
 // ============ Stations & Machines ============
-export type StationType = "manual" | "automatic";
+export type StationType = "manual" | "automatic" | "semi_auto";
 export type StationStatus = "running" | "idle" | "down" | "maintenance";
 export type CommProtocol = "OPC-UA" | "MQTT" | "Modbus-TCP" | "EtherNet/IP" | "Profinet" | "REST";
 

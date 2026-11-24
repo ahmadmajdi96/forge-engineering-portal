@@ -81,7 +81,15 @@ describe("process engineering workspaces", () => {
       <StepRelationships
         step={step}
         lineId="L-01"
-        catalog={{ design: makeModel(), spaces, designStatus: null, layoutStatus: null }}
+        catalog={{
+          site: "north",
+          applications: [],
+          studioStatus: null,
+          design: makeModel(),
+          spaces,
+          designStatus: null,
+          layoutStatus: null,
+        }}
         put={put}
       />,
     );

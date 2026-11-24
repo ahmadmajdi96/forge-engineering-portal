@@ -2,6 +2,8 @@ import type { EngineeringModel } from "@/lib/engineering/model";
 import type { SpatialDocument } from "./model";
 
 export type LayoutTarget = {
+  traceRoute?: string | undefined;
+  traceStep?: string | undefined;
   space?: string | undefined;
   occurrence?: string | undefined;
   line?: string | undefined;

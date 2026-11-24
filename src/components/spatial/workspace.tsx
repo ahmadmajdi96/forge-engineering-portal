@@ -1,3 +1,6 @@
+import { useProcessApplications } from "@/lib/engineering/process-catalog";
+import { processTrace } from "@/lib/spatial/process-trace";
+import { useProcessRevision } from "@/lib/production/use-process-revision";
 import { WorkspaceLoading } from "@/components/engineering/workspace-loading";
 import {
   lazy,
@@ -11,7 +14,7 @@ import {
   type CSSProperties,
   type FormEvent,
 } from "react";
-import { useBlocker } from "@tanstack/react-router";
+import { Link, useBlocker } from "@tanstack/react-router";
 import { verifySpatialArtifactContent } from "@/lib/spatial/artifacts";
 import { Box, ChevronRight, Crosshair, Layers3, Redo2, Undo2 } from "lucide-react";
 import { loadFactoryWorkspace, saveFactoryWorkspace } from "@/lib/production/workspace.functions";
@@ -265,16 +268,46 @@ function LayoutEditor({
       floorRecords.filter(({ record }) => scope && isWithin(spaces, record.stationId, scope.id)),
     [floorRecords, scope, spaces],
   );
+  const engineering = useEngineering();
+  const savedEngineering =
+    engineering.authenticated &&
+    engineering.site === site &&
+    engineering.loadState === "ready" &&
+    !engineering.dirty &&
+    engineering.revision
+      ? engineering.workspaceModel
+      : undefined;
+  const [traceRouteId, setTraceRoute] = useState(target?.traceRoute ?? "");
+  const [traceSection, setTraceSection] = useState("");
+  const [traceStep, setTraceStep] = useState(target?.traceStep ?? "");
+  const [traceOnly, setTraceOnly] = useState(Boolean(target?.traceStep));
+  const mayTrace =
+    engineering.site === site && engineering.actions.includes("ems.factory_process.view");
+  const maySeeStudio =
+    engineering.site === site && engineering.actions.includes("ems.application_studio.view");
+  const apps = useProcessApplications(site, maySeeStudio && mayTrace && !!traceRouteId);
+  const processes = useProcessRevision(site, mayTrace);
+  const traceRoute = mayTrace
+    ? processes.data?.document.routes.find((r) => r.id === traceRouteId)
+    : undefined;
+  const trace = useMemo(
+    () =>
+      traceRoute
+        ? processTrace(traceRoute, traceStep, traceSection, document, savedEngineering)
+        : undefined,
+    [traceRoute, traceStep, traceSection, document, savedEngineering],
+  );
   const isolatedIds = isolate ? selection : undefined;
   const visibleRecords = useMemo(
     () =>
       scopedRecords.filter(
         ({ record }) =>
+          (!traceOnly || !trace || trace.stations.has(record.stationId)) &&
           (showHidden || !record.hidden) &&
           (!layer || record.layer === layer) &&
           (!isolatedIds || isolatedIds.includes(record.id)),
       ),
-    [scopedRecords, showHidden, layer, isolatedIds],
+    [scopedRecords, showHidden, layer, isolatedIds, traceOnly, trace],
   );
   const presentIds = useMemo(
     () => new Set(floorRecords.map(({ record }) => record.id)),
@@ -304,15 +337,6 @@ function LayoutEditor({
         ),
     );
   const selectedTemplate = catalog.find((entry) => templateKey(entry) === templateId) ?? catalog[0];
-  const engineering = useEngineering();
-  const savedEngineering =
-    engineering.authenticated &&
-    engineering.site === site &&
-    engineering.loadState === "ready" &&
-    !engineering.dirty &&
-    engineering.revision
-      ? engineering.workspaceModel
-      : undefined;
   const issues = useMemo(
     () => [
       ...validateSpatialRelationships(document),
@@ -1236,6 +1260,7 @@ function LayoutEditor({
                   floor={floor}
                   visible={visibleRecords}
                   connections={visibleLinks}
+                  signalPaths={trace?.paths}
                   artifacts={document.artifacts}
                   selection={selection}
                   mode={cameraMode}
@@ -1256,6 +1281,15 @@ function LayoutEditor({
                   Drag to orbit · right-drag to pan · scroll to zoom · Shift+select for multiple
                   placements
                 </span>
+                {!!trace?.paths.length && (
+                  <span>
+                    <span aria-hidden="true" style={{ color: "#61e4cb" }}>
+                      ➜{" "}
+                    </span>
+                    {trace.paths.length} configured signal{" "}
+                    {trace.paths.length === 1 ? "path" : "paths"}
+                  </span>
+                )}
                 {visibleLinks.length > 0 &&
                   connectionKinds
                     .filter((kind) => visibleLinks.some((item) => item.kind === kind))
@@ -1265,6 +1299,186 @@ function LayoutEditor({
                       </span>
                     ))}
               </div>
+              {mayTrace && (
+                <details open={target?.traceRoute ? true : undefined} className={panel}>
+                  <summary className="cursor-pointer font-medium">Process and signal flows</summary>
+                  <div className="mt-2 grid gap-2">
+                    <label className="engineering-picker-field">
+                      Trace route
+                      <select
+                        value={traceRouteId}
+                        onChange={(e) => {
+                          setTraceRoute(e.target.value);
+                          setTraceSection("");
+                          setTraceStep("");
+                        }}
+                      >
+                        <option value="">Physical layout only</option>
+                        {processes.data?.document.routes.map((r) => (
+                          <option key={r.id} value={r.id}>
+                            {r.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    {processes.isError && <p role="alert">Process revision unavailable.</p>}
+                    {traceRoute && trace && (
+                      <>
+                        <label className="engineering-picker-field">
+                          Trace section
+                          <select
+                            value={traceSection}
+                            onChange={(e) => {
+                              setTraceSection(e.target.value);
+                              setTraceStep("");
+                            }}
+                          >
+                            <option value="">All sections</option>
+                            {traceRoute.sections?.map((s) => (
+                              <option key={s.id} value={s.id}>
+                                {s.name}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="engineering-picker-field">
+                          Trace step
+                          <select value={traceStep} onChange={(e) => setTraceStep(e.target.value)}>
+                            <option value="">All steps in scope</option>
+                            {traceRoute.steps
+                              .filter((s) => !traceSection || s.sectionId === traceSection)
+                              .map((s) => (
+                                <option key={s.id} value={s.id}>
+                                  {s.name}
+                                </option>
+                              ))}
+                          </select>
+                        </label>
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={traceOnly}
+                            onChange={(e) => setTraceOnly(e.target.checked)}
+                          />{" "}
+                          Isolate assigned stations
+                        </label>
+                        <Link
+                          className="ref-issue-link"
+                          to="/factory-process"
+                          search={{
+                            site,
+                            engLine: traceRoute.lineId,
+                            routeId: traceRoute.id,
+                            stepId: traceStep || undefined,
+                          }}
+                        >
+                          Open {traceStep ? "step" : "route"} definition
+                        </Link>
+                        <p className="text-xs">
+                          Configured signal paths · Process revision {processes.data?.revision}.
+                          Live observations unavailable.
+                        </p>
+                        {trace.steps
+                          .filter((s) => s.completionSignal)
+                          .map((s) => (
+                            <div key={s.id} className="rounded border p-2 text-sm">
+                              <strong>{s.name}</strong> · {s.completionSignal}
+                              {savedEngineering?.signals
+                                .filter((signal) => signal.key === s.completionSignal)
+                                .map((signal) => (
+                                  <p key={signal.key}>
+                                    <Link
+                                      className="ref-issue-link"
+                                      to="/station-connectivity"
+                                      search={{
+                                        site,
+                                        engLine: traceRoute.lineId,
+                                        engStation: signal.stationId,
+                                        signal: signal.key,
+                                      }}
+                                    >
+                                      Source {signal.equipmentId}
+                                    </Link>{" "}
+                                    · {signal.protocol} {signal.address} · {signal.type}{" "}
+                                    {signal.unit} · Freshness limit {signal.maxAge} s
+                                  </p>
+                                ))}
+                              <ul>
+                                {s.consumers?.map((c) => {
+                                  if (c.kind === "mes") {
+                                    const mapping = savedEngineering?.records.find(
+                                      (record) =>
+                                        record.kind === "mapping" && record.id === c.mappingId,
+                                    );
+                                    return (
+                                      <li key={"mes/" + c.mappingId}>
+                                        MES mapping ·{" "}
+                                        {mapping ? (
+                                          <Link
+                                            className="ref-issue-link"
+                                            to="/mes-integration"
+                                            search={{
+                                              site,
+                                              engLine: traceRoute.lineId,
+                                              engStation: mapping.parent,
+                                              mapping: c.mappingId,
+                                            }}
+                                          >
+                                            {c.mappingId}
+                                          </Link>
+                                        ) : (
+                                          c.mappingId
+                                        )}
+                                        {mapping?.binding && <> → {mapping.binding}</>}
+                                      </li>
+                                    );
+                                  }
+                                  const app = maySeeStudio
+                                    ? apps.data?.find((app) => app.id === c.appId)
+                                    : undefined;
+                                  const widgets = app?.screens.flatMap((screen) =>
+                                    screen.widgets
+                                      .filter((widget) => widget.signalId === c.signalId)
+                                      .map((widget) => screen.name + " / " + widget.title),
+                                  );
+                                  return (
+                                    <li key={JSON.stringify([c.appId, c.signalId])}>
+                                      Application input ·{" "}
+                                      {maySeeStudio ? (
+                                        <Link
+                                          className="ref-issue-link"
+                                          to="/application-studio"
+                                          search={{ site, app: c.appId, view: "bindings" }}
+                                        >
+                                          {app?.name ?? c.appId} / {c.signalId}
+                                        </Link>
+                                      ) : (
+                                        c.appId + " / " + c.signalId
+                                      )}
+                                      {widgets?.length ? (
+                                        <div>Screen / widget · {widgets.join(", ")}</div>
+                                      ) : null}
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            </div>
+                          ))}
+                        {!trace.paths.length && (
+                          <p className="text-xs">
+                            No drawable source-to-terminal paths in this selection.
+                          </p>
+                        )}
+                        {trace.findings.map((f, i) => (
+                          <p key={i} className="text-xs">
+                            {f}
+                          </p>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                </details>
+              )}
               <div className="grid gap-2 sm:grid-cols-2">
                 <SpatialProjection
                   mode="plan"
@@ -1272,6 +1486,7 @@ function LayoutEditor({
                   records={visibleRecords}
                   connections={visibleLinks}
                   selected={selection}
+                  signalPaths={trace?.paths}
                   onSelect={select}
                 />
                 <SpatialProjection
@@ -1280,6 +1495,7 @@ function LayoutEditor({
                   records={visibleRecords}
                   connections={visibleLinks}
                   selected={selection}
+                  signalPaths={trace?.paths}
                   onSelect={select}
                 />
               </div>

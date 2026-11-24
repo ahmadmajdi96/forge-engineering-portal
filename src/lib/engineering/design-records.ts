@@ -34,7 +34,7 @@ export const designRecordSchema = z.object({
   diagram: z.literal("mixing-vessel").optional(),
   screenKind: z.enum(["operator", "hmi"]).optional(),
   breakpoint: z.enum(["Tablet (1280 × 800)", "Industrial panel (1920 × 1080)"]).optional(),
-  executionMode: z.enum(["manual", "automatic"]).optional(),
+  executionMode: z.enum(["manual", "automatic", "semi_auto"]).optional(),
   expectedSeconds: z.number().finite().nonnegative().optional(),
   resourcePolicy: z.enum(["all", "alternatives"]).optional(),
   machine: machineConfigSchema.optional(),

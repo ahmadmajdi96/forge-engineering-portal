@@ -4,7 +4,7 @@ import { lineSchema, stationConfigSchema } from "./asset-schema";
 export const stationSchema = z.object({
   id: z.string(),
   name: z.string().min(1),
-  mode: z.enum(["manual", "automatic"]),
+  mode: z.enum(["manual", "automatic", "semi_auto"]),
   equipment: z.array(z.string()),
   app: z.string(),
   operation: z.string(),

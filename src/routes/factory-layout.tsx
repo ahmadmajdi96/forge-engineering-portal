@@ -8,6 +8,8 @@ const targetId = z.string().trim().min(1).max(180).optional().catch(undefined);
 export const Route = createFileRoute("/factory-layout")({
   validateSearch: z.object({
     site: siteKey.optional().catch(undefined),
+    traceRoute: targetId,
+    traceStep: targetId,
     space: targetId,
     occurrence: targetId,
     line: targetId,
@@ -26,8 +28,9 @@ export const Route = createFileRoute("/factory-layout")({
 
 function FactoryLayout() {
   const { ems } = Route.useRouteContext();
-  const { site, space, occurrence, line, station, asset, assetKind } = Route.useSearch();
-  const target = { space, occurrence, line, station, asset, assetKind };
+  const { site, space, occurrence, line, station, asset, assetKind, traceRoute, traceStep } =
+    Route.useSearch();
+  const target = { traceRoute, traceStep, space, occurrence, line, station, asset, assetKind };
   const sites = ems.identity?.sites ?? [];
   const currentSite = site || sites[0]?.key || "";
   const selectedSite = sites.find(({ key }) => key === currentSite);

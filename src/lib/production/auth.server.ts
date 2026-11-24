@@ -417,6 +417,7 @@ export async function listAuthorizedSites(request: Request) {
               actions: actions.filter(
                 (action) =>
                   (action.startsWith("ems.") && action.endsWith(".view")) ||
+                  action === editPermission.process ||
                   action === editPermission.spatial ||
                   action === editPermission.engineering,
               ),

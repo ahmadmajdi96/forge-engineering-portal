@@ -16,9 +16,19 @@ vi.mock("@/lib/production/workspace.functions", () => ({
 
 describe("process route revision feedback", () => {
   it("keeps edits made during a save, reports conflicts and reloads the current head", async () => {
-    vi.spyOn(Route, "useSearch").mockReturnValue({ site: "training-north" });
+    vi.spyOn(Route, "useSearch").mockReturnValue({
+      site: "training-north",
+      routeId: undefined,
+      stepId: undefined,
+    });
     vi.spyOn(Route, "useRouteContext").mockReturnValue({
-      ems: { mode: "local", identity: { name: "Test", sites: [] } },
+      ems: {
+        mode: "local",
+        identity: {
+          name: "Test",
+          sites: [{ key: "training-north", name: "North", actions: ["ems.factory_process.edit"] }],
+        },
+      },
       queryClient: new QueryClient(),
     });
     vi.mocked(loadFactoryWorkspace)

@@ -16,6 +16,7 @@ export function lineDesignMetrics(model: EngineeringModel) {
     manual: model.stations.filter((station) => station.mode === "manual").length,
     automatic: model.stations.filter((station) => station.mode === "automatic").length,
     unassigned: steps.filter((step) => stationsForStep(model, step).length === 0).length,
+    semiAutomatic: model.stations.filter(station => station.mode === "semi_auto").length,
     missingApps: model.stations.filter((station) => !station.app.trim()).length,
   };
 }
