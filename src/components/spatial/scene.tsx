@@ -66,6 +66,8 @@ export type ViewportHandle = {
 };
 
 type Props = {
+  areas?: import("@/lib/spatial/model").SpaceNode[];
+  activeAreaId?: string | undefined;
   viewport: Ref<ViewportHandle | null>;
   floor: Floor;
   visible: VisualRecord[];
@@ -420,6 +422,24 @@ function createScene(
       links.remove(line);
     }
 
+    for (const area of props.areas ?? []) {
+      const b = area.boundary;
+      if (!b) continue;
+      const y = 0.025;
+      const corners = [
+        [b.x, b.z],
+        [b.x + b.width, b.z],
+        [b.x + b.width, b.z + b.depth],
+        [b.x, b.z + b.depth],
+        [b.x, b.z],
+      ];
+      links.add(
+        new Line(
+          new BufferGeometry().setFromPoints(corners.map(([x, z]) => new Vector3(x, y, z))),
+          new LineBasicMaterial({ color: area.id === props.activeAreaId ? 0xffce86 : 0x75bcaf }),
+        ),
+      );
+    }
     clipping.constant = props.section ?? 0;
     const byId = new Map(props.visible.map((item) => [item.record.id, item]));
     const selected = new Set(props.selection);
@@ -699,6 +719,8 @@ function createScene(
     const refresh =
       forceDetail ||
       !previous ||
+      previous.areas !== props.areas ||
+      previous.activeAreaId !== props.activeAreaId ||
       previous.visible !== props.visible ||
       previous.connections !== props.connections ||
       previous.signalPaths !== props.signalPaths ||
@@ -962,6 +984,8 @@ export default function SpatialScene(props: Props) {
     floor,
     visible,
     connections,
+    areas,
+    activeAreaId,
     signalPaths,
     artifacts,
     selection,
@@ -983,6 +1007,8 @@ export default function SpatialScene(props: Props) {
     floor,
     visible,
     connections,
+    areas,
+    activeAreaId,
     signalPaths,
     artifacts,
     selection,

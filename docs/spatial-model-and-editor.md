@@ -52,3 +52,9 @@ For that procedural fixture, the engineering targets are first mount below 350 m
 - The [Three.js TransformControls documentation](https://threejs.org/docs/pages/TransformControls.html) defines transform snapping and world or local gizmo space.
 - The [Three.js GLTFLoader documentation](https://threejs.org/docs/pages/GLTFLoader.html) defines the loading APIs. EMS enforces a narrower static ingest profile.
 - The [ISA-95 equipment hierarchy](https://reference.opcfoundation.org/specs/OPC-10030/7.4.1) and [ManuQube WMS repository](https://github.com/ahmadmajdi96/command-center-pro) informed the engineering containment model and spatial selection behavior.
+
+## Buildings, floors and sections
+
+Open **Buildings, floors and sections** above the viewer to navigate the physical hierarchy. Under **Manage buildings, floors and sections**, choose a parent to add a child, or choose **Rename**. Selecting a building previews its first floor in document order. Use the Floor selector to switch levels. Under **Floor dimensions and reference**, set the selected floor's dimensions and site anchor in metres.
+
+A physical section uses the existing area identity. Select it and expand **Section footprint** to enter its lower X/Z corner, width and depth relative to the floor. The saved outline appears in the 3D scene and plan. Existing areas have no outline until someone supplies dimensions. Moving the outline preserves equipment locations and process assignments. Use **Save workspace** with a revision reason to persist changes. View-only users can navigate the same hierarchy.

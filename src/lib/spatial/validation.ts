@@ -151,6 +151,22 @@ export function validateSpatialRelationships(document: SpatialDocument): Spatial
         "Clear the engineering link.",
       );
     const parent = node.parentId ? spaces.get(node.parentId) : undefined;
+    const b = node.boundary;
+    if (
+      b &&
+      (node.kind !== "area" ||
+        !parent?.floor ||
+        b.x < 0 ||
+        b.z < 0 ||
+        b.x + b.width > parent.floor.size.x + epsilon ||
+        b.z + b.depth > parent.floor.size.z + epsilon)
+    )
+      error(
+        "section-boundary",
+        [node.id],
+        "A section footprint must fit inside its parent floor",
+        "Adjust the section position, footprint or floor dimensions.",
+      );
     if (
       (node.kind === "organization"
         ? !!node.parentId

@@ -15,6 +15,7 @@ type Point = [number, number];
 type Props = {
   floor: { size: Vector; reference: FloorReference | null };
   records: VisualRecord[];
+  areas?: import("@/lib/spatial/model").SpaceNode[];
   connections: Connection[];
   signalPaths?: import("@/lib/spatial/process-trace").SignalPath[] | undefined;
   selected: string[];
@@ -44,6 +45,7 @@ function hull(points: Point[]): Point[] {
 export const SpatialProjection = memo(function SpatialProjection({
   floor,
   records,
+  areas,
   connections,
   signalPaths,
   selected,
@@ -185,6 +187,25 @@ export const SpatialProjection = memo(function SpatialProjection({
             </g>
           );
         })}
+        {plan &&
+          areas?.map(
+            (area) =>
+              area.boundary && (
+                <rect
+                  key={area.id}
+                  x={area.boundary.x}
+                  y={area.boundary.z}
+                  width={area.boundary.width}
+                  height={area.boundary.depth}
+                  fill="none"
+                  stroke="#75bcaf"
+                  strokeWidth={stroke}
+                  pointerEvents="none"
+                >
+                  <title>{area.label} · Section boundary</title>
+                </rect>
+              ),
+          )}
         {connections.map((link) => {
           const from = byId.get(link.from.occurrenceId),
             to = byId.get(link.to.occurrenceId);

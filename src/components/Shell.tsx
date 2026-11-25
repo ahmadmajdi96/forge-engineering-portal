@@ -488,7 +488,10 @@ export function Shell(props: NativeProps) {
   }, []);
   if (!props.identity && !session) return <SignIn />;
   return (
-    <SidebarProvider>
+    <SidebarProvider
+      key={path === "/factory-layout" ? "layout" : "portal"}
+      defaultOpen={path !== "/factory-layout"}
+    >
       <div className="flex min-h-screen w-full bg-background text-foreground">
         <a
           href="#workspace"
@@ -499,7 +502,15 @@ export function Shell(props: NativeProps) {
         <AppSidebar {...props} />
         <div className="flex min-w-0 flex-1 flex-col">
           <TopBar {...props} />
-          <main id="workspace" tabIndex={-1} className="min-h-0 min-w-0 flex-1 p-4 lg:p-6">
+          <main
+            id="workspace"
+            tabIndex={-1}
+            className={
+              path === "/factory-layout"
+                ? "min-h-0 min-w-0 flex-1 p-2 sm:p-3"
+                : "min-h-0 min-w-0 flex-1 p-4 lg:p-6"
+            }
+          >
             <EngineeringWorkspaceGate>
               {permitted ? (
                 <Outlet />

@@ -37,7 +37,7 @@ function FactoryLayout() {
   const allowed = selectedSite?.actions?.includes(viewPermission.spatial);
 
   return (
-    <div className="mx-auto min-w-0 max-w-[1800px] space-y-4">
+    <div className="w-full min-w-0 space-y-4">
       <header>
         <h1 className="font-display text-2xl font-semibold tracking-tight">Factory layout</h1>
         {allowed && (

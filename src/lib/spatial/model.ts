@@ -159,6 +159,10 @@ const space = z
     label: text,
     kind: z.enum(spaceKinds),
     parentId: id.nullable(),
+    boundary: z
+      .object({ x: coordinate, z: coordinate, width: dimension, depth: dimension })
+      .strict()
+      .optional(),
     engineeringId: z.string().trim().min(1).max(180).optional(),
     floor: z
       .object({
