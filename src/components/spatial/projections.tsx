@@ -15,7 +15,7 @@ type Point = [number, number];
 type Props = {
   floor: { size: Vector; reference: FloorReference | null };
   records: VisualRecord[];
-  areas?: import("@/lib/spatial/model").SpaceNode[];
+  areas?: import("@/lib/spatial/floor-display").DisplayArea[] | undefined;
   connections: Connection[];
   signalPaths?: import("@/lib/spatial/process-trace").SignalPath[] | undefined;
   selected: string[];
@@ -197,12 +197,16 @@ export const SpatialProjection = memo(function SpatialProjection({
                   y={area.boundary.z}
                   width={area.boundary.width}
                   height={area.boundary.depth}
-                  fill="none"
+                  fill="#75bcaf"
+                  fillOpacity={0.16}
+                  strokeDasharray={area.estimated ? "0.18 0.1" : undefined}
                   stroke="#75bcaf"
                   strokeWidth={stroke}
                   pointerEvents="none"
                 >
-                  <title>{area.label} · Section boundary</title>
+                  <title>
+                    {area.label} · {area.estimated ? "Equipment extent" : "Section boundary"}
+                  </title>
                 </rect>
               ),
           )}

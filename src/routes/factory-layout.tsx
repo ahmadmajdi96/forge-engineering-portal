@@ -1,3 +1,4 @@
+import "@/components/spatial/viewer-layout.css";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { FactoryWorkspace } from "@/components/spatial/workspace";
@@ -37,7 +38,7 @@ function FactoryLayout() {
   const allowed = selectedSite?.actions?.includes(viewPermission.spatial);
 
   return (
-    <div className="w-full min-w-0 space-y-4">
+    <div className="ems-layout-page w-full min-w-0 space-y-4">
       <header>
         <h1 className="font-display text-2xl font-semibold tracking-tight">Factory layout</h1>
         {allowed && (

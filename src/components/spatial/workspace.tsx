@@ -1,3 +1,5 @@
+import { FloorStrip } from "./floor-strip";
+import { buildingLevels } from "@/lib/spatial/floor-display";
 import { SpaceControls } from "./space-controls";
 import { useProcessApplications } from "@/lib/engineering/process-catalog";
 import { processTrace } from "@/lib/spatial/process-trace";
@@ -256,13 +258,17 @@ function LayoutEditor({
       isWithin(spaces, node.id, selectedFloor.id) &&
       isWithin(spaces, node.id, scope.id),
   );
-  const floorAreas = useMemo(
-    () =>
-      document.spaces.filter(
-        (node) => node.kind === "area" && node.parentId === selectedFloor?.id && node.boundary,
-      ),
-    [document.spaces, selectedFloor?.id],
+  const [showStack, setShowStack] = useState(false);
+  const levels = useMemo(
+    () => (selectedFloor ? buildingLevels(document, selectedFloor) : []),
+    [document, selectedFloor],
   );
+  const selectedLevel = useMemo(
+    () => levels.filter((l) => l.node.id === selectedFloor?.id),
+    [levels, selectedFloor?.id],
+  );
+  const floorAreas = selectedLevel[0]?.areas;
+  const activeArea = scope && spaceTrail(spaces, scope.id).find((node) => node.kind === "area")?.id;
   const targetStation =
     stations.length === 1 ? stations[0] : stations.find((node) => node.id === placementStationId);
 
@@ -502,6 +508,7 @@ function LayoutEditor({
   function selectSpace(id: string) {
     setPlacementStationId("");
     setScopeId(id);
+    setShowStack(spaces.get(id)?.kind === "building");
     setTraceOnly(false);
     setSelection([]);
     setLayer("");
@@ -1207,6 +1214,16 @@ function LayoutEditor({
             <>
               <div className={panel + " space-y-2"}>
                 <div className="flex flex-wrap items-center gap-2">
+                  {levels.length > 1 && (
+                    <button
+                      type="button"
+                      className={button}
+                      aria-pressed={showStack}
+                      onClick={() => setShowStack(!showStack)}
+                    >
+                      Building floors ({levels.length})
+                    </button>
+                  )}
                   <button className={button} type="button" onClick={() => viewport.current?.fit()}>
                     <Crosshair size={15} /> Fit view
                   </button>
@@ -1390,9 +1407,10 @@ function LayoutEditor({
                 <Scene
                   key={selectedFloor.id}
                   areas={floorAreas}
-                  activeAreaId={
-                    scope && spaceTrail(spaces, scope.id).find((node) => node.kind === "area")?.id
-                  }
+                  levels={showStack ? levels : selectedLevel}
+                  activeFloor={selectedFloor.id}
+                  onSpace={selectSpace}
+                  activeAreaId={activeArea}
                   viewport={viewport}
                   floor={floor}
                   visible={visibleRecords}
@@ -1413,6 +1431,26 @@ function LayoutEditor({
                   onDropTemplate={place}
                 />
               </Suspense>
+              <FloorStrip
+                floorName={selectedFloor.label}
+                width={floor.size.x}
+                depth={floor.size.z}
+                sections={(floorAreas ?? []).map((a) => ({
+                  id: a.id,
+                  label: a.label,
+                  defined: !!a.boundary && !a.estimated,
+                  estimated: a.estimated,
+                }))}
+                activeSection={activeArea}
+                onSection={selectSpace}
+                onFloor={() => selectSpace(selectedFloor.id)}
+              />
+              {showStack && levels.length > 1 && (
+                <p className="text-sm text-muted-foreground">
+                  Separated floor view · Equipment is shown on {selectedFloor.label}. Select a floor
+                  to work on it.
+                </p>
+              )}
               <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
                 <span>
                   Drag to orbit · right-drag to pan · scroll to zoom · Shift+select for multiple

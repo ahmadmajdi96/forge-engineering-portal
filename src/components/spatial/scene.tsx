@@ -1,6 +1,9 @@
+import { floorSurfaces, clearFloorSurfaces, sizeFloorLabels } from "./floor-surfaces";
+import type { DisplayLevel } from "@/lib/spatial/floor-display";
 import { useEffect, useRef, useState, type Ref } from "react";
 import {
   AmbientLight,
+  Sprite,
   Box3,
   Box3Helper,
   BoxGeometry,
@@ -66,7 +69,10 @@ export type ViewportHandle = {
 };
 
 type Props = {
-  areas?: import("@/lib/spatial/model").SpaceNode[];
+  levels: DisplayLevel[];
+  activeFloor: string;
+  onSpace: (id: string) => void;
+  areas?: import("@/lib/spatial/model").SpaceNode[] | undefined;
   activeAreaId?: string | undefined;
   viewport: Ref<ViewportHandle | null>;
   floor: Floor;
@@ -157,7 +163,9 @@ function createScene(
     objects = new Group(),
     links = new Group(),
     outlines = new Group();
-  scene.add(floorGroup, objects, links, outlines);
+  const surfaces = new Group();
+  const floorLabels: Sprite[] = [];
+  scene.add(surfaces, floorGroup, objects, links, outlines);
   const unit = new BoxGeometry(1, 1, 1);
   const stationGeometry = new Map<string, BufferGeometry>();
   function symbolGeometry(shape: StationShape, simplified: boolean) {
@@ -194,7 +202,11 @@ function createScene(
     if (frame || disposed || failed) return;
     frame = requestAnimationFrame(() => {
       frame = 0;
-      if (!disposed && !failed) renderer.render(scene, camera);
+      if (!disposed && !failed) {
+        camera.updateMatrixWorld();
+        sizeFloorLabels(floorLabels, camera, canvas.clientHeight);
+        renderer.render(scene, camera);
+      }
     });
   }
 
@@ -244,6 +256,15 @@ function createScene(
       bounds
         .expandByPoint(new Vector3())
         .expandByPoint(new Vector3(props.floor.size.x, 0, props.floor.size.z));
+    if (!items.length)
+      for (const { node, offset } of props.levels) {
+        if (node.floor)
+          bounds
+            .expandByPoint(vec(offset))
+            .expandByPoint(
+              new Vector3(offset.x + node.floor.size.x, offset.y, offset.z + node.floor.size.z),
+            );
+      }
     const directions = {
       isometric: new Vector3(0.99, 0.77, 1.08),
       top: new Vector3(0, 1, 0.00001),
@@ -298,7 +319,7 @@ function createScene(
     }
     const ground = new Mesh(
       new PlaneGeometry(floor.size.x, floor.size.z),
-      new MeshBasicMaterial({ color: "#373532" }),
+      new MeshBasicMaterial({ color: "#535954" }),
     );
     ground.rotation.x = -Math.PI / 2;
     ground.position.set(floor.size.x / 2, -0.015, floor.size.z / 2);
@@ -711,6 +732,15 @@ function createScene(
     applyProjection(props.mode);
     rebuildFloor(props.floor);
     const previous = previousProps;
+    const levelsChanged = previous?.levels !== props.levels;
+    if (levelsChanged || previous?.activeAreaId !== props.activeAreaId) {
+      clearFloorSurfaces(surfaces);
+      surfaces.add(floorSurfaces(props.levels, props.activeFloor, props.activeAreaId));
+      floorLabels.length = 0;
+      surfaces.traverse((child) => {
+        if (child instanceof Sprite) floorLabels.push(child);
+      });
+    }
     const detailSelection =
       props.exploded ||
       props.artifacts.length > 0 ||
@@ -735,7 +765,7 @@ function createScene(
     }
     previousProps = props;
     showSelection(props);
-    if (!floorInitialized) {
+    if (!floorInitialized || previous?.levels.length !== props.levels.length) {
       floorInitialized = true;
       fit(true, "isometric");
     }
@@ -799,7 +829,14 @@ function createScene(
     )
       return;
     const id = hitId(event);
-    if (id) current().onSelect(id, event.shiftKey || event.metaKey || event.ctrlKey);
+    if (id) {
+      current().onSelect(id, event.shiftKey || event.metaKey || event.ctrlKey);
+      return;
+    }
+    const hit = raycaster
+      .intersectObjects(surfaces.children, true)
+      .find((h) => typeof h.object.userData["spaceId"] === "string");
+    if (hit) current().onSpace(hit.object.userData["spaceId"] as string);
   };
   const change = () => {
     if (!selectionId || !currentSelection || !transform.dragging) return;
@@ -918,6 +955,7 @@ function createScene(
       clearTimeout(hoverTimer);
       canvas.removeEventListener("pointermove", hover);
       canvas.removeEventListener("pointerleave", clearHover);
+      clearFloorSurfaces(surfaces);
       navigation.dispose();
       transform.dispose();
       clearModelCopies();
@@ -986,6 +1024,8 @@ export default function SpatialScene(props: Props) {
     connections,
     areas,
     activeAreaId,
+    levels,
+    activeFloor,
     signalPaths,
     artifacts,
     selection,
@@ -1009,6 +1049,8 @@ export default function SpatialScene(props: Props) {
     connections,
     areas,
     activeAreaId,
+    levels,
+    activeFloor,
     signalPaths,
     artifacts,
     selection,

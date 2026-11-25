@@ -1,3 +1,4 @@
+import "./engineering-workspace.css";
 import {workspaceForPath} from '@/lib/engineering/navigation';
 import { useRef, useState, type ReactNode } from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
@@ -20,7 +21,7 @@ export function ReferencePage({children,title,sub,crumb,actions,sourceLabel}:{ch
   const route=useRouterState({select:s=>s.location.pathname});
   const section=workspaceForPath(route)?.group??'Factory Engineering';
   const assetPage=['Line Topology Designer','Production Steps','Station Composition Editor','Asset Model / Hierarchy','Terminals & Peripherals','Command Policy Editor'].includes(title)||title.startsWith('Signal bindings')||title.startsWith('Equipment')||title.startsWith('MD-104');
-  return <div className="reference-page"><div className="ref-crumb"><Network size={14}/>{section}<ChevronRight size={12}/>{crumb??title}<span className="ref-concept">{sourceLabel ?? (native ? `${fixture?"Training · ":""}${dirty?"Edited draft":lifecycle} · r${revision}` : 'Sandbox · simulated data')}</span>{dirty && <span role="status" className="text-warning">Unsaved changes</span>}<EngineeringDataDrawer/></div><header className="ref-page-head"><div><h1>{title}</h1>{sub&&<p>{sub}</p>}</div><div className="ref-actions">{actions}</div></header>{assetPage&&<AssetFlowNav/>}{title==='Line Topology Designer'&&<AssetLineMetrics/>}{title==='Station Composition Editor'&&<AssetStationConfiguration/>}{children}</div>;
+  return <div className={section==="Factory Engineering"?"reference-page ems-engineering-page":"reference-page"}><div className="ref-crumb"><Network size={14}/>{section}<ChevronRight size={12}/>{crumb??title}<span className="ref-concept">{sourceLabel ?? (native ? `${fixture?"Training · ":""}${dirty?"Edited draft":lifecycle} · r${revision}` : 'Sandbox · simulated data')}</span>{dirty && <span role="status" className="text-warning">Unsaved changes</span>}<EngineeringDataDrawer/></div><header className="ref-page-head"><div><h1>{title}</h1>{sub&&<p>{sub}</p>}</div><div className="ref-actions">{actions}</div></header>{assetPage&&<AssetFlowNav/>}{title==='Line Topology Designer'&&<AssetLineMetrics/>}{title==='Station Composition Editor'&&<AssetStationConfiguration/>}{children}</div>;
 }
 export function ScopeSelectors() {
   const {workspaceModel, lineId, selectLine} = useEngineering();

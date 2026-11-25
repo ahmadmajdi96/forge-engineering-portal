@@ -46,6 +46,23 @@ test("design a building, floor and section footprint", async ({ page }) => {
     .filter({ has: page.locator("title", { hasText: "Inspection bay · Section boundary" }) });
   await expect(outline).toHaveAttribute("width", "6");
   await expect(page.locator("canvas").first()).toBeVisible();
+  const nav = page.getByRole("navigation", { name: "Mezzanine navigation" });
+  await expect(nav.getByRole("button", { name: "Inspection bay" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await controls.getByRole("radio", { name: "Add" }).click();
+  const buildingId = await controls.getByLabel("Building", { exact: true }).inputValue();
+  await parent.selectOption(buildingId);
+  await name.fill("Upper floor");
+  await controls.getByRole("button", { name: "Add floor", exact: true }).click();
+  const stack = page.getByRole("button", { name: "Building floors (2)" });
+  await stack.click();
+  await expect(stack).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByText(/Separated floor view/)).toBeVisible();
+  await controls.getByLabel("Floor", { exact: true }).selectOption({ label: "Mezzanine" });
+  await nav.getByRole("button", { name: "Inspection bay" }).click();
+  await expect(stack).toHaveAttribute("aria-pressed", "false");
   if (process.env["EMS_DISPOSABLE_SPACE_TEST"] === "1") {
     await page.getByLabel("Revision reason").fill("Verify hierarchy persistence");
     await page.getByRole("button", { name: "Save workspace" }).click();
