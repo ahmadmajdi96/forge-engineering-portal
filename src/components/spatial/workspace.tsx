@@ -196,7 +196,10 @@ function LayoutEditor({
   const [baseline, setBaseline] = useState(initial);
   const [draft, dispatch] = useReducer(draftReducer, initial.document, startDraft);
   const [pendingHead, setPendingHead] = useState<Snapshot | null>(null);
-  const [feedback, setFeedback] = useState<{ message: string; error: boolean }>();
+  const [feedback, setFeedback] = useState<{
+    message: string;
+    error: boolean;
+  }>();
   const [busy, setBusy] = useState(false);
   const [reason, setReason] = useState("");
   const [cameraMode, setCameraMode] = useState<SavedCamera["mode"]>("perspective");
@@ -276,7 +279,10 @@ function LayoutEditor({
     () =>
       document.occurrences.flatMap((record): VisualRecord[] => {
         const template = choices.get(
-          templateKey({ id: record.templateId, revision: record.templateRevision }),
+          templateKey({
+            id: record.templateId,
+            revision: record.templateRevision,
+          }),
         );
         return template && selectedFloor && isWithin(spaces, record.stationId, selectedFloor.id)
           ? [{ record, template }]
@@ -473,7 +479,10 @@ function LayoutEditor({
       if (readonlyView || !item || !targetStation || !floor) return;
       const point = at ?? { x: floor.size.x / 2, y: 0, z: floor.size.z / 2 };
       if (point.x < 0 || point.z < 0 || point.x > floor.size.x || point.z > floor.size.z) {
-        setFeedback({ message: "Drop the component within this floor.", error: true });
+        setFeedback({
+          message: "Drop the component within this floor.",
+          error: true,
+        });
         return;
       }
       try {
@@ -486,7 +495,10 @@ function LayoutEditor({
         edited(() => next.document);
         select(next.record.id, false);
       } catch (error) {
-        setFeedback({ message: message(error, "Could not place this template."), error: true });
+        setFeedback({
+          message: message(error, "Could not place this template."),
+          error: true,
+        });
       }
     },
     [available, document, readonlyView, targetStation, floor, moveSnap, edited, select],
@@ -527,7 +539,12 @@ function LayoutEditor({
       const blockers = validateSpatialRelationships(checked);
       if (blockers.length) throw new Error(blockers[0]?.message);
       const response = await saveFactoryWorkspace({
-        data: { ...keyFor(site), expected: baseline.revision, payload: checked, reason },
+        data: {
+          ...keyFor(site),
+          expected: baseline.revision,
+          payload: checked,
+          reason,
+        },
       });
       if (response.revision !== baseline.revision + 1)
         throw new Error(
@@ -536,9 +553,15 @@ function LayoutEditor({
       setBaseline({ revision: response.revision, document: candidate });
       setPendingHead(null);
       setReason("");
-      setFeedback({ message: `Revision ${response.revision} saved.`, error: false });
+      setFeedback({
+        message: `Revision ${response.revision} saved.`,
+        error: false,
+      });
     } catch (cause) {
-      setFeedback({ message: message(cause, "The workspace could not be saved."), error: true });
+      setFeedback({
+        message: message(cause, "The workspace could not be saved."),
+        error: true,
+      });
       // Determine whether this is a conflict by reading the authorized head, independent of error transport.
       try {
         const head = decodeSnapshot(site, await loadFactoryWorkspace({ data: keyFor(site) }));
@@ -573,9 +596,15 @@ function LayoutEditor({
       await verifySpatialArtifactContent(restored);
       edited(() => restored);
       setReadonlyView(false);
-      setFeedback({ message: "Draft restored. Review the changes before saving.", error: false });
+      setFeedback({
+        message: "Draft restored. Review the changes before saving.",
+        error: false,
+      });
     } catch (cause) {
-      setFeedback({ message: message(cause, "Draft could not be restored."), error: true });
+      setFeedback({
+        message: message(cause, "Draft could not be restored."),
+        error: true,
+      });
     }
   }
 
@@ -629,7 +658,10 @@ function LayoutEditor({
       floorId: selectedFloor.id,
       label,
     };
-    edited((previous) => ({ ...previous, cameras: [...previous.cameras, next] }));
+    edited((previous) => ({
+      ...previous,
+      cameras: [...previous.cameras, next],
+    }));
     form.reset();
   }
 
@@ -647,7 +679,10 @@ function LayoutEditor({
       activeSelection.map(({ record }) => record),
       { x: 0.5, y: 0, z: 0.5 },
     );
-    edited((previous) => ({ ...previous, occurrences: [...previous.occurrences, ...records] }));
+    edited((previous) => ({
+      ...previous,
+      occurrences: [...previous.occurrences, ...records],
+    }));
     setSelection(records.map((record) => record.id));
   };
   const remove = (id: string) => {
@@ -721,7 +756,7 @@ function LayoutEditor({
   const floorCameras = document.cameras.filter((camera) => camera.floorId === selectedFloor?.id);
 
   return (
-    <div className="space-y-4">
+    <div className="ems-layout-editor space-y-2">
       {exit.status === "blocked" && (
         <div className="rounded-lg border border-amber-500/60 bg-card p-3">
           <p role="status" className="text-sm font-medium">
@@ -744,7 +779,11 @@ function LayoutEditor({
           </div>
         </div>
       )}
-      <div className={panel + " flex flex-wrap items-start justify-between gap-3"}>
+      <div
+        className={
+          panel + " ems-layout-status flex flex-wrap items-center justify-between gap-x-3 gap-y-2"
+        }
+      >
         <div>
           {scope && (
             <nav
@@ -859,11 +898,11 @@ function LayoutEditor({
                 onSubmit={(event) => {
                   void save(event);
                 }}
-                className="flex w-full flex-wrap items-end gap-2"
+                className="ems-layout-save flex flex-wrap items-end gap-2"
               >
                 <Field name="Revision reason">
                   <input
-                    className={control + " w-60 max-w-full"}
+                    className={control + " w-52 max-w-full"}
                     disabled={readonlyView || busy}
                     required
                     minLength={3}
@@ -918,122 +957,11 @@ function LayoutEditor({
           station in the hierarchy to link a saved engineering record.
         </p>
       )}
-      <details
-        className={panel}
-        open={typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches}
-      >
-        <summary className="cursor-pointer text-sm font-semibold">
-          Buildings, floors and sections
-        </summary>
-        <SpaceControls
-          spaces={document.spaces}
-          scopeId={scope?.id ?? ""}
-          readOnly={readonlyView}
-          onSelect={selectSpace}
-          onCreate={(id, label) => {
-            const parent = spaces.get(id);
-            if (readonlyView || !parent || !childKind[parent.kind]) return;
-            const next = createSpace(parent, label);
-            edited((prev) => ({ ...prev, spaces: [...prev.spaces, next] }));
-            selectSpace(next.id);
-          }}
-          onRename={(id, label) => {
-            if (!readonlyView)
-              edited((prev) => ({
-                ...prev,
-                spaces: prev.spaces.map((n) => (n.id === id ? { ...n, label } : n)),
-              }));
-          }}
-        />
-        {scope?.kind === "area" && floor && (
-          <details className="mt-2 rounded-md border p-3">
-            <summary className="cursor-pointer font-medium">
-              Section footprint · {scope.label}
-            </summary>
-            {readonlyView ? (
-              <p>
-                {scope.boundary
-                  ? `${scope.boundary.width} × ${scope.boundary.depth} m at X ${scope.boundary.x}, Z ${scope.boundary.z}`
-                  : "No footprint configured."}
-              </p>
-            ) : (
-              <form
-                key={JSON.stringify([scope.id, scope.boundary])}
-                className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  const data = new FormData(event.currentTarget);
-                  const boundary = {
-                    x: Number(data.get("x")),
-                    z: Number(data.get("z")),
-                    width: Number(data.get("width")),
-                    depth: Number(data.get("depth")),
-                  };
-                  if (
-                    boundary.x + boundary.width > floor.size.x ||
-                    boundary.z + boundary.depth > floor.size.z
-                  ) {
-                    setFeedback({
-                      error: true,
-                      message:
-                        "The section must fit inside the floor. Check its position and dimensions.",
-                    });
-                    return;
-                  }
-                  edited((prev) => ({
-                    ...prev,
-                    spaces: prev.spaces.map((n) => (n.id === scope.id ? { ...n, boundary } : n)),
-                  }));
-                  setFeedback({ error: false, message: "Section footprint updated in the draft." });
-                }}
-              >
-                {(["x", "z", "width", "depth"] as const).map((k) => (
-                  <label className="grid min-w-0 gap-1 text-sm" key={k}>
-                    {{ x: "Floor X", z: "Floor Z", width: "Width", depth: "Depth" }[k]} (m)
-                    <input
-                      className={control + " w-full"}
-                      name={k}
-                      type="number"
-                      required
-                      step="any"
-                      min={k === "x" || k === "z" ? 0 : 0.001}
-                      max={k === "x" || k === "width" ? floor.size.x : floor.size.z}
-                      defaultValue={scope.boundary?.[k] ?? (k === "x" || k === "z" ? 0 : undefined)}
-                    />
-                  </label>
-                ))}
-                <button type="submit" className={button + " self-end"}>
-                  Apply footprint
-                </button>
-              </form>
-            )}
-          </details>
-        )}
-        {floor && selectedFloor && !readonlyView && (
-          <FloorControls
-            key={JSON.stringify([
-              selectedFloor.id,
-              floor.size,
-              floor.origin,
-              floor.reference?.sha256,
-            ])}
-            floor={floor}
-            onChange={(next) =>
-              edited((previous) => ({
-                ...previous,
-                spaces: previous.spaces.map((node) =>
-                  node.id === selectedFloor.id ? { ...node, floor: next } : node,
-                ),
-              }))
-            }
-          />
-        )}
-      </details>
       <nav
         aria-label="Layout workspace panels"
-        className="grid grid-cols-3 gap-1 rounded-lg border border-border bg-card p-1 xl:hidden"
+        className="ems-layout-panes grid grid-cols-3 gap-1 rounded-lg border border-border bg-card p-1 xl:hidden"
       >
-        {(["library", "scene", "properties"] as const).map((id) => (
+        {(["scene", "library", "properties"] as const).map((id) => (
           <button
             type="button"
             key={id}
@@ -1042,19 +970,152 @@ function LayoutEditor({
             onClick={() => setCompactPanel(id)}
             className={`min-h-10 rounded-md px-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring ${compactPanel === id ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}
           >
-            {{ library: "Hierarchy", scene: "Views", properties: "Properties" }[id]}
+            {
+              {
+                library: "Floors & hierarchy",
+                scene: "Views",
+                properties: "Properties",
+              }[id]
+            }
           </button>
         ))}
       </nav>
       <div
         style={{ "--inspector-width": inspectorWidth + "px" } as CSSProperties}
-        className="grid min-w-0 gap-3 xl:grid-cols-[clamp(17rem,21vw,23rem)_minmax(0,1fr)_8px_var(--inspector-width)] xl:gap-x-2"
+        className="ems-layout-workbench grid min-w-0 gap-3 xl:grid-cols-[clamp(15rem,17vw,19.5rem)_minmax(0,1fr)_8px_var(--inspector-width)] xl:gap-x-2"
       >
         <aside
           id="layout-library"
           aria-label="Spatial hierarchy and library"
           className={`min-w-0 space-y-3 ${compactPanel === "library" ? "" : "hidden xl:block"}`}
         >
+          <details
+            className={panel + " ems-layout-setup"}
+            id="layout-setup"
+            open={typeof window !== "undefined" && window.matchMedia("(min-width: 1280px)").matches}
+          >
+            <summary className="cursor-pointer text-sm font-semibold">
+              Buildings, floors and sections
+            </summary>
+            <SpaceControls
+              spaces={document.spaces}
+              scopeId={scope?.id ?? ""}
+              readOnly={readonlyView}
+              onSelect={selectSpace}
+              onCreate={(id, label) => {
+                const parent = spaces.get(id);
+                if (readonlyView || !parent || !childKind[parent.kind]) return;
+                const next = createSpace(parent, label);
+                edited((prev) => ({ ...prev, spaces: [...prev.spaces, next] }));
+                selectSpace(next.id);
+              }}
+              onRename={(id, label) => {
+                if (!readonlyView)
+                  edited((prev) => ({
+                    ...prev,
+                    spaces: prev.spaces.map((n) => (n.id === id ? { ...n, label } : n)),
+                  }));
+              }}
+            />
+            {scope?.kind === "area" && floor && (
+              <details className="mt-2 rounded-md border p-3">
+                <summary className="cursor-pointer font-medium">
+                  Section footprint · {scope.label}
+                </summary>
+                {readonlyView ? (
+                  <p>
+                    {scope.boundary
+                      ? `${scope.boundary.width} × ${scope.boundary.depth} m at X ${scope.boundary.x}, Z ${scope.boundary.z}`
+                      : "No footprint configured."}
+                  </p>
+                ) : (
+                  <form
+                    key={JSON.stringify([scope.id, scope.boundary])}
+                    className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      const data = new FormData(event.currentTarget);
+                      const boundary = {
+                        x: Number(data.get("x")),
+                        z: Number(data.get("z")),
+                        width: Number(data.get("width")),
+                        depth: Number(data.get("depth")),
+                      };
+                      if (
+                        boundary.x + boundary.width > floor.size.x ||
+                        boundary.z + boundary.depth > floor.size.z
+                      ) {
+                        setFeedback({
+                          error: true,
+                          message:
+                            "The section must fit inside the floor. Check its position and dimensions.",
+                        });
+                        return;
+                      }
+                      edited((prev) => ({
+                        ...prev,
+                        spaces: prev.spaces.map((n) =>
+                          n.id === scope.id ? { ...n, boundary } : n,
+                        ),
+                      }));
+                      setFeedback({
+                        error: false,
+                        message: "Section footprint updated in the draft.",
+                      });
+                    }}
+                  >
+                    {(["x", "z", "width", "depth"] as const).map((k) => (
+                      <label className="grid min-w-0 gap-1 text-sm" key={k}>
+                        {
+                          {
+                            x: "Floor X",
+                            z: "Floor Z",
+                            width: "Width",
+                            depth: "Depth",
+                          }[k]
+                        }{" "}
+                        (m)
+                        <input
+                          className={control + " w-full"}
+                          name={k}
+                          type="number"
+                          required
+                          step="any"
+                          min={k === "x" || k === "z" ? 0 : 0.001}
+                          max={k === "x" || k === "width" ? floor.size.x : floor.size.z}
+                          defaultValue={
+                            scope.boundary?.[k] ?? (k === "x" || k === "z" ? 0 : undefined)
+                          }
+                        />
+                      </label>
+                    ))}
+                    <button type="submit" className={button + " self-end"}>
+                      Apply footprint
+                    </button>
+                  </form>
+                )}
+              </details>
+            )}
+            {floor && selectedFloor && !readonlyView && (
+              <FloorControls
+                key={JSON.stringify([
+                  selectedFloor.id,
+                  floor.size,
+                  floor.origin,
+                  floor.reference?.sha256,
+                ])}
+                floor={floor}
+                onChange={(next) =>
+                  edited((previous) => ({
+                    ...previous,
+                    spaces: previous.spaces.map((node) =>
+                      node.id === selectedFloor.id ? { ...node, floor: next } : node,
+                    ),
+                  }))
+                }
+              />
+            )}
+          </details>
           <div className={panel}>
             <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
               <Layers3 aria-hidden="true" size={16} /> Factory hierarchy
@@ -1212,8 +1273,8 @@ function LayoutEditor({
         >
           {floor && selectedFloor ? (
             <>
-              <div className={panel + " space-y-2"}>
-                <div className="flex flex-wrap items-center gap-2">
+              <div className={panel + " ems-scene-tools space-y-2"}>
+                <div className="ems-scene-tools-row flex flex-wrap items-center gap-2">
                   {levels.length > 1 && (
                     <button
                       type="button"
@@ -1394,43 +1455,45 @@ function LayoutEditor({
               {scope && ["organization", "site", "building"].includes(scope.kind) && (
                 <p className="text-sm font-medium">Viewing floor · {selectedFloor.label}</p>
               )}
-              <Suspense
-                fallback={
-                  <div
-                    className="grid min-h-[360px] place-items-center rounded-lg bg-[#292624] text-sm text-stone-100"
-                    role="status"
-                  >
-                    Loading 3D tools…
-                  </div>
-                }
-              >
-                <Scene
-                  key={selectedFloor.id}
-                  areas={floorAreas}
-                  levels={showStack ? levels : selectedLevel}
-                  activeFloor={selectedFloor.id}
-                  onSpace={selectSpace}
-                  activeAreaId={activeArea}
-                  viewport={viewport}
-                  floor={floor}
-                  visible={visibleRecords}
-                  connections={visibleLinks}
-                  signalPaths={trace?.paths}
-                  artifacts={document.artifacts}
-                  selection={selection}
-                  mode={cameraMode}
-                  gizmo={gizmo}
-                  moveSnap={moveSnap}
-                  angleSnap={angleSnap}
-                  transparent={transparent}
-                  section={section ? sectionHeight : null}
-                  exploded={exploded}
-                  editable={!readonlyView}
-                  onSelect={select}
-                  onTransform={transform}
-                  onDropTemplate={place}
-                />
-              </Suspense>
+              <div className="ems-stage">
+                <Suspense
+                  fallback={
+                    <div
+                      className="grid min-h-[360px] place-items-center rounded-lg bg-[#292624] text-sm text-stone-100"
+                      role="status"
+                    >
+                      Loading 3D tools…
+                    </div>
+                  }
+                >
+                  <Scene
+                    key={selectedFloor.id}
+                    areas={floorAreas}
+                    levels={showStack ? levels : selectedLevel}
+                    activeFloor={selectedFloor.id}
+                    onSpace={selectSpace}
+                    activeAreaId={activeArea}
+                    viewport={viewport}
+                    floor={floor}
+                    visible={visibleRecords}
+                    connections={visibleLinks}
+                    signalPaths={trace?.paths}
+                    artifacts={document.artifacts}
+                    selection={selection}
+                    mode={cameraMode}
+                    gizmo={gizmo}
+                    moveSnap={moveSnap}
+                    angleSnap={angleSnap}
+                    transparent={transparent}
+                    section={section ? sectionHeight : null}
+                    exploded={exploded}
+                    editable={!readonlyView}
+                    onSelect={select}
+                    onTransform={transform}
+                    onDropTemplate={place}
+                  />
+                </Suspense>
+              </div>
               <FloorStrip
                 floorName={selectedFloor.label}
                 width={floor.size.x}
@@ -1623,7 +1686,11 @@ function LayoutEditor({
                                         <Link
                                           className="ref-issue-link"
                                           to="/application-studio"
-                                          search={{ site, app: c.appId, view: "bindings" }}
+                                          search={{
+                                            site,
+                                            app: c.appId,
+                                            view: "bindings",
+                                          }}
                                         >
                                           {app?.name ?? c.appId} / {c.signalId}
                                         </Link>

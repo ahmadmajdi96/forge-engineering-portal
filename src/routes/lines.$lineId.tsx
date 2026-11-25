@@ -6,9 +6,12 @@ import { useEngineering } from "@/lib/engineering/context";
 import { projectAssets } from "@/lib/engineering/asset-registry";
 import { stationsForStep } from "@/lib/engineering/asset-flow";
 import { useListControls } from "@/components/list-controls";
+import { EngineeringJourney } from "@/components/engineering/journey-rail";
 
 export const Route = createFileRoute("/lines/$lineId")({
-  head: () => ({ meta: [{ title: "Production line detail · Engineering Portal" }] }),
+  head: () => ({
+    meta: [{ title: "Production line detail · Engineering Portal" }],
+  }),
   component: LineDetailPage,
 });
 
@@ -56,48 +59,36 @@ function LineDetailPage() {
     );
   return (
     <div className="space-y-4">
-      <header className="flex flex-wrap items-end justify-between gap-3">
+      <header className="ems-workspace-head">
         <div>
           <Link to="/lines" className="ref-issue-link">
             Line registry
           </Link>
-          <h1 className="font-display text-2xl font-semibold">{line.name}</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1>{line.name}</h1>
+          <p>
             {line.plant} / {line.id} · Engineering draft r{revision}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {native && actions.includes("ems.factory_process.view") && <Button asChild><Link to="/factory-process" search={{site, engLine:lineId}}>Design sections and steps</Link></Button>}
-          <Button asChild variant="outline"><Link to="/station-connectivity" search={{site, engLine:lineId}}>Connectivity</Link></Button>
-          <Button asChild variant="outline"><Link to="/release-readiness" search={{site, engLine:lineId}}>Readiness</Link></Button>
-          {native && actions.includes("ems.factory_layout.view") && (
-            <Button asChild variant="outline">
-              <Link
-                to="/factory-layout"
-                search={(prev) => ({
-                  ...prev,
-                  site,
-                  line: lineId,
-                  station: undefined,
-                  space: undefined,
-                  asset: undefined,
-                  occurrence: undefined,
-                })}
-              >
-                Open layout
-              </Link>
-            </Button>
-          )}
+      </header>
+      <EngineeringJourney
+        stage="line"
+        scope={{ site, lineId, lineName: line.name }}
+        access={{ native, actions }}
+        primary={
           <Button asChild>
             <Link
               to="/line-engineering"
-              search={(prev) => ({ ...prev, engLine: lineId, engStation: undefined })}
+              search={(prev) => ({
+                ...prev,
+                engLine: lineId,
+                engStation: undefined,
+              })}
             >
               Design line
             </Link>
           </Button>
-        </div>
-      </header>
+        }
+      />
       <div className="grid min-w-0 items-start gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(16rem,1fr)]">
         <div className="min-w-0 space-y-4">
           <Surface
@@ -129,7 +120,11 @@ function LineDetailPage() {
                     className="ref-issue-link"
                     to="/stations/$stationId"
                     params={{ stationId: s.id }}
-                    search={(prev) => ({ ...prev, engLine: lineId, engStation: s.id })}
+                    search={(prev) => ({
+                      ...prev,
+                      engLine: lineId,
+                      engStation: s.id,
+                    })}
                   >
                     {s.name}
                   </Link>,
@@ -152,7 +147,11 @@ function LineDetailPage() {
               <Button asChild variant="outline">
                 <Link
                   to="/asset-steps"
-                  search={(prev) => ({ ...prev, engLine: lineId, engStation: undefined })}
+                  search={(prev) => ({
+                    ...prev,
+                    engLine: lineId,
+                    engStation: undefined,
+                  })}
                 >
                   Edit sequence
                 </Link>
@@ -168,7 +167,11 @@ function LineDetailPage() {
                     key={r.id}
                     className="ref-issue-link"
                     to="/asset-steps"
-                    search={(prev) => ({ ...prev, engLine: lineId, step: r.id })}
+                    search={(prev) => ({
+                      ...prev,
+                      engLine: lineId,
+                      step: r.id,
+                    })}
                   >
                     {r.name}
                   </Link>,

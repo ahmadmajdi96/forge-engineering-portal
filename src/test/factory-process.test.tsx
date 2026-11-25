@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
+import type { ReactNode } from "react";
 import { useBlocker } from "@tanstack/react-router";
 import { Route } from "@/routes/factory-process";
 import { loadFactoryWorkspace, saveFactoryWorkspace } from "@/lib/production/workspace.functions";
@@ -8,6 +9,7 @@ import { loadFactoryWorkspace, saveFactoryWorkspace } from "@/lib/production/wor
 vi.mock("@tanstack/react-router", async (original) => ({
   ...(await original<typeof import("@tanstack/react-router")>()),
   useBlocker: vi.fn(),
+  Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a>,
 }));
 vi.mock("@/lib/production/workspace.functions", () => ({
   loadFactoryWorkspace: vi.fn(),

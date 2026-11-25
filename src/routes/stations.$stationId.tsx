@@ -15,6 +15,7 @@ import {
   DraftDialog,
 } from "@/components/engineering/reference-ui";
 import { WorkspaceHistory } from "@/components/engineering/workspace-history";
+import { EngineeringJourney } from "@/components/engineering/journey-rail";
 import { stationsForStep } from "@/lib/engineering/asset-flow";
 
 export const Route = createFileRoute("/stations/$stationId")({
@@ -25,7 +26,10 @@ export const Route = createFileRoute("/stations/$stationId")({
         name: "description",
         content: "Shared station profile, machine configuration and engineering assignments.",
       },
-      { property: "og:title", content: `Station ${params.stationId} · Engineering Portal` },
+      {
+        property: "og:title",
+        content: `Station ${params.stationId} · Engineering Portal`,
+      },
       {
         property: "og:description",
         content: "Shared station profile, machine configuration and engineering assignments.",
@@ -48,6 +52,7 @@ function StationProfile() {
     workspaceModel: model,
     actions,
     authenticated,
+    native,
     selected,
     select,
     loadState,
@@ -111,26 +116,40 @@ function StationProfile() {
       ].join(" / ")}
       actions={<Button onClick={() => setSaving(true)}>Save draft</Button>}
     >
-      <div className="ref-actions">
-        <Button asChild variant="outline">
-          <Link to="/stations" search={(p) => ({ ...p, ...scope })}>
-            All stations
-          </Link>
-        </Button>
-        <Button asChild variant="outline">
-          <Link to="/workstations" search={(p) => ({ ...p, ...scope })}>
-            Station composition
-          </Link>
-        </Button>
-        <Button asChild variant="outline">
-          <Link
-            to="/factory-layout"
-            search={(p) => ({ ...p, ...scope, station: station.id, line: line.id })}
-          >
-            Locate in layout
-          </Link>
-        </Button>
-      </div>
+      <EngineeringJourney
+        stage="station"
+        scope={{
+          site,
+          lineId: line.id,
+          lineName: line.name,
+          stationId: station.id,
+          stationName: station.name,
+        }}
+        access={{ native, actions }}
+        primary={
+          <Button asChild variant="outline">
+            <Link to="/workstations" search={(p) => ({ ...p, ...scope })}>
+              Station composition
+            </Link>
+          </Button>
+        }
+      />
+      <nav className="ems-quiet-links" aria-label="Station shortcuts">
+        <Link to="/stations" search={(p) => ({ ...p, ...scope })}>
+          All stations
+        </Link>
+        <Link
+          to="/factory-layout"
+          search={(p) => ({
+            ...p,
+            ...scope,
+            station: station.id,
+            line: line.id,
+          })}
+        >
+          Locate in layout
+        </Link>
+      </nav>
       <div className="ref-two-col">
         <Surface title="Engineering configuration">
           <KeyValues

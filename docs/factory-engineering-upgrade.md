@@ -111,3 +111,13 @@ Use an empty local training-south site in a separate fixture database. Run `bun 
 Verification covered installing twice on an isolated PostgreSQL database, editing a section through the browser, reloading the saved revision, opening a station's exact step, and following the signal, HMI and MES references. Changing the HMI unit, moving the source outside the assigned stations and archiving the referenced MES mapping each returned HTTP 409 with unchanged heads. For the browser regression suite set `EMS_PACKAGING_FIXTURE_ORIGIN` to the populated training origin. Desktop, tablet and narrow-screen checks covered 1920 × 1080, 1440 × 900, 1024 × 768 and 390 × 844 with software WebGL. Each viewport displayed the canvas on initial load with no page-wide horizontal overflow.
 
 The overlay represents configured logical endpoints and draws up to 1,000 paths at once. A live observation overlay, intermediate gateway routing, historical signal replay, cross-line capacity reservations and benchmarking on plant hardware remain open. End-to-end physical handover still requires an authorized adapter, actual device observations, release readback and a correlated MES acknowledgement.
+
+### Factory Engineering journey redesign
+
+The overview uses the selected line's station sequence as its main workspace. Each station links to its composition. A suggested task uses the loaded engineering records and findings. The Sentinel brief, reviews and saved layout summary remain available beside the line.
+
+The engineering navigation connects line setup, manufacturing sections and steps, station hardware, signals, 3D layout and readiness. Previous and next actions carry the relevant factory, line and station. In the process editor, the route outline and graph sit beside the selected step on wide screens. Revision and validation controls stay with the route.
+
+In the layout, buildings, floors and sections share the desktop hierarchy column. On smaller screens, open **Floors & hierarchy** to select or manage a space and **Views** to return to the canvas. A compact stage selector and revision bar leave room for the scene. Screenshots from the populated training factory showed the canvas starting 287 CSS pixels below the top at 1920×1080 and 1440×900, 339 pixels at 1024×768 and 373 pixels at 390×844. These are measurements from Chromium at default zoom.
+
+Lovable authored the interface in revisions `d96cc05` and `bb7ce23`. The second revision addressed the canvas being pushed below the first screen in the first pass. This change uses the existing EMS records, assignments, and save APIs. The new browser regression follows a packaging station through its signals into the layout and checks all three scope IDs.

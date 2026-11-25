@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Badge } from './common';
 import {EngineeringDataDrawer} from './record-editor';
-import {AssetFlowNav,EngineeringDetailNav} from './asset-flow-nav';
+import {EngineeringDetailNav,RelatedEngineeringPages} from './asset-flow-nav';
+import {EngineeringJourney,JourneyProvider,useJourneyPresent,type JourneyStage} from './journey-rail';
 import {AssetLineMetrics,AssetStationConfiguration} from './asset-context-panel';
 
 export { Badge };
@@ -20,8 +21,11 @@ export function ReferencePage({children,title,sub,crumb,actions,sourceLabel}:{ch
   const {dirty,native,revision,lifecycle,fixture}=useEngineering();
   const route=useRouterState({select:s=>s.location.pathname});
   const section=workspaceForPath(route)?.group??'Factory Engineering';
-  const assetPage=['Line Topology Designer','Production Steps','Station Composition Editor','Asset Model / Hierarchy','Terminals & Peripherals','Command Policy Editor'].includes(title)||title.startsWith('Signal bindings')||title.startsWith('Equipment')||title.startsWith('MD-104');
-  return <div className={section==="Factory Engineering"?"reference-page ems-engineering-page":"reference-page"}><div className="ref-crumb"><Network size={14}/>{section}<ChevronRight size={12}/>{crumb??title}<span className="ref-concept">{sourceLabel ?? (native ? `${fixture?"Training · ":""}${dirty?"Edited draft":lifecycle} · r${revision}` : 'Sandbox · simulated data')}</span>{dirty && <span role="status" className="text-warning">Unsaved changes</span>}<EngineeringDataDrawer/></div><header className="ref-page-head"><div><h1>{title}</h1>{sub&&<p>{sub}</p>}</div><div className="ref-actions">{actions}</div></header>{assetPage&&<AssetFlowNav/>}{title==='Line Topology Designer'&&<AssetLineMetrics/>}{title==='Station Composition Editor'&&<AssetStationConfiguration/>}{children}</div>;
+  const {site,actions:grants,lineId,model,selected}=useEngineering();
+  const stage:JourneyStage|undefined=title==='Line Topology Designer'?'line':title==='Production Steps'?'process':['Station Composition Editor','Asset Model / Hierarchy','Terminals & Peripherals'].includes(title)||title.startsWith('Equipment')||title.startsWith('MD-104')?'station':title==='Command Policy Editor'||title.startsWith('Signal bindings')?'signals':undefined;
+  const station=model.stations.find(item=>item.id===selected);
+  const page=<div className={section==="Factory Engineering"?"reference-page ems-engineering-page":"reference-page"}><div className="ref-crumb"><Network size={14}/>{section}<ChevronRight size={12}/>{crumb??title}<span className="ref-concept">{sourceLabel ?? (native ? `${fixture?"Training · ":""}${dirty?"Edited draft":lifecycle} · r${revision}` : 'Sandbox · simulated data')}</span>{dirty && <span role="status" className="text-warning">Unsaved changes</span>}<EngineeringDataDrawer/></div><header className="ref-page-head"><div><h1>{title}</h1>{sub&&<p>{sub}</p>}</div><div className="ref-actions">{actions}</div></header>{stage&&<EngineeringJourney stage={stage} scope={{site,lineId,lineName:model.name,stationId:station?.id,stationName:station?.name}} access={{native,actions:grants}} more={<RelatedEngineeringPages/>}/>}{title==='Line Topology Designer'&&<AssetLineMetrics/>}{title==='Station Composition Editor'&&<AssetStationConfiguration/>}{children}</div>;
+  return stage?<JourneyProvider>{page}</JourneyProvider>:page;
 }
 export function ScopeSelectors() {
   const {workspaceModel, lineId, selectLine} = useEngineering();
@@ -68,7 +72,7 @@ export function RefTable({headers,rows,selected,onSelect}:{headers:string[];rows
 export function KeyValues({items}:{items:[string,ReactNode][]}){return <dl className="ref-values">{items.map(([label,val])=><div key={label}><dt>{label}</dt><dd>{val}</dd></div>)}</dl>;}
 export function Notice({children,tone='info'}:{children:ReactNode;tone?:'info'|'warn'|'good'}){const Icon=tone==='warn'?AlertTriangle:tone==='good'?CheckCircle2:Info;return <div className={`ref-notice ${tone}`}><Icon size={19}/><div>{children}</div></div>;}
 export function StationList({tree=false}:{tree?:boolean}){const {model,selected,select,lineId}=useEngineering();const [q,setQ]=useState('');const matching=model.stations.filter(s=>(s.id+s.name).toLowerCase().includes(q.trim().toLowerCase()));return <Surface title={tree?'Asset Model / Hierarchy':`Production Line · Stations (${model.stations.length})`} sub={tree?'Engineering asset structure and configuration':undefined} className="ref-asset-list">{tree&&<><label className="ref-search"><Search size={14}/><input placeholder="Search assets…" aria-label="Search assets" value={q} onChange={e=>setQ(e.target.value)}/></label><div className="ref-tree-root"><ChevronDown size={12}/><Building2 size={16}/>{model.scope}</div><div className="ref-tree-root indent-more"><ChevronDown size={12}/><Folder size={16}/>{lineId} {model.name}</div></>}<div className={tree?'ref-tree-stations':''}>{matching.map(s=><Button key={s.id} variant="ghost" aria-pressed={s.id===selected} className={`ref-station-row ${s.id===selected?'is-selected':''}`} onClick={()=>select(s.id)}>{tree&&<Settings2 size={14}/>}<span>{s.id}</span><strong>{s.name.replace(' (CCP)','').replace(' & Palletize','')}</strong>{!tree&&<Badge tone={s.mode==='automatic'?'cyan':'neutral'}>{s.mode==='automatic'?'Automatic':'Manual'}</Badge>}</Button>)}{!matching.length&&<p role="status" className="ref-empty">{q ? <>No matching stations. <Button variant="outline" size="sm" onClick={()=>setQ('')}>Clear search</Button></> : 'No stations on this line.'}</p>}</div>{tree&&<div className="ref-tree-footer"><h3><Network size={20}/>{lineId} {model.name}</h3><div className="ref-inline-stats"><div><small>Stations</small><b>{model.stations.length}</b></div><div><small>Automatic</small><b>{model.stations.filter(s=>s.mode==='automatic').length}</b></div><div><small>Manual</small><b>{model.stations.filter(s=>s.mode==='manual').length}</b></div></div></div>}</Surface>;}
-export function DetailLinks(){return <EngineeringDetailNav/>;}
+export function DetailLinks(){const journey=useJourneyPresent();return journey?null:<EngineeringDetailNav/>;}
 export function DraftDialog({open,onClose,review=false,title=review?'Submit engineering review':'Save engineering draft'}:{open:boolean;onClose:()=>void;title?:string;review?:boolean}) {
   const {model,setModel,save,busy,native,authenticated,canSave} = useEngineering();
   const trigger = useRef<HTMLElement | null>(null);

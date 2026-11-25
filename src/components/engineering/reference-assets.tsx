@@ -1,4 +1,5 @@
 import {SentinelBrief} from './ems-persona';
+import {EngineeringOverviewWorkspace} from './engineering-overview';
 import {AssignedApplications} from './assigned-applications';
 import {HardwareAssignment} from './hardware-assignment';
 import {FactoryStructure} from './factory-structure';
@@ -11,44 +12,14 @@ import {Button} from '@/components/ui/button';
 import {useEngineering} from '@/lib/engineering/context';
 import {Surface,ReferencePage,ScopeSelectors,RefTabs,RefTable,KeyValues,Notice,StationList,Badge,DetailLinks,DraftDialog} from './reference-ui';
 
-const engineeringSteps = [
-  {to:'/lines', title:'Define production lines', detail:'Set line identity and choose its operating area.', icon:Network},
-  {to:'/asset-steps', title:'Design manufacturing steps', detail:'Set sequence, station options and dependencies.', icon:Settings2},
-  {to:'/registry', title:'Inspect physical assets', detail:'Find equipment, ownership and external references.', icon:Server},
-] as const;
-
 export function EngineeringOverview() {
-  const {model,workspaceModel,issues,revision,native,site,lineId,fixture,dirty} = useEngineering();
-  const stations=model.stations;
+  const {model,workspaceModel,issues,revision,native,site,fixture,dirty} = useEngineering();
   const physicalIssues=issues.filter(issue=>issue.category!=='Workflow');
-  const equipment=workspaceModel.records.filter(r=>!r.archived && ['equipment','terminal','node'].includes(r.kind));
-  const metrics=[
-    {label:'Active lines',value:workspaceModel.lines.filter(l=>!l.archived).length,icon:Network},
-    {label:'Stations on this line',value:stations.length,icon:Layers},
-    {label:'Site hardware records',value:equipment.length,icon:Server},
-    {label:'Engineering findings',value:physicalIssues.length,icon:AlertTriangle},
-  ];
   return <ReferencePage title="Engineering Overview" sourceLabel={fixture ? "Training factory" : native ? "Factory engineering" : "Sandbox engineering draft"} sub={`${site??model.scope} · ${revision?'Saved engineering revision '+revision:'Initial engineering draft'}`}>
-    <ScopeSelectors/>
-    <div className="ref-kpis">{metrics.map(({icon:Icon,label,value})=><div className="ref-kpi" key={label}><Icon aria-hidden="true" size={24}/><div><span>{label}</span><strong>{value}</strong></div></div>)}</div>
-    <FactoryStructure/>
-    <div className="ref-overview-grid"><div className="ref-stack">
-      <Surface title="Line configuration" sub={lineId?`${lineId} · ${model.name}`:'No line selected'} actions={<Button variant="outline" size="sm" asChild><Link to={lineId?'/line-engineering':'/lines'}>{lineId?'Open line design':'Create a line'}<ArrowRight size={14}/></Link></Button>}>
-        {stations.length?<div className="ref-station-tiles">{stations.map(s=><Button key={s.id} variant="outline" asChild><Link to="/workstations" search={{site,engLine:lineId,engStation:s.id}}><Box size={18}/><span>{s.id}<strong>{s.name}</strong></span><Badge>{s.mode}</Badge></Link></Button>)}</div>:<p className="ref-empty">Add a line and assign its first station to start engineering.</p>}
-      </Surface>
-      <Surface title="Engineering findings" sub="Design checks across this factory." actions={<Link to="/release-readiness" className="ref-issue-link">Readiness<ArrowRight size={14}/></Link>}>
-        {physicalIssues.length?<RefTable headers={['Object','Finding','Inspect']} rows={physicalIssues.map(issue=>{
-          const signal=issue.category==='Signals'?workspaceModel.signals.find(s=>s.key===issue.object):undefined;
-          const record=workspaceModel.records.find(r=>r.id===issue.object&&!r.archived);
-          const station=workspaceModel.stations.find(s=>s.id===(signal?.stationId??record?.parent??issue.object));
-          const target=signal?'/station-connectivity':record?.kind==='operation'?'/asset-steps':station?'/workstations':issue.category==='Process'?'/process-routes':'/registry';
-          const destination={site,engLine:station?.lineId??lineId,engStation:station?.id,...(signal?{signal:signal.key}:{}),...(record?.kind==="operation"?{step:record.id}:{}),...(record?{engAsset:record.kind+":"+record.id}:{})};
-          return [<strong>{issue.object}</strong>,issue.message,<Link className="ref-issue-link" to={target} search={destination}>Inspect<ArrowRight size={13}/></Link>];
-        })}/>:<p className="ref-empty"><CheckCircle2 size={16}/>No current engineering findings.</p>}
-      </Surface></div><div className="ref-stack">
-      <SentinelBrief revision={revision} dirty={dirty} finding={physicalIssues[0]} hasLines={workspaceModel.lines.some(line=>!line.archived)}/>
-      <Surface title="Engineering workflow"><nav aria-label="Engineering workflow"><ol className="ref-journey">{engineeringSteps.map(({to,title,detail,icon:Icon})=><li key={to}><Link to={to}><Icon size={18}/><span><strong>{title}</strong><small>{detail}</small></span><ArrowRight size={15}/></Link></li>)}</ol></nav></Surface>
-      <Surface title="Engineering reviews"><nav className="ref-detail-links"><Link to="/approvals">Approval chain</Link><Link to="/commissioning">Commissioning evidence</Link><Link to="/changes">Change history</Link></nav></Surface></div></div></ReferencePage>;
+    <EngineeringOverviewWorkspace site={site} scopeSelectors={<ScopeSelectors/>}
+      brief={<SentinelBrief revision={revision} dirty={dirty} finding={physicalIssues[0]} hasLines={workspaceModel.lines.some(line=>!line.archived)}/>}
+      layout={<FactoryStructure/>}/>
+  </ReferencePage>;
 }
 
 function EmptyStationPage({title}:{title:string}) {
