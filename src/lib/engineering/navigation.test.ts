@@ -13,20 +13,35 @@ describe("engineering and studio ownership", () => {
       "/hmi-layouts",
       "/edge-app-studio",
     ])
-      expect(workspaceForPath(path)?.group).toBe("Application Studio");
-    for (const path of ["/process-routes", "/asset-steps", "/stations/ST-2", "/step-templates"])
-      expect(workspaceForPath(path)?.group).toBe("Factory Engineering");
+      expect(workspaceForPath(path)?.group).toBe("Studio");
+    for (const path of ["/process-routes", "/asset-steps", "/step-templates"])
+      expect(workspaceForPath(path)?.group).toBe("Process Design");
+    expect(workspaceForPath("/stations/ST-2")?.group).toBe("Assets");
     expect(workspaceGroups().some((group) => group.label === "Operations")).toBe(false);
     for (const path of ["/live", "/operator", "/operator/ST-101", "/hmi", "/hmi/ST-101"])
       expect(workspaceForPath(path)).toBeUndefined();
     const actions = ["ems.engineering.view"];
     expect(allowedWorkspace("/operator-app", actions)).toBe(false);
     expect(
-      workspaceGroups({ key: "north", name: "North", actions }).find(
-        (g) => g.label === "Application Studio",
-      )?.items,
+      workspaceGroups({ key: "north", name: "North", actions }).find((g) => g.label === "Studio")
+        ?.items,
     ).toHaveLength(0);
     expect(allowedWorkspace("/application-studio", ["ems.application_studio.view"])).toBe(true);
+  });
+  it("applies independent grants to release, assignment and technical pages", () => {
+    for (const [path, grant] of [
+      ["/approvals", "ems.factory_releases.view"],
+      ["/integrations", "ems.factory_releases.view"],
+      ["/factory-assignment", "ems.factory_assignments.view"],
+      ["/admin/qa", "ems.admin_qa.view"],
+    ]) {
+      expect(allowedWorkspace(path!, ["ems.engineering.view"])).toBe(false);
+      expect(allowedWorkspace(path!, [grant!])).toBe(true);
+    }
+    expect(allowedWorkspace("/screen-editor", ["ems.application_studio.view"])).toBe(false);
+    expect(
+      allowedWorkspace("/screen-editor", ["ems.application_studio.view", "ems.engineering.view"]),
+    ).toBe(true);
   });
   it("recognizes legacy app definition changes independently of a physical edit", () => {
     const original = makeModel();

@@ -11,7 +11,7 @@ test("a draft hardware identity appears in matching table and hierarchy views", 
   await page.goto("/registry?site=training-north");
   await page.getByLabel("Fixture access token").fill(key!);
   await page.getByRole("button", { name: "Sign in to fixture" }).click();
-  await expect(page.getByRole("heading", { name: "Asset registry", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Assets", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Manage engineering records" }).click();
   await page.getByLabel("Record type").selectOption("equipment");
   await expect(page.getByLabel("Record type").locator('option[value="screen"]')).toHaveCount(0);

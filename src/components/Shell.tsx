@@ -4,6 +4,8 @@ import {
   SentinelPresence,
 } from "@/components/engineering/ems-persona";
 import { EngineeringWorkspaceGate } from "@/components/engineering/workspace-gate";
+import "@/components/engineering/ownership.css";
+import { useGuidedSetup } from "@/components/engineering/setup-wizard-context";
 import { SetupWizardFrame } from "@/components/engineering/setup-wizard";
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
@@ -12,22 +14,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { VerifiedSignIn } from "@/components/engineering/verified-sign-in";
 import {
-  BarChart3,
-  Boxes,
   ChevronRight,
-  Cpu,
-  FileText,
-  GitBranch,
-  LayoutDashboard,
-  LayoutGrid,
-  ListChecks,
   Loader2,
   LogOut,
   Mail,
   Moon,
   Search,
   X,
-  Network,
   Sun,
   UserCog,
 } from "lucide-react";
@@ -58,6 +51,8 @@ import {
   allWorkspaceGroups,
   workspaceForPath,
   allowedWorkspace,
+  workspaceLinkSearch,
+  type WorkspaceEntry,
 } from "@/lib/engineering/navigation";
 
 const inputCls =
@@ -154,51 +149,24 @@ function SignIn() {
 
 type NativeProps = { identity?: EmsIdentity | undefined; site?: string | undefined };
 
-const secondaryPages = new Set([
-  "/line-engineering",
-  "/asset-steps",
-  "/process-routes",
-  "/step-templates",
-  "/workstations",
-  "/command-policy",
-  "/edge-app-studio",
-  "/operator-apps",
-  "/procedure-designer",
-  "/screen-editor",
-  "/hmi-layouts",
-  "/analytics",
-  "/reports",
-  "/diagnostics",
-  "/approvals",
-  "/changes",
-]);
 function AppSidebar({ identity, site }: NativeProps) {
   const path = useRouterState({ select: (r) => r.location.pathname });
+  const currentSearch = useRouterState({ select: (r) => r.location.search }) as Record<string, unknown>;
   const navigate = useNavigate();
-  const isActive = (url: string) => workspaceForPath(path)?.url === url;
+  const current = workspaceForPath(path);
+  const isActive = (url: string) => current?.url === url;
   const { session } = useStore();
   const { isMobile, setOpenMobile, state: sidebarState } = useSidebar();
   const [filter, setFilter] = useState("");
   const searchInput = useRef<HTMLInputElement>(null);
   const groups = workspaceGroups(identity?.sites.find((s) => s.key === site));
-  const [morePages, setMorePages] = useState(false);
-
+  const guided = useGuidedSetup();
   const effectiveFilter = !isMobile && sidebarState === "collapsed" ? "" : filter;
-  const words = effectiveFilter.trim().toLowerCase().split(/\s+/);
-  const matchingGroups = groups
-    .map((group) => ({
-      ...group,
-      items: group.items.filter(
-        (item) =>
-          (!identity ||
-            morePages ||
-            !!effectiveFilter.trim() ||
-            isActive(item.url) ||
-            !secondaryPages.has(item.url)) &&
-          words.every((word) => (item.title + " " + group.label).toLowerCase().includes(word)),
-      ),
-    }))
-    .filter((group) => group.items.length > 0);
+  const words = effectiveFilter.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const matchingGroups = groups.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => words.every((word) => [item.title, group.label, ...(item.aliases ?? [])].join(" ").toLowerCase().includes(word))),
+  })).filter((group) => group.items.length > 0);
   function clearFilter() {
     setFilter("");
     searchInput.current?.focus();
@@ -207,65 +175,65 @@ function AppSidebar({ identity, site }: NativeProps) {
     setFilter("");
     if (isMobile) setOpenMobile(false);
   }
+  function renderItem(item: WorkspaceEntry) {
+    return (
+      <SidebarMenuItem key={item.url}>
+        <SidebarMenuButton
+          asChild
+          isActive={isActive(item.url)}
+          tooltip={item.title}
+          className="h-10 rounded-lg data-[active=true]:border data-[active=true]:border-primary/30 data-[active=true]:bg-primary/10 data-[active=true]:text-primary"
+        >
+          <Link
+            aria-current={isActive(item.url) ? "page" : undefined}
+            onClick={followLink}
+            to={item.url as never}
+            search={workspaceLinkSearch(currentSearch, item.url) as never}
+            className="flex items-center gap-3"
+          >
+            <item.icon className="h-4 w-4 shrink-0" />
+            <span className="truncate">{item.title}</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  }
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="p-4 group-data-[collapsible=icon]:px-1">
         <div className="flex items-center justify-between">
-          <Link
-            to="/"
-            onClick={followLink}
-            aria-label="ManuQube EMS overview"
-            className="flex items-center gap-2.5"
-          >
+          <Link to="/" onClick={followLink} aria-label="ManuQube EMS overview" className="flex items-center gap-2.5">
             <ManuQubeEmblem />
             <div className="flex min-w-0 flex-col leading-tight group-data-[collapsible=icon]:hidden">
               <span className="text-sm font-semibold tracking-tight">ManuQube EMS</span>
-              <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                Engineering Management
-              </span>
+              <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Engineering Management</span>
             </div>
           </Link>
-          {isMobile && (
-            <Button
-              type="button"
-              size="icon"
-              variant="ghost"
-              aria-label="Close navigation"
-              onClick={() => setOpenMobile(false)}
-            >
-              <X />
-            </Button>
-          )}
+          {isMobile && <Button type="button" size="icon" variant="ghost" aria-label="Close navigation" onClick={() => setOpenMobile(false)}><X /></Button>}
         </div>
         <select
           className="h-9 w-full rounded-md border bg-sidebar px-2 text-sm group-data-[collapsible=icon]:hidden"
           aria-label="Open EMS section"
-          value={workspaceForPath(path)?.group ?? ""}
+          value={current?.group ?? ""}
           onChange={(event) => {
-            const first = groups.find((group) => group.label === event.target.value)?.items[0];
+            const group = groups.find((candidate) => candidate.label === event.target.value);
+            const first = group?.items.find((item) => item.primary) ?? group?.items[0];
             if (first) {
               followLink();
-              void navigate({ to: first.url });
+              void navigate({ to: first.url as never, search: workspaceLinkSearch(currentSearch, first.url) as never });
             }
           }}
         >
-          {!workspaceForPath(path) && <option value="">Open section</option>}
-          {groups
-            .filter((g) => g.items.length)
-            .map((g) => (
-              <option key={g.label}>{g.label}</option>
-            ))}
+          {!current && <option value="">Open section</option>}
+          {groups.filter((group) => group.items.length).map((group) => <option key={group.label}>{group.label}</option>)}
         </select>
         <div className="relative mt-2 group-data-[collapsible=icon]:hidden">
-          <Search
-            aria-hidden="true"
-            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-          />
+          <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="search"
             ref={searchInput}
             aria-label="Find a workspace"
-            placeholder="Find a workspace"
+            placeholder="Find any workspace or tool"
             value={filter}
             onChange={(event) => setFilter(event.target.value)}
             onKeyDown={(event) => {
@@ -281,80 +249,46 @@ function AppSidebar({ identity, site }: NativeProps) {
       </SidebarHeader>
       <SidebarContent className="px-2">
         <nav aria-label="Engineering workspaces">
-          {identity && !effectiveFilter.trim() && (
-            <Button
-              variant="ghost"
-              size="sm"
-              aria-expanded={morePages}
-              onClick={() => setMorePages(!morePages)}
-            >
-              {morePages ? "Show primary pages" : "Show all workspaces"}
-            </Button>
-          )}
-          {!matchingGroups.length && (
+          {effectiveFilter.trim() && !matchingGroups.length && (
             <div className="px-2 py-4 text-sm">
               <p role="status">No matching workspaces.</p>
-              <Button variant="link" className="px-0" onClick={clearFilter}>
-                Clear search
-              </Button>
+              <Button variant="link" className="px-0" onClick={clearFilter}>Clear search</Button>
             </div>
           )}
-          {matchingGroups.map((g) => (
-            <SidebarGroup key={g.label}>
-              <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">
-                {g.label}
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {g.items.map((item) => (
-                    <SidebarMenuItem key={item.url}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={isActive(item.url)}
-                        tooltip={item.title}
-                        className="h-10 rounded-lg data-[active=true]:border data-[active=true]:border-primary/30 data-[active=true]:bg-primary/10 data-[active=true]:text-primary"
-                      >
-                        <Link
-                          aria-current={isActive(item.url) ? "page" : undefined}
-                          onClick={followLink}
-                          to={item.url}
-                          search={site ? { site } : {}}
-                          className="flex items-center gap-3"
-                        >
-                          <item.icon className="h-4 w-4 shrink-0" />
-                          <span className="truncate">{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
+          {effectiveFilter.trim() ? matchingGroups.map((group) => (
+            <SidebarGroup key={group.label}>
+              <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">{group.label}</SidebarGroupLabel>
+              <SidebarGroupContent><SidebarMenu>{group.items.map(renderItem)}</SidebarMenu></SidebarGroupContent>
             </SidebarGroup>
-          ))}
+          )) : groups.map((group) => {
+            const primary = group.items.filter((item) => item.primary);
+            const tools = group.items.filter((item) => !item.primary);
+            if (guided && !primary.length) return null;
+            return (
+              <SidebarGroup key={group.label}>
+                <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">{group.label}</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  {!!primary.length && <SidebarMenu>{primary.map(renderItem)}</SidebarMenu>}
+                  {!!tools.length && !guided && (
+                    <details className="ems-nav-tools group-data-[collapsible=icon]:hidden" open={current?.group === group.label}>
+                      <summary>{primary.length ? `${group.label} tools` : "Specialist tools"}</summary>
+                      <SidebarMenu>{tools.map(renderItem)}</SidebarMenu>
+                    </details>
+                  )}
+                </SidebarGroupContent>
+              </SidebarGroup>
+            );
+          })}
         </nav>
       </SidebarContent>
       <SidebarFooter className="p-3 group-data-[collapsible=icon]:px-1">
         <SentinelPresence />
         <div className="rounded-xl border border-border/60 bg-card/60 p-3 group-data-[collapsible=icon]:hidden">
           <div className="flex items-center gap-2 text-xs">
-            <span
-              className={`status-dot ${session?.source === "hub" ? "text-success" : "text-warning"}`}
-            />
-            <span className="font-medium">
-              {identity
-                ? "Factory workspace"
-                : session?.source === "verified"
-                  ? "Verified sandbox account"
-                  : session?.source === "hub"
-                    ? "Legacy access session"
-                    : "Demo access"}
-            </span>
+            <span className={`status-dot ${session?.source === "hub" ? "text-success" : "text-warning"}`} />
+            <span className="font-medium">{identity ? "Factory workspace" : session?.source === "verified" ? "Verified sandbox account" : session?.source === "hub" ? "Legacy access session" : "Demo access"}</span>
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {identity
-              ? identity.sites.find((s) => s.key === site)?.name
-              : "MES preview · simulated data"}
-          </p>
+          <p className="mt-1 text-xs text-muted-foreground">{identity ? identity.sites.find((s) => s.key === site)?.name : "MES preview · simulated data"}</p>
         </div>
       </SidebarFooter>
     </Sidebar>

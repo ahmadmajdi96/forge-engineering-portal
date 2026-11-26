@@ -8,7 +8,6 @@ import { AssignedApplications } from "@/components/engineering/assigned-applicat
 import { HardwareAssignment } from "@/components/engineering/hardware-assignment";
 import {
   KeyValues,
-  Notice,
   ReferencePage,
   RefTable,
   Surface,
@@ -320,10 +319,6 @@ function StationProfile() {
           ) : (
             <p>No station-specific validation findings.</p>
           )}
-          <Notice>
-            Live telemetry, downtime and operator presence are unavailable for this engineering
-            workspace.
-          </Notice>
           <Button asChild variant="outline">
             <Link to="/commissioning" search={(p) => ({ ...p, ...scope })}>
               Commissioning evidence

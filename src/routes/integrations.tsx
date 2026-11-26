@@ -1,7 +1,8 @@
 import {useEngineering} from "@/lib/engineering/context";
 import {deliveryHistory} from "@/lib/production/release.functions";
 import {Button} from "@/components/ui/button";
-import {createFileRoute,Link} from '@tanstack/react-router';
+import {createFileRoute,Link,useRouterState} from '@tanstack/react-router';
+import {workspaceScopedSearch} from '@/lib/engineering/navigation';
 import {useServerFn} from '@tanstack/react-start';
 import {useQuery} from '@tanstack/react-query';
 import {Badge} from '@/components/ui/badge';
@@ -30,15 +31,17 @@ function Page(){
     </section></div>;}
 
 function Integrations(){
-  const {native,site}=useEngineering();
+  const {native,site,actions}=useEngineering();
+  if(native && !actions.includes("ems.factory_releases.view"))return <p role="status">Factory release access is required to view delivery acknowledgements.</p>;
   return native ? <Deliveries site={site}/> : <Page/>;
 }
 function Deliveries({site}:{site:string|undefined}){
-  const query=useQuery({queryKey:["factory-deliveries",site],enabled:!!site,retry:false,queryFn:()=>deliveryHistory({data:{site:site!}}),refetchInterval:15000});
+  const currentSearch=useRouterState({select:state=>state.location.search}) as Record<string,unknown>;
+  const query=useQuery({queryKey:["factory-deliveries",site],enabled:!!site,retry:false,queryFn:()=>deliveryHistory({data:{site:site??""}}),refetchInterval:15000});
   return <section className="space-y-4"><header><h1 className="font-display text-2xl font-semibold">System integrations</h1>
     <p className="text-sm text-muted-foreground">Track package delivery and the receiving system’s acknowledgement.</p></header>
     <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-semibold">Release outbox</h2>
-      {site && <Button asChild variant="outline"><Link to="/factory-releases" search={{site}}>Open factory releases</Link></Button>}</div>
+      {site && <Button asChild variant="outline"><Link to="/factory-releases" search={workspaceScopedSearch(currentSearch,{site},"/factory-releases") as never}>Open factory releases</Link></Button>}</div>
     {!site && <p role="status">Choose a factory to view its deliveries.</p>}
     {site && query.isPending && <p role="status">Loading deliveries…</p>}
     {query.error && <div role="alert">{query.error.message} <Button variant="outline" onClick={()=>void query.refetch()}>Retry</Button></div>}

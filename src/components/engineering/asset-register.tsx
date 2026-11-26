@@ -18,6 +18,7 @@ import { placedHardware } from "@/lib/engineering/hardware-lifecycle";
 import { RecordActions } from "./record-editor";
 import { AssetHierarchy } from "./reference-assets";
 import { WorkspaceHistory } from "./workspace-history";
+import { AssetReports } from "./asset-reports";
 
 export function AssetRegister() {
   const { workspaceModel, revision, site, native, dirty, loadState, reload } = useEngineering();
@@ -122,6 +123,7 @@ export function AssetRegister() {
         <AssetHierarchy />
       </>
     );
+  if (search.view === "reports") return <AssetReports />;
   const groups = new Map<string, RegistryRow[]>();
   for (const item of result?.rows ?? []) {
     const path = [item.line, item.station].filter(Boolean).join(" / ") || "Unassigned";
@@ -129,15 +131,22 @@ export function AssetRegister() {
   }
   return (
     <ReferencePage
-      title="Asset registry"
-      sub={site ?? workspaceModel.scope}
+      title="Assets"
+      sub={`Asset registry · ${site ?? workspaceModel.scope}`}
       actions={
-        <Button asChild variant="outline">
-          <Link to="/factory-layout" search={(old) => ({ ...old })}>
-            <Layers size={15} />
-            Factory layout
-          </Link>
-        </Button>
+        <div className="ref-actions">
+          <Button asChild variant="outline">
+            <Link to="/registry" search={(old) => ({ ...old, view: "reports", report: "inventory" })}>
+              Reports & export
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link to="/factory-layout" search={(old) => ({ ...old })}>
+              <Layers size={15} />
+              Factory layout
+            </Link>
+          </Button>
+        </div>
       }
     >
       <Surface
@@ -235,9 +244,9 @@ export function AssetRegister() {
           </label>
         </div>
         <RefTabs
-          items={["Table", "Tree", "Station relationships", "History"]}
+          items={["Table", "Tree", "Station relationships", "History", "Reports & export"]}
           value={view}
-          onChange={setView}
+          onChange={(next) => next === "Reports & export" ? change({ view: "reports", report: "inventory" }) : setView(next)}
         />
         {view === "History" ? (
           <WorkspaceHistory />

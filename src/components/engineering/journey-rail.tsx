@@ -1,7 +1,8 @@
 import "./engineering-journey.css";
 import { useGuidedSetup } from "./setup-wizard-context";
 import { createContext, useContext, type ComponentProps, type ReactNode } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { workspaceScopedSearch } from "@/lib/engineering/navigation";
 import {
   ArrowLeft,
   ArrowRight,
@@ -128,7 +129,7 @@ export const journeyStages: readonly StageDef[] = [
     title: "Readiness",
     icon: ClipboardCheck,
     detail: () => "Findings & evidence",
-    target: (s) => ({ to: "/release-readiness", search: scoped({ ...s, stationId: undefined }) }),
+    target: (s, a) => engineeringAllowed(a) ? { to: "/release-readiness", search: scoped(s) } : { locked: "Needs engineering access" },
   },
 ];
 
@@ -144,7 +145,8 @@ export function ScopedLink({
   to: string;
   search?: Record<string, unknown>;
 }) {
-  return <Link {...rest} to={to as never} search={(search ?? {}) as never} />;
+  const current = useRouterState({ select: (state) => state.location.search }) as Record<string, unknown>;
+  return <Link {...rest} to={to as never} search={workspaceScopedSearch(current, search ?? {}, to) as never} />;
 }
 
 const JourneyPresence = createContext(false);

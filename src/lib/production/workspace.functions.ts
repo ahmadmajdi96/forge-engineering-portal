@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { reasonSchema, workspaceScope } from "./contracts";
+import { identifier } from "@/lib/edge/assignment";
+import { reasonSchema, revisionNumber, siteScope, workspaceScope } from "./contracts";
 
 export const loadFactoryWorkspace = createServerFn({ method: "POST", strict: { output: false } })
   .inputValidator((input) => workspaceScope.parse(input))
@@ -8,6 +9,20 @@ export const loadFactoryWorkspace = createServerFn({ method: "POST", strict: { o
     const { getRequest } = await import("@tanstack/react-start/server");
     const { readWorkspace } = await import("./workspace.server");
     return readWorkspace(getRequest(), data);
+  });
+
+/** Read one immutable published Studio definition for an engineering assignment link. */
+export const loadReleasedStudioApplication = createServerFn({
+  method: "POST",
+  strict: { output: false },
+})
+  .inputValidator((input) =>
+    siteScope.extend({ application: identifier, revision: revisionNumber }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    const { getRequest } = await import("@tanstack/react-start/server");
+    const { readPublishedStudioApplication } = await import("./workspace.server");
+    return readPublishedStudioApplication(getRequest(), data);
   });
 
 export const saveFactoryWorkspace = createServerFn({ method: "POST" })

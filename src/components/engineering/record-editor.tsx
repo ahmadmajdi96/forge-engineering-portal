@@ -1,11 +1,11 @@
-import {useEffect, useRef, useState, type ReactNode} from 'react';
+import {useEffect, useMemo, useRef, useState, type ReactNode} from 'react';
 import {Plus,Pencil,Copy,Archive,Save,X,Search,ArrowUp,ArrowDown,Download,Database} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {useEngineering} from '@/lib/engineering/context';
 import {activeRecords,archiveDesignRecord,upsertDesignRecord,recordKinds,type DesignRecord,type RecordKind} from '@/lib/engineering/design-records';
 import {toast} from 'sonner';
 import {useRouterState} from '@tanstack/react-router';
-import {workspaceForPath} from '@/lib/engineering/navigation';
+import {recordKindsForPage} from './page-ownership';
 import {duplicateDesignRecord} from '@/lib/engineering/design-records';
 import {placedHardware,updateHardware,archiveHardware} from '@/lib/engineering/hardware-lifecycle';
 import {removeStation} from '@/lib/engineering/asset-registry';
@@ -44,12 +44,15 @@ export function useRecords(kind:RecordKind) {
 }
 export function RecordEditor({kind,record,onClose}:{kind:RecordKind;record?:DesignRecord|undefined;onClose:()=>void}){
   const {put}=useRecords(kind);
-  const {selected,lineId,workspaceModel:model}=useEngineering();
+  const {selected,lineId,site,workspaceModel:model}=useEngineering();
+  const ownerScope=useRef({site,lineId,selected});
+  const scopeChanged=ownerScope.current.site!==site||ownerScope.current.lineId!==lineId||ownerScope.current.selected!==selected;
   const [draft,setDraft]=useState<DesignRecord>(record??{id:kind.toUpperCase()+'-'+crypto.randomUUID().slice(0,8),kind,name:'',parent:['equipment','terminal','command'].includes(kind)?selected:lineId,version:'r1',description:'',binding:'',unit:'',value:'',required:false,archived:false});
   const [error,setError]=useState('');
   const hardware=placedHardware(draft);
   const setField=(key:keyof DesignRecord,value:string)=>setDraft({...draft,[key]:value});
   function submit(){
+    if(scopeChanged){setError("The selected factory, line or station changed. Close this editor and reopen the record in its correct scope.");return;}
     if(!draft.name.trim()||!draft.id.trim()){setError('Enter a name and identifier.');return;}
     if(!record && model.records.some(r=>r.id===draft.id&&r.kind===kind)){setError('This identifier already exists for this type.');return;}
     if(put({...draft,name:draft.name.trim()}))onClose();
@@ -83,12 +86,10 @@ export function RecordActions({record}:{record:DesignRecord}){
 }
 export function AddRecord({kind,label}:{kind:RecordKind;label?:string}){const [open,setOpen]=useState(false);return <><Button variant="outline" size="sm" aria-label={label??`Add ${kind}`} onClick={()=>setOpen(true)}><Plus size={14}/>{label??`Add ${kind}`}</Button>{open&&<RecordEditor kind={kind} onClose={()=>setOpen(false)}/>}</>;}
 
-export function EngineeringDataDrawer({initialKind='station',label='Manage engineering records'}:{initialKind?:RecordKind|'station'|'signal'|'step';label?:string}){const {model,setModel,save,authenticated,canSave,busy,native,site,lineId}=useEngineering();const [open,setOpen]=useState(false),[kind,setKind]=useState<RecordKind|'station'|'signal'|'step'>(initialKind),[q,setQ]=useState(''),[edit,setEdit]=useState<Record<string,string>|null>(null),[index,setIndex]=useState(-1),[confirm,setConfirm]=useState<number|null>(null);
+export function EngineeringDataDrawer({initialKind='station',label='Manage engineering records'}:{initialKind?:RecordKind|'station'|'signal'|'step';label?:string}){const {model,setModel,save,authenticated,canSave,busy,native,site,lineId,selected}=useEngineering();const [open,setOpen]=useState(false),[kind,setKind]=useState<RecordKind|'station'|'signal'|'step'>(initialKind),[q,setQ]=useState(''),[edit,setEdit]=useState<Record<string,string>|null>(null),[index,setIndex]=useState(-1),[confirm,setConfirm]=useState<number|null>(null);
  const pathname=useRouterState({select:state=>state.location.pathname});
- const section=workspaceForPath(pathname)?.group;
- const studio=section==='Application Studio';
- const excluded=section==='Factory Engineering'?['app','screen','widget','release','review','change','evidence','test']:['app','screen','widget'];
- const kinds=studio?['step','app','screen','widget']:['station','signal',...recordKinds.filter(k=>!excluded.includes(k))];
+ const kinds=useMemo(()=>recordKindsForPage(pathname).filter(k=>['station','signal','step'].includes(k)||recordKinds.includes(k as RecordKind)),[pathname]);
+ useEffect(()=>{setKind(current=>kinds.includes(current)?current:(kinds[0] as typeof kind));setEdit(null);setConfirm(null);setQ('');},[kinds,site,lineId,selected]);
  const fieldNames: Record<string,string> = {id:"ID",name:"Name",mode:"Control mode",equipment:"Equipment IDs (comma-separated)",app:"Application",operation:"Operation",key:"Signal key",address:"Source address",type:"Data type",unit:"Unit",maxAge:"Maximum age (seconds)",label:"Step label",kind:"Step type",signal:"Signal key",timeout:"Timeout (seconds)"};
  const list=kind==='station'?model.stations.map(r=>({id:r.id,name:r.name,details:r.mode})):kind==='signal'?model.signals.map(r=>({id:r.key,name:r.key,details:r.type+' · '+r.unit})):kind==='step'?model.steps.map(r=>({id:r.id,name:r.label,details:r.kind})):activeRecords(model.records,kind).map(r=>({id:r.id,name:r.name,details:r.version}));
  function start(i:number){setIndex(i);if(kind==='station'){const r=model.stations[i];setEdit(r?{id:r.id,name:r.name,mode:r.mode}:{id:'ST-'+Date.now().toString().slice(-5),name:'',mode:'manual'});}else if(kind==='signal'){const r=model.signals[i];setEdit(r?{key:r.key,address:r.address,type:r.type,unit:r.unit,maxAge:String(r.maxAge)}:{key:'',address:'',type:'Number',unit:'kg',maxAge:'60'});}else if(kind==='step'){const r=model.steps[i];setEdit(r?{id:r.id,label:r.label,kind:r.kind,signal:r.signal,timeout:String(r.timeout)}:{id:'step-'+crypto.randomUUID().slice(0,5),label:'',kind:'Work instruction',signal:'',timeout:'60'});}}

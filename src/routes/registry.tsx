@@ -10,6 +10,8 @@ export const Route = createFileRoute("/registry")({
     .extend({
       engAsset: z.string().max(250).optional(),
       registryLine: z.string().max(160).optional(),
+      view: z.enum(["reports"]).optional(),
+      report: z.enum(["inventory", "assignments", "calibration", "crosswalk", "changes"]).optional(),
     })
     .catch({}),
   head: () => ({

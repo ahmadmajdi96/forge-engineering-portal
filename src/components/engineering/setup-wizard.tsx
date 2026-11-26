@@ -10,14 +10,19 @@ import {
   isSetupRoute,
   readSetup,
   resolveSetupItem,
+  setupAuthorized,
+  setupJourney,
   setupLayoutSearch,
   setupPickSearch,
   setupSearch,
-  setupStageIndex,
+  setupStageAtPath,
   setupStages,
   setupUnavailable,
   stripSetup,
   type SetupDocument,
+  type SetupProcessDocument,
+  type SetupScope,
+  type SetupStage,
 } from "./setup-wizard-state";
 
 /** The host supplies the existing authorized layout reader; this is not another data store. */
@@ -26,11 +31,15 @@ export function FactorySetupProvider({
   site,
   actions,
   readLayout,
+  readProcess,
+  terminalAssignments,
 }: {
   children: ReactNode;
   site: string | undefined;
   actions: readonly string[];
   readLayout: (site: string) => Promise<{ revision: number; payload: unknown }>;
+  readProcess?: ((site: string) => Promise<{ revision: number; payload: unknown }>) | undefined;
+  terminalAssignments?: ((scope: SetupScope) => ReactNode) | undefined;
 }) {
   const router = useRouter();
   const location = useRouterState({ select: (state) => state.location });
@@ -43,6 +52,8 @@ export function FactorySetupProvider({
   const engineering = useEngineering();
   const loadState = (engineering as typeof engineering & { loadState?: string }).loadState;
   const [document, setDocument] = useState<SetupDocument>();
+  const [processes, setProcesses] = useState<SetupProcessDocument>();
+  const [processLoading, setProcessLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [layoutDirty, setLayoutDirty] = useState(false);
@@ -56,6 +67,8 @@ export function FactorySetupProvider({
     };
   }, []);
   reader.current = readLayout;
+  const processReader = useRef(readProcess);
+  processReader.current = readProcess;
   const readKey = valid && item ? `${item.site}/${item.type}/${item.id}` : "";
   useEffect(() => {
     if (!active || !valid || !site || !actions.includes("ems.factory_layout.view")) {
@@ -95,12 +108,47 @@ export function FactorySetupProvider({
       alive = false;
     };
   }, [active, valid, readKey, site, attempt, actions]);
+  useEffect(() => {
+    setProcesses(undefined);
+    setProcessLoading(false);
+    if (
+      !active ||
+      !valid ||
+      !site ||
+      !actions.includes("ems.factory_process.view") ||
+      !processReader.current
+    )
+      return;
+    let alive = true;
+    setProcessLoading(true);
+    void processReader
+      .current(site)
+      .then((result) => {
+        const payload = result.payload as SetupProcessDocument | null;
+        if (
+          alive &&
+          payload &&
+          Array.isArray(payload.routes) &&
+          payload.routes.every((route) => Array.isArray(route.steps))
+        )
+          setProcesses({ siteCode: site, routes: payload.routes });
+      })
+      .catch(() => {
+        /* Missing relationships remain explicitly unavailable. */
+      })
+      .finally(() => {
+        if (alive) setProcessLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [active, valid, site, readKey, attempt, actions]);
   const scope = useMemo(
     () =>
       valid && item && document
-        ? resolveSetupItem(item, document, engineering.workspaceModel)
+        ? resolveSetupItem(item, document, engineering.workspaceModel, processes)
         : undefined,
-    [valid, item, document, engineering.workspaceModel],
+    [valid, item, document, engineering.workspaceModel, processes],
   );
   const engineeringLoading = actions.includes("ems.engineering.view") && loadState === "loading";
   const failure =
@@ -177,13 +225,14 @@ export function FactorySetupProvider({
         scope,
         site,
         actions,
-        loading: loading || engineeringLoading,
+        loading: loading || engineeringLoading || processLoading,
         error: failure,
         layoutDirty,
         publish,
         retry: () => setAttempt((value) => value + 1),
         registerFocus,
         focusItem: () => focus.current?.(),
+        terminalAssignments,
       }}
     >
       {children}
@@ -192,25 +241,22 @@ export function FactorySetupProvider({
 }
 
 function SetupLink({
-  to,
+  stage,
   search,
   children,
   label,
   current,
-  params,
 }: {
-  to: string;
+  stage: SetupStage;
   search: Record<string, unknown>;
   children: ReactNode;
   label?: string | undefined;
   current?: boolean | undefined;
-  params?: Record<string, string>;
 }) {
-  // These destinations are from the authoritative EMS route table, not arbitrary URLs.
   return (
     <Link
-      to={to as never}
-      {...(params ? { params: params as never } : {})}
+      to={stage.path as never}
+      {...(stage.params ? { params: stage.params as never } : {})}
       search={search as never}
       aria-label={label}
       aria-current={current ? "step" : undefined}
@@ -229,8 +275,10 @@ export function SetupWizardFrame({ children }: { children: ReactNode }) {
   const rawSearch = location.search as Record<string, unknown>;
   if (!wizard || !isSetupRoute(location.pathname)) return <>{children}</>;
   const { scope, actions, active, loading, error, layoutDirty, site } = wizard;
-  const index = setupStageIndex(location.pathname);
-  const stage = setupStages[index];
+  const journey = scope ? setupJourney(scope) : [];
+  const catalogStage = setupStageAtPath(location.pathname);
+  const index = journey.findIndex((entry) => entry.path === catalogStage?.path);
+  const stage = index >= 0 ? journey[index] : undefined;
   const layout = location.pathname === "/factory-layout";
   if (!active)
     return (
@@ -258,9 +306,8 @@ export function SetupWizardFrame({ children }: { children: ReactNode }) {
       location.pathname.split("/")[2] !== encodeURIComponent(scope.line ?? "")) ||
       (location.pathname.startsWith("/stations/") &&
         location.pathname.split("/")[2] !== encodeURIComponent(scope.station ?? "")));
-  const reason = scope && stage ? setupUnavailable(stage, scope, actions) : undefined;
+  const reason = scope && catalogStage ? setupUnavailable(catalogStage, scope, actions) : undefined;
   const blocked = !layout && (loading || error || !scope || mismatch || reason);
-  const search = scope ? setupSearch(scope) : {};
   const canLeave = !(layout && layoutDirty);
   const synchronized =
     scope &&
@@ -269,24 +316,49 @@ export function SetupWizardFrame({ children }: { children: ReactNode }) {
     rawSearch["engAsset"] === scope.asset;
   const leave = (finish: boolean) => {
     if (!canLeave) return;
-    const clean = error ? clearSetupScope(rawSearch) : stripSetup(rawSearch);
+    const stripped = stripSetup(rawSearch);
+    const clean = error
+      ? clearSetupScope(rawSearch)
+      : location.pathname === "/application-studio"
+        ? {
+            ...stripped,
+            app: undefined,
+            terminal: undefined,
+            source: undefined,
+            entity: undefined,
+            kind: undefined,
+            view: undefined,
+          }
+        : stripped;
     void router.navigate({
       to: (finish ? "/factory-layout" : location.pathname) as never,
       search: (finish && scope ? stripSetup(setupLayoutSearch(scope)) : clean) as never,
     });
   };
   const adjacent = (direction: -1 | 1) => {
-    if (!scope) return undefined;
-    for (let at = index + direction; at >= 0 && at < setupStages.length; at += direction) {
-      const candidate = setupStages[at];
+    if (!scope || index < 0) return undefined;
+    for (let at = index + direction; at >= 0 && at < journey.length; at += direction) {
+      const candidate = journey[at];
       if (candidate && !error && !setupUnavailable(candidate, scope, actions)) return candidate;
     }
     return undefined;
   };
   const previous = adjacent(-1),
     next = adjacent(1);
-  const targetSearch = (path: string) =>
-    scope && path === "/factory-layout" ? setupLayoutSearch(scope) : search;
+  const targetSearch = (entry: SetupStage) =>
+    scope
+      ? entry.path === "/factory-layout"
+        ? setupLayoutSearch(scope)
+        : setupSearch(scope, entry.path)
+      : {};
+  const spatialFinish = Boolean(
+    scope &&
+    scope.type === "space" &&
+    ["organization", "site", "building", "floor", "area"].includes(scope.kind),
+  );
+  const canFinish =
+    index === journey.length - 1 &&
+    (stage?.path === "/release-readiness" || (layout && spatialFinish));
   return (
     <>
       <section className="sentinel-setup" aria-label="Sentinel factory setup">
@@ -296,33 +368,36 @@ export function SetupWizardFrame({ children }: { children: ReactNode }) {
             <div>
               <strong>Sentinel setup · {scope?.label ?? "Selected physical item"}</strong>
               <small>
-                {site} · {scope?.type} {scope?.id} · Stage {index + 1} of 14: {stage?.name}
+                {site} · {scope?.kind ?? scope?.type} {scope?.id} ·{" "}
+                {stage
+                  ? `Stage ${index + 1} of ${journey.length}: ${stage.name}`
+                  : `Optional page: ${catalogStage?.name ?? "Engineering"}`}
               </small>
             </div>
           </div>
           <div className="sentinel-setup-controls">
             {previous && canLeave && !loading && (
               <Button variant="outline" size="sm" asChild>
-                <Link
-                  to={previous.path as never}
-                  search={targetSearch(previous.path) as never}
-                  aria-label={`Previous setup stage: ${previous.name}`}
+                <SetupLink
+                  stage={previous}
+                  search={targetSearch(previous)}
+                  label={`Previous setup stage: ${previous.name}`}
                 >
                   <ArrowLeft size={14} />
                   Previous
-                </Link>
+                </SetupLink>
               </Button>
             )}
             {next && canLeave && !loading && (
               <Button size="sm" asChild>
-                <Link
-                  to={next.path as never}
-                  search={targetSearch(next.path) as never}
-                  aria-label={`Next setup stage: ${next.name}`}
+                <SetupLink
+                  stage={next}
+                  search={targetSearch(next)}
+                  label={`Next setup stage: ${next.name}`}
                 >
                   Next
                   <ArrowRight size={14} />
-                </Link>
+                </SetupLink>
               </Button>
             )}
             {scope && layout && (
@@ -337,7 +412,7 @@ export function SetupWizardFrame({ children }: { children: ReactNode }) {
                 </Link>
               </Button>
             )}
-            {index === 13 && (
+            {canFinish && (
               <Button
                 size="sm"
                 disabled={!canLeave || !scope || loading}
@@ -371,6 +446,76 @@ export function SetupWizardFrame({ children }: { children: ReactNode }) {
             </Button>
           </p>
         )}
+        {spatialFinish && scope && (
+          <details className="sentinel-setup-stages">
+            <summary>Review physical dimensions &amp; hierarchy</summary>
+            <nav aria-label="Selected item hierarchy">
+              <ol>
+                {scope.hierarchy?.map((node) => (
+                  <li key={node.id}>
+                    <span>
+                      {node.label} · {node.kind}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </nav>
+            <p className="sentinel-setup-note">
+              {scope.size
+                ? `Width ${scope.size.x} m · Depth ${scope.size.z} m · Height ${scope.size.y} m`
+                : "Physical dimensions are not defined for this item. Review its boundaries in Properties."}
+            </p>
+            <p className="sentinel-setup-note">
+              Review this exact item in the layout inspector, then Finish setup to leave guidance.
+              Finishing does not save or activate equipment.
+            </p>
+          </details>
+        )}
+        {scope?.kind === "terminal" && !loading && !error && (
+          <details className="sentinel-setup-stages">
+            <summary>Terminal application assignments</summary>
+            {scope.terminalId ? (
+              (wizard.terminalAssignments?.(scope) ?? (
+                <p className="sentinel-setup-note">
+                  Native assignment details are unavailable in this workspace.
+                </p>
+              ))
+            ) : (
+              <p className="sentinel-setup-note">
+                Link the enrolled terminal in Properties. No other terminal is selected.
+              </p>
+            )}
+            {scope.app && canLeave && actions.includes("ems.application_studio.view") && (
+              <p className="sentinel-setup-note">
+                <Link
+                  to={"/application-studio" as never}
+                  search={setupSearch(scope, "/application-studio") as never}
+                >
+                  Current authoring definition · {scope.app}
+                </Link>{" "}
+                · separate from assigned releases listed above.
+              </p>
+            )}
+            {!scope.app && (
+              <p className="sentinel-setup-note">
+                No current authoring definition is recorded on the placement. Choose an exact
+                assigned release in the terminal panel; no application kind is assumed.
+              </p>
+            )}
+            {canLeave && scope.terminalId && actions.includes("ems.factory_assignments.view") && (
+              <SetupLink
+                stage={{
+                  path: "/factory-assignment",
+                  name: "Manage terminal assignments",
+                  need: "item",
+                }}
+                search={setupSearch(scope, "/factory-assignment")}
+              >
+                Manage terminal assignments
+              </SetupLink>
+            )}
+          </details>
+        )}
         {scope?.reason && (
           <p className="sentinel-setup-note" role="status">
             {scope.reason}
@@ -382,58 +527,108 @@ export function SetupWizardFrame({ children }: { children: ReactNode }) {
             occur.
           </p>
         )}
-        <details className="sentinel-setup-stages">
-          <summary>All 14 setup stages · {stage?.name}</summary>
-          <ol aria-label="Ordered factory setup stages">
-            {setupStages.map((entry, at) => {
-              const unavailable =
-                error ||
-                (scope
-                  ? setupUnavailable(entry, scope, actions)
-                  : "Select and verify a saved physical item first");
-              return (
-                <li key={entry.path}>
-                  {unavailable || !canLeave || loading ? (
-                    <div className="sentinel-setup-stage" aria-disabled="true">
-                      <span>{at + 1}</span>
-                      <span>
-                        {entry.name}
-                        <small>
-                          <Lock size={12} aria-hidden="true" />{" "}
-                          {unavailable ??
-                            (!canLeave ? "Save layout before leaving" : "Verifying item")}
-                        </small>
-                      </span>
-                    </div>
-                  ) : (
-                    <SetupLink
-                      to={entry.path}
-                      search={targetSearch(entry.path)}
-                      current={at === index}
-                    >
-                      <span>{at + 1}</span>
-                      <span>{entry.name}</span>
-                    </SetupLink>
-                  )}
-                </li>
-              );
-            })}
-          </ol>
-          {scope?.line && actions.includes("ems.engineering.view") && canLeave && (
-            <SetupLink to="/lines/$lineId" params={{ lineId: scope.line }} search={search}>
-              Linked line details · {scope.line}
-            </SetupLink>
-          )}
-          {scope?.station && actions.includes("ems.engineering.view") && canLeave && (
-            <SetupLink
-              to="/stations/$stationId"
-              params={{ stationId: scope.station }}
-              search={search}
-            >
-              Linked station details · {scope.station}
-            </SetupLink>
-          )}
-        </details>
+        {scope && journey.length > 0 && (
+          <details className="sentinel-setup-stages">
+            <summary>
+              Item setup stages · {journey.length} relevant{" "}
+              {journey.length === 1 ? "stage" : "stages"}
+            </summary>
+            <ol aria-label="Ordered relevant item setup stages">
+              {journey.map((entry, at) => {
+                const unavailable = error || setupUnavailable(entry, scope, actions);
+                return (
+                  <li key={entry.path}>
+                    {unavailable || !canLeave || loading ? (
+                      <div className="sentinel-setup-stage" aria-disabled="true">
+                        <span className="sentinel-setup-stage-number">{at + 1}</span>
+                        <span>
+                          {entry.name}
+                          <small>
+                            <Lock size={12} aria-hidden="true" />{" "}
+                            {unavailable ??
+                              (!canLeave ? "Save layout before leaving" : "Verifying item")}
+                          </small>
+                        </span>
+                      </div>
+                    ) : (
+                      <SetupLink stage={entry} search={targetSearch(entry)} current={at === index}>
+                        <span className="sentinel-setup-stage-number">{at + 1}</span>
+                        <span>{entry.name}</span>
+                      </SetupLink>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+            {scope.line && actions.includes("ems.engineering.view") && canLeave && (
+              <SetupLink
+                stage={{
+                  need: "line",
+                  action: "ems.engineering.view",
+                  path: "/lines/$lineId",
+                  params: { lineId: scope.line },
+                  name: "Linked line details",
+                }}
+                search={setupSearch(scope)}
+              >
+                Linked line details · {scope.line}
+              </SetupLink>
+            )}
+            {scope.station && actions.includes("ems.engineering.view") && canLeave && (
+              <SetupLink
+                stage={{
+                  need: "station",
+                  action: "ems.engineering.view",
+                  path: "/stations/$stationId",
+                  params: { stationId: scope.station },
+                  name: "Linked station details",
+                }}
+                search={setupSearch(scope)}
+              >
+                Linked station details · {scope.station}
+              </SetupLink>
+            )}
+          </details>
+        )}
+        {scope && (
+          <details className="sentinel-setup-catalog">
+            <summary>Other authorized engineering pages</summary>
+            <ol aria-label="Other authorized engineering pages">
+              {setupStages
+                .filter(
+                  (entry) =>
+                    setupAuthorized(entry, actions) &&
+                    !journey.some((relevant) => relevant.path === entry.path),
+                )
+                .map((entry) => {
+                  const unavailable = error || setupUnavailable(entry, scope, actions);
+                  return (
+                    <li key={entry.path}>
+                      {unavailable || !canLeave || loading ? (
+                        <div className="sentinel-setup-stage" aria-disabled="true">
+                          <span>
+                            {entry.name}
+                            <small>
+                              {unavailable ??
+                                (!canLeave ? "Save layout before leaving" : "Verifying item")}
+                            </small>
+                          </span>
+                        </div>
+                      ) : (
+                        <SetupLink
+                          stage={entry}
+                          search={targetSearch(entry)}
+                          current={catalogStage?.path === entry.path}
+                        >
+                          {entry.name}
+                        </SetupLink>
+                      )}
+                    </li>
+                  );
+                })}
+            </ol>
+          </details>
+        )}
       </section>
       {blocked || (!layout && !synchronized) ? (
         <section className="sentinel-setup sentinel-setup-empty" role="status">

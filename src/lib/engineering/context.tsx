@@ -78,7 +78,7 @@ export function EngineeringProvider({
   scopeAsset?: string | null;
   /** Guided setup must never fall back to a different line, station or hardware record. */
   strictScope?: boolean;
-  onScopeChange?: (line: string, station: string) => void;
+  onScopeChange?: (line: string, station: string, reason?: "normalize" | "select") => void;
   site?: string | undefined;
 }) {
   const [model, setModel] = useState(() => (native ? emptyWorkspace(site) : makeModel()));
@@ -111,7 +111,7 @@ export function EngineeringProvider({
   useEffect(() => {
     if (strictScope || loadState !== "ready" || !onScopeChange) return;
     if ((scopeLine && scopeLine !== lineId) || (scopeStation && scopeStation !== selected))
-      onScopeChange(lineId, selected);
+      onScopeChange(lineId, selected, "normalize");
   }, [loadState, scopeLine, scopeStation, lineId, selected, onScopeChange, strictScope]);
   function selectLine(id: string) {
     if (strictScope) return;

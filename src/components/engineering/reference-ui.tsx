@@ -1,5 +1,6 @@
 import "./engineering-workspace.css";
 import {workspaceForPath} from '@/lib/engineering/navigation';
+import {pageOwner} from './page-ownership';
 import {useGuidedSetup} from './setup-wizard-context';
 import { useRef, useState, type ReactNode } from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
@@ -21,11 +22,12 @@ export function Surface({title,sub,children,actions,className=''}:{title?:ReactN
 export function ReferencePage({children,title,sub,crumb,actions,sourceLabel}:{children:ReactNode;title:string;sub?:string;crumb?:string;actions?:ReactNode;sourceLabel?:string}){
   const {dirty,native,revision,lifecycle,fixture}=useEngineering();
   const route=useRouterState({select:s=>s.location.pathname});
-  const section=workspaceForPath(route)?.group??'Factory Engineering';
+  const section=workspaceForPath(route)?.group??'Engineering';
+  const engineeringPage=pageOwner(route)==='engineering';
   const {site,actions:grants,lineId,model,selected}=useEngineering();
   const stage:JourneyStage|undefined=title==='Line Topology Designer'?'line':title==='Production Steps'?'process':['Station Composition Editor','Asset Model / Hierarchy','Terminals & Peripherals'].includes(title)||title.startsWith('Equipment')||title.startsWith('MD-104')?'station':title==='Command Policy Editor'||title.startsWith('Signal bindings')?'signals':undefined;
   const station=model.stations.find(item=>item.id===selected);
-  const page=<div className={section==="Factory Engineering"?"reference-page ems-engineering-page":"reference-page"}><div className="ref-crumb"><Network size={14}/>{section}<ChevronRight size={12}/>{crumb??title}<span className="ref-concept">{sourceLabel ?? (native ? `${fixture?"Training · ":""}${dirty?"Edited draft":lifecycle} · r${revision}` : 'Sandbox · simulated data')}</span>{dirty && <span role="status" className="text-warning">Unsaved changes</span>}<EngineeringDataDrawer/></div><header className="ref-page-head"><div><h1>{title}</h1>{sub&&<p>{sub}</p>}</div><div className="ref-actions">{actions}</div></header>{stage&&<EngineeringJourney stage={stage} scope={{site,lineId,lineName:model.name,stationId:station?.id,stationName:station?.name}} access={{native,actions:grants}} more={<RelatedEngineeringPages/>}/>}{title==='Line Topology Designer'&&<AssetLineMetrics/>}{title==='Station Composition Editor'&&<AssetStationConfiguration/>}{children}</div>;
+  const page=<div className={engineeringPage?"reference-page ems-engineering-page":"reference-page"}><div className="ref-crumb"><Network size={14}/>{section}<ChevronRight size={12}/>{crumb??title}<span className="ref-concept">{sourceLabel ?? (native ? `${fixture?"Training · ":""}${dirty?"Edited draft":lifecycle} · r${revision}` : 'Sandbox · simulated data')}</span>{dirty && <span role="status" className="text-warning">Unsaved changes</span>}<EngineeringDataDrawer/></div><header className="ref-page-head"><div><h1>{title}</h1>{sub&&<p>{sub}</p>}</div><div className="ref-actions">{actions}</div></header>{stage&&<EngineeringJourney stage={stage} scope={{site,lineId,lineName:model.name,stationId:station?.id,stationName:station?.name}} access={{native,actions:grants}} more={<RelatedEngineeringPages/>}/>}{title==='Line Topology Designer'&&<AssetLineMetrics/>}{title==='Station Composition Editor'&&<AssetStationConfiguration/>}{children}</div>;
   return stage?<JourneyProvider>{page}</JourneyProvider>:page;
 }
 export function ScopeSelectors() {

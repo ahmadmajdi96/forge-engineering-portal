@@ -19,7 +19,9 @@ import { emsSession } from "@/lib/production/session.functions";
 import { Shell } from "@/components/Shell";
 import { EngineeringProvider } from "@/lib/engineering/context";
 import { FactorySetupProvider } from "@/components/engineering/setup-wizard";
+import { AssignedApplications } from "@/components/engineering/assigned-applications";
 import { isSetupRoute } from "@/components/engineering/setup-wizard-state";
+import { scopeChangeSearch } from "@/lib/engineering/scope-search";
 import { loadFactoryWorkspace } from "@/lib/production/workspace.functions";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -93,6 +95,8 @@ type EngineeringSearch = {
   setupSite?: string | undefined;
   setupItem?: string | undefined;
   setupType?: string | undefined;
+  layoutId?: string | undefined;
+  layoutType?: string | undefined;
 };
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
@@ -126,12 +130,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   }),
   validateSearch: (params): EngineeringSearch =>
     Object.fromEntries(
-      ["site", "engLine", "engStation", "engAsset", "setup", "setupSite", "setupItem", "setupType"].flatMap((key) =>
+      ["site", "engLine", "engStation", "engAsset", "setup", "setupSite", "setupItem", "setupType", "layoutId", "layoutType"].flatMap((key) =>
         typeof params[key] === "string" && params[key].length <= (key === "engAsset" ? 250 : 180) ? [[key, params[key]]] : [],
       ),
     ),
   search: {
-    middlewares: [retainSearchParams<EngineeringSearch>(["site", "engLine", "engStation", "engAsset", "setup", "setupSite", "setupItem", "setupType"])],
+    middlewares: [retainSearchParams<EngineeringSearch>(["site", "engLine", "engStation", "engAsset", "setup", "setupSite", "setupItem", "setupType", "layoutId", "layoutType"])],
   },
   beforeLoad: async () => ({ ems: await emsSession() }),
   shellComponent: RootShell,
@@ -196,7 +200,7 @@ function RootComponent() {
             scopeStation={params.get("engStation")}
             scopeAsset={params.get("engAsset")}
             strictScope={params.get("setup") === "guided" && params.get("setupSite") === site && isSetupRoute(router.state.location.pathname)}
-            onScopeChange={(engLine, engStation) => {
+            onScopeChange={(engLine, engStation, reason = "select") => {
               if (params.get("setup") === "guided" && isSetupRoute(router.state.location.pathname)) return;
               if (
                 (params.get("engLine") ?? "") === engLine &&
@@ -207,14 +211,12 @@ function RootComponent() {
                 to: router.state.location.pathname,
                 replace: true,
                 resetScroll: false,
-                search: (prev) => {
-                  const { step, signal, engAsset, ...scope } = prev;
-                  return {
-                    ...scope,
-                    engLine: engLine || undefined,
-                    engStation: engStation || undefined,
-                  };
-                },
+                search: (prev) => scopeChangeSearch(
+                  prev,
+                  { engLine: engLine || undefined, engStation: engStation || undefined },
+                  router.state.location.pathname,
+                  reason,
+                ),
               });
             }}
             fixture={ems.mode === "local"}
@@ -222,7 +224,9 @@ function RootComponent() {
             site={site}
           >
             <FactorySetupProvider site={site} actions={authorizedSite?.actions ?? []}
-              readLayout={(factory) => loadFactoryWorkspace({ data: { site: factory, workspace: "spatial" } })}>
+              readLayout={(factory) => loadFactoryWorkspace({ data: { site: factory, workspace: "spatial" } })}
+              readProcess={(factory) => loadFactoryWorkspace({ data: { site: factory, workspace: "process" } })}
+              terminalAssignments={(scope) => <AssignedApplications terminalId={scope.terminalId} />}>
               <Shell identity={ems.identity ?? undefined} site={site} />
               <Toaster />
             </FactorySetupProvider>

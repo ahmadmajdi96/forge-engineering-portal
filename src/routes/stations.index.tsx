@@ -225,15 +225,12 @@ function StationsPage() {
                 <th className="px-4 py-3 text-left font-medium">Configured state</th>
                 <th className="px-4 py-3 text-left font-medium">Machine</th>
                 <th className="px-4 py-3 text-left font-medium">Comms</th>
-                <th className="px-4 py-3 text-left font-medium">Operator</th>
                 <th className="px-4 py-3 text-right font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
               {lc.visible.map((s) => {
                 const line = store.lines.find((l) => l.id === s.lineId);
-                const asmt = store.assignments.find((a) => a.active && a.targetType === "station" && a.targetId === s.id);
-                const op = asmt ? store.users.find((u) => u.id === asmt.userId) : undefined;
                 const dot =
                   s.status === "running" ? "bg-success animate-pulse"
                   : s.status === "down" ? "bg-destructive"
@@ -249,7 +246,7 @@ function StationsPage() {
                     </td>
                     <td className="px-4 py-3 text-xs">
                       {line ? (
-                        <Link to="/lines/$lineId" params={{ lineId: line.id }} className="hover:text-primary">
+                        <Link to="/lines/$lineId" params={{ lineId: line.id }} search={(p) => ({ ...p, engLine: line.id, engStation: s.id, engAsset: undefined })} className="hover:text-primary">
                           {line.name}
                         </Link>
                       ) : s.lineId}
@@ -283,11 +280,6 @@ function StationsPage() {
                           <span className="inline-flex items-center gap-1"><Wifi className="h-3 w-3 text-primary" /> {s.machine.protocol}</span>
                         </div>
                       ) : <span className="text-muted-foreground">—</span>}
-                    </td>
-                    <td className="px-4 py-3 text-xs">
-                      {op ? (
-                        <span className="hover:text-primary">{op.name}</span>
-                      ) : <span className="text-warning">unassigned</span>}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-1.5">
@@ -323,7 +315,7 @@ function StationsPage() {
                 );
               })}
               {lc.filtered.length === 0 && (
-                <tr><td colSpan={8} className="px-4 py-10 text-center text-sm text-muted-foreground">No stations match those filters.</td></tr>
+                <tr><td colSpan={7} className="px-4 py-10 text-center text-sm text-muted-foreground">No stations match those filters.</td></tr>
               )}
             </tbody>
           </table>

@@ -25,24 +25,15 @@ test("a placed scale retains identity through the engineering wizard, reload and
   await page.getByRole("link", { name: "Start item setup", exact: true }).click();
   const wizard = page.getByRole("region", { name: "Sentinel factory setup", exact: true });
   await expect(wizard).toContainText(scale.label);
-  await wizard.getByText(/All 14 setup stages/).click();
-  await expect(wizard.getByRole("listitem")).toHaveCount(14);
-  await expect(
-    wizard.getByRole("listitem").filter({ hasText: "Terminals & peripherals" }),
-  ).toContainText(/equipment/);
+  await wizard.getByText(/Item setup stages/).click();
+  const stages = wizard.getByRole("list", { name: "Ordered relevant item setup stages" });
+  await expect(stages.getByRole("listitem")).toHaveCount(5);
+  await expect(stages.getByText("Terminals & peripherals")).toHaveCount(0);
   for (const path of [
-    "/lines",
-    "/line-engineering",
-    "/factory-process",
-    "/process-routes",
-    "/asset-steps",
-    "/step-templates",
-    "/stations",
-    "/workstations",
     "/machines",
     "/station-connectivity",
-    "/command-policy",
-    "/registry",
+    "/mes-integration",
+    "/release-readiness",
   ]) {
     await wizard.getByRole("link", { name: /Next setup stage:/ }).click();
     await expect.poll(() => new URL(page.url()).pathname).toBe(path);
@@ -51,6 +42,16 @@ test("a placed scale retains identity through the engineering wizard, reload and
     expect(q.get("engStation")).toBe("CHECK");
     expect(q.get("setupItem")).toBe(scale.id);
     expect(q.get("engLine")).toBe("PACK-A");
+    if (path === "/release-readiness") {
+      const readiness = page.getByRole("region", { name: "Item-scoped readiness" });
+      await expect(
+        readiness.getByRole("heading", { name: "Item readiness · " + scale.label }),
+      ).toBeVisible();
+      await expect(readiness).toContainText("PACK-SCALE");
+      await expect(readiness).toContainText("PACK-WEIGHT");
+    }
+    if (path === "/mes-integration") expect(q.get("mapping")).toBe("PACK-WEIGHT");
+    if (path === "/station-connectivity") expect(q.get("signal")).toBe("inspection_weight");
     if (path === "/machines") {
       await page.reload();
       await expect(wizard).toContainText(scale.label);
@@ -91,4 +92,28 @@ test("missing and cross-site item bookmarks cannot open another station as the s
   await expect(
     page.getByRole("region", { name: "Sentinel factory setup", exact: true }),
   ).toHaveCount(0);
+});
+
+test("an HMI placement keeps its exact application, terminal and layout identity in Studio", async ({
+  page,
+}) => {
+  test.skip(!origin, "Requires the packaging training fixture.");
+  const hmi = example.spatial.occurrences.find((item) => item.terminalId === "PACK-HMI")!;
+  const definition = example.studio.applications.find((app) => app.id === hmi.authoringAppId)!;
+  await signIn(page, "/factory-layout?site=" + site + "&occurrence=" + hmi.id);
+  await page.getByRole("link", { name: "Start item setup", exact: true }).click();
+  const wizard = page.getByRole("region", { name: "Sentinel factory setup", exact: true });
+  await wizard.getByRole("link", { name: /Next setup stage:/ }).click();
+  await expect.poll(() => new URL(page.url()).pathname).toBe("/terminals");
+  await wizard.getByRole("link", { name: /Next setup stage:/ }).click();
+  await expect.poll(() => new URL(page.url()).pathname).toBe("/factory-assignment");
+  expect(new URL(page.url()).searchParams.get("terminal")).toBe(hmi.terminalId);
+  await wizard.getByRole("link", { name: /Next setup stage:/ }).click();
+  await expect.poll(() => new URL(page.url()).pathname).toBe("/application-studio");
+  await expect(page.getByLabel("Application name", { exact: true })).toHaveValue(definition.name);
+  await page.reload();
+  await expect(page.getByLabel("Application name", { exact: true })).toHaveValue(definition.name);
+  expect(new URL(page.url()).searchParams.get("terminal")).toBe(hmi.terminalId);
+  await wizard.getByRole("link", { name: "Return to item in 3D" }).click();
+  await expect.poll(() => new URL(page.url()).searchParams.get("occurrence")).toBe(hmi.id);
 });

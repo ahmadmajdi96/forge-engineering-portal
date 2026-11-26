@@ -1,4 +1,4 @@
-import { createContext, useContext } from "react";
+import { createContext, useContext, type ReactNode } from "react";
 import type { SetupDocument, SetupScope } from "./setup-wizard-state";
 
 export type WizardContext = {
@@ -13,6 +13,7 @@ export type WizardContext = {
   retry: () => void;
   registerFocus: (focus: () => void) => () => void;
   focusItem: () => void;
+  terminalAssignments?: ((scope: SetupScope) => ReactNode) | undefined;
 };
 export const FactorySetupContext = createContext<WizardContext | null>(null);
 export const useFactorySetup = () => useContext(FactorySetupContext);

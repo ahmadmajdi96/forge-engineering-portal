@@ -9,6 +9,7 @@ import { loadFactoryWorkspace, saveFactoryWorkspace } from "@/lib/production/wor
 vi.mock("@tanstack/react-router", async (original) => ({
   ...(await original<typeof import("@tanstack/react-router")>()),
   useBlocker: vi.fn(),
+  useRouterState: () => ({ site: "training-north" }),
   Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a>,
 }));
 vi.mock("@/lib/production/workspace.functions", () => ({

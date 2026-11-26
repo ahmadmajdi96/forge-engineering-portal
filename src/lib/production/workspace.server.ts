@@ -30,6 +30,27 @@ export async function readWorkspace(request: Request, input: Scope) {
   return row ?? { revision: 0, payload: null };
 }
 
+export async function readPublishedStudioApplication(
+  request: Request,
+  input: { site: string; application: string; revision: number },
+) {
+  await requirePermission(request, input.site, viewPermission.studio);
+  const [snapshot] = await database()<{ payload: unknown }[]>`
+    select r.payload from ems.revisions r
+    where r.site = ${input.site} and r.workspace = 'studio' and r.revision = ${input.revision}
+      and exists (select 1 from ems.releases rel
+        where rel.site = r.site and rel.workspace_revision = r.revision
+          and rel.application_id = ${input.application} and rel.status = 'published')`;
+  const application =
+    snapshot &&
+    studioWorkspaceSchema
+      .parse(snapshot.payload)
+      .applications.find((definition) => definition.id === input.application);
+  if (!application)
+    throw new EmsError(404, "Published application revision unavailable in this factory.");
+  return { revision: input.revision, application };
+}
+
 async function validateWorkspace(input: Scope, payload: unknown) {
   let raw: string;
   try {

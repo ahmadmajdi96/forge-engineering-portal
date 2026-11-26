@@ -122,15 +122,44 @@ In the layout, buildings, floors and sections share the desktop hierarchy column
 
 Lovable authored the interface in revisions `d96cc05` and `bb7ce23`. The second revision addressed the canvas being pushed below the first screen in the first pass. This change uses the existing EMS records, assignments, and save APIs. The new browser regression follows a packaging station through its signals into the layout and checks all three scope IDs.
 
-### Set up an item from the 3D viewer
+### Page ownership and setup from 3D
 
-| Engineer's task | Where and how |
+Overview remains a standalone landing page. The sidebar contains six primary engineering destinations and Application Studio. Search accepts former page names. Each section has a keyboard-accessible tools list. A saved bookmark still opens its editor with its own authorization.
+
+| Destination | Active routes and responsibilities |
 | --- | --- |
-| Choose what to configure | Create or select a physical space or placement in Factory layout. A new item needs a saved layout revision before the wizard can use it. Choose **Start item setup**. Other engineering pages offer **Start setup in 3D**. Overview stays independent. |
-| Follow the item's configuration | Use **Next**, **Previous**, or **All 14 setup stages**. The sequence covers physical layout, production lines, line design, manufacturing sections and routes, process design, production steps, step templates, stations, station composition, equipment, terminals, signals, command policy, and the registry. |
-| Resolve missing prerequisites | Stage availability comes from the current factory permissions and the item's engineering links. For example, a scale uses equipment setup and skips terminal setup. A section without a linked line can reach line lists, templates, and the registry. The stage list explains unavailable actions. |
-| Resume or finish | The URL identifies the factory and the saved physical item. Reload or use **Return to item in 3D** to inspect that item. **Finish setup** returns to its placement. Saving, release approval and commissioning use their existing controls. |
+| Overview | `/` summarizes the factory. It does not join a setup sequence. |
+| Factory Layout | `/factory-layout` owns physical hierarchy, placement, footprint and 3D, plan and elevation selection. Start setup after saving a placement or space. |
+| Assets | `/registry` is the entry for equipment and station inventory. Lines, line design, stations, station composition, machines and terminals retain their detail URLs and identities. The Stations list shows engineering configuration. Shift and operator presence belong in MES. |
+| Process Design | `/factory-process` owns the versioned line process. `/process-routes`, `/asset-steps` and `/step-templates` remain editing surfaces for their respective manufacturing definitions. Native line routes and engineering templates have distinct revision streams. The active template library saves assignments through the engineering workspace. |
+| Connectivity | `/station-connectivity` owns signal design. `/command-policy` covers writable signals and `/mes-integration` covers MES resource mappings. Only mappings reached through the saved line's signal consumers and exact station record enter an item's setup. |
+| Readiness | `/release-readiness` shows engineering findings for the selected setup item and distinguishes related line and station findings. Opening the page independently presents the existing governance workspace. Diagnostics, commissioning, approval, changes and deployment history remain available with their grants. |
+| Application Studio | `/application-studio` keeps app definitions, workflows, screens, previews, factory releases and assignments together. Native editor modes use the selected native definition. Existing Edge App Studio, Operator Apps, Screen Editor, Procedure Designer and HMI Designer URLs still address their original records. |
+| Specialist tools | Edge Fleet, System Integrations and Admin QA retain their own pages and access checks. |
 
-The Operations section, shop-floor consoles, and their unit, work-order and waste-reason pages have been removed. Their disconnected runtime controls and simulated telemetry timer were removed with them. Application Studio still owns operator-app and HMI definitions, assignments and releases. This change requires no database migration.
+A line's station order and its geometry are independent. Guided navigation carries the saved site, physical item, engineering line, station and asset IDs. Selecting another scope clears inapplicable relationship IDs. Finishing returns to the same 3D object. Save, publish, approval, commissioning and delivery retain separate actions.
 
-The browser regression covers a saved scale through the applicable stages, a missing item, cross-factory context, and retired bookmarks. The disposable PostgreSQL scenario creates a new section, saves it, follows it into setup, reloads, and returns to the same section. Lovable authored the wizard in draft revision `7567fb5`.
+| Selected item | Guided work |
+| --- | --- |
+| Building, floor or area | Review dimensions and hierarchy in the layout inspector and finish on the same space. |
+| Line | Configure the line, organize its stations, inspect manufacturing sections and review readiness. |
+| Station | Configure its composition, manufacturing steps and signals. Command policy appears for configured writable signals. |
+| Equipment | Configure the exact equipment record, inspect its signals, review applicable command policy and MES mapping, then open readiness. The packaging scale links to `PACK-SCALE`, `inspection_weight` and `PACK-WEIGHT` at station `CHECK`. |
+| Terminal | Inspect the saved terminal and its application relationship. An explicit authoring reference opens the current definition. Published release links open an immutable Studio revision. A terminal without an app reference lists assignments for that terminal. |
+
+The wizard explains missing relationships and grants. Other authorized pages remain available through its optional tools list. A successful review reports findings against engineering records. Physical commissioning and MES acknowledgement each require separate evidence.
+
+### Bookmarks, data and integration
+
+- `/analytics` redirects to Diagnostics. `/reports` redirects to the reports view in Assets and retains a supported report tab and factory context. Inventory, station memberships and crosswalks use the scoped engineering model. Native calibration dates, assignment intervals and signed changes appear only where the underlying service supplies evidence. The sandbox can display its local records with source labels. Available exports quote CSV values and neutralize formula text.
+- The read-only Studio lookup checks the existing site Studio grant and joins the published application and revision to its immutable document. A missing, unpublished, inaccessible or mismatched revision cannot silently open the current draft. The existing edit, publish, assign and audit APIs retain their responsibilities. No schema migration or data rewrite is required.
+- The Operations URLs, runtime consoles, work-order, unit and waste-reason pages remain retired. Production execution belongs to MES. A production MES launch URL and federated entitlement have not been verified.
+- The active Step Templates route already used the factory engineering workspace. The old browser-store editor in that file was unreachable and has been removed. No legacy records were migrated or renumbered.
+
+### Verification
+
+The repository includes browser scenarios for exact item setup, scoped signal/mapping handoff, return to placement, native report exports, old bookmarks, terminal-only Studio navigation and invalid versions. Disposable PostgreSQL scenarios exercise template assignment save/reload, new floor/section footprint persistence and historical application preview after the Studio head changes. The release scenario expects the published fixture produced by `scripts/ops/factory-acceptance.ts`. It runs only with `EMS_DISPOSABLE_RELEASE_TEST=1`.
+
+Lovable authored the interface in draft revisions `bb138a9`, `45140db`, `856772b` `26f3846` and `4c00bc3`. Integration and backend validation use the running EMS and its canonical PostgreSQL records.
+
+The release check ran 198 unit and component tests, the EMS lint and TypeScript checks, the production build and the Node server build. Chromium passed 18 scenarios against the two running local factories. Two write-dependent tests were excluded there and passed against disposable PostgreSQL databases. The packaging run passed six scenarios. The release run also exercised concurrent writes, independent approval, a signed package and historical preview after changing the Studio head. Screenshot inspection covered 1920 × 1080, 1440 × 900, 1024 × 768 and 390 × 844. The measured page width matched each viewport, with no uncaught page errors during that walkthrough.

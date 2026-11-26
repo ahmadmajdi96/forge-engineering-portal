@@ -20,10 +20,10 @@ test("factory renderer, saved layout and protected QA", async ({ page, request }
   await page.getByRole("button", { name: "Toggle theme" }).click();
   await expect(page.locator("html")).not.toHaveClass(/dark/);
   await page.getByRole("button", { name: "Toggle theme" }).click();
-  await page.getByRole("button", { name: "Show all workspaces" }).click();
+  await page.getByRole("searchbox", { name: "Find a workspace" }).fill("Edge App Studio");
   await page.getByRole("link", { name: "Edge App Studio", exact: true }).click();
   await expect(page).toHaveURL(/edge-app-studio/);
-  await page.getByRole("link", { name: "Factory layout", exact: true }).click();
+  await page.getByRole("link", { name: "Factory Layout", exact: true }).click();
   const canvas = page.locator("canvas").first();
   await expect(canvas).toBeVisible();
   expect(
@@ -51,6 +51,10 @@ test("factory renderer, saved layout and protected QA", async ({ page, request }
   await page.getByRole("button", { name: "Undo", exact: true }).click();
   await expect(planMachine).toHaveAttribute("points", initialPlan);
   await expect(elevationMachine).toHaveAttribute("points", initialElevation);
+  const workspaceSearch = page.getByRole("searchbox", { name: "Find a workspace" });
+  if (!(await workspaceSearch.isVisible()))
+    await page.getByRole("button", { name: "Toggle Sidebar" }).click();
+  await workspaceSearch.fill("Admin QA");
   await page.getByRole("link", { name: "Admin QA", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Admin QA", exact: true })).toBeVisible({
     timeout: 15_000,
@@ -82,7 +86,19 @@ test("original and factory sidebar destinations render after sign-in", async ({ 
   await page.getByLabel("Fixture access token").fill(key!);
   await page.getByRole("button", { name: "Sign in to fixture" }).click();
   await expect(page.getByRole("heading", { name: "Engineering Overview" })).toBeVisible();
-  await page.getByRole("button", { name: "Show all workspaces" }).click();
+  const navigation = page.getByRole("navigation", { name: "Engineering workspaces" });
+  for (const title of [
+    "Overview",
+    "Factory Layout",
+    "Assets",
+    "Process Design",
+    "Connectivity",
+    "Application Studio",
+    "Readiness",
+  ]) {
+    await expect(navigation.getByRole("link", { name: title, exact: true })).toBeVisible();
+  }
+  await expect(page.getByRole("button", { name: "Show all workspaces" })).toHaveCount(0);
   const routes = await page
     .locator('[data-sidebar="menu-button"][href]')
     .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("href")!));

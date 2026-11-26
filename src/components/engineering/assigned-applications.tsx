@@ -5,8 +5,11 @@ import { useState } from "react";
 import { useEngineering } from "@/lib/engineering/context";
 import { getEngineeringAssignments } from "@/lib/production/engineering-relations.functions";
 import { Button } from "@/components/ui/button";
+import { workspaceScopedSearch } from "@/lib/engineering/navigation";
+import { useFactorySetup } from "./setup-wizard-context";
 
 type Props = {
+  showStudioEntry?: boolean | undefined;
   stationId?: string | undefined;
   machineId?: string | undefined;
   terminalId?: string | undefined;
@@ -22,32 +25,73 @@ export function AssignedApplications(props: Props) {
         : "stationId";
   const id = props[field];
   if (!id) return null;
-  return <AssignmentList key={field + ":" + id} field={field} id={id} />;
+  return (
+    <AssignmentList
+      key={field + ":" + id}
+      field={field}
+      id={id}
+      showStudioEntry={props.showStudioEntry ?? true}
+    />
+  );
 }
-function AssignmentList({ field, id }: { field: keyof Props; id: string }) {
+function AssignmentList({
+  field,
+  id,
+  showStudioEntry,
+}: {
+  field: "stationId" | "machineId" | "terminalId" | "stepId";
+  id: string;
+  showStudioEntry: boolean;
+}) {
   const { native, site, actions, workspaceModel, lineId, selected } = useEngineering();
   const get = useServerFn(getEngineeringAssignments);
   const [cursors, setCursors] = useState<string[]>([]);
   const after = cursors.at(-1);
   const readable = !!site && actions.includes("ems.factory_assignments.view");
   const studio = !!site && actions.includes("ems.application_studio.view");
+  const setup = useFactorySetup();
+  const contextAsset =
+    field === "machineId" || field === "terminalId"
+      ? field === "terminalId" && setup?.active && setup.scope?.terminalId === id
+        ? setup.scope.asset
+        : workspaceModel.records.find(
+            (record) =>
+              !record.archived &&
+              record.id === id &&
+              record.kind === (field === "terminalId" ? "terminal" : "equipment"),
+          )?.id
+      : undefined;
+  const currentSearch = useRouterState({ select: (state) => state.location.search }) as Record<
+    string,
+    unknown
+  >;
   const query = useQuery({
     queryKey: ["engineering-assignments", site, field, id, after],
     enabled: native && readable,
-    queryFn: () => get({ data: { site: site!, field, id, ...(after ? { after } : {}) } }),
+    queryFn: () => get({ data: { site: site ?? "", field, id, ...(after ? { after } : {}) } }),
     retry: false,
   });
   const stationProfile = useRouterState({
     select: (s) => s.location.pathname.startsWith("/stations/"),
   });
-  const studioScope = {
-    ...(stationProfile ? { profile: "station" as const } : {}),
-    site,
-    engLine: lineId,
-    engStation: selected,
-    entity: id,
-    source: field,
-  };
+  const studioScope = workspaceScopedSearch(
+    currentSearch,
+    {
+      ...(stationProfile ? { profile: "station" as const } : {}),
+      site,
+      engLine: lineId,
+      engStation: selected,
+      entity: id,
+      source: field,
+      app: undefined,
+      kind: undefined,
+      revision: undefined,
+      view: undefined,
+      engAsset: contextAsset,
+      terminal: field === "terminalId" ? id : undefined,
+    },
+    "/application-studio",
+  );
   const intended =
     field === "stationId" ? workspaceModel.stations.find((s) => s.id === id)?.app : undefined;
   return (
@@ -57,13 +101,30 @@ function AssignmentList({ field, id }: { field: keyof Props; id: string }) {
           <h2>Assigned Applications/HMI</h2>
           <p>{id} · release assignments</p>
         </div>
-        {studio && (
+        {studio && showStudioEntry && (
           <Link className="ref-issue-link" to="/application-studio" search={studioScope}>
             Open in Application Studio
           </Link>
         )}
       </header>
       <div className="ref-surface-body space-y-2 text-sm">
+        {native && readable && (
+          <p>
+            <Link
+              className="ref-issue-link"
+              to="/factory-assignment"
+              search={
+                workspaceScopedSearch(
+                  currentSearch,
+                  { site, ...(field === "terminalId" ? { terminal: id } : {}) },
+                  "/factory-assignment",
+                ) as never
+              }
+            >
+              Manage application assignments
+            </Link>
+          </p>
+        )}
         {intended && (
           <p>
             Engineering application reference <strong>{intended}</strong>
@@ -103,9 +164,16 @@ function AssignmentList({ field, id }: { field: keyof Props; id: string }) {
                       <Link
                         className="ref-issue-link"
                         to="/application-studio"
-                        search={{ ...studioScope, app: a.application_id, kind: a.kind }}
+                        search={
+                          {
+                            ...studioScope,
+                            app: a.application_id,
+                            kind: a.kind,
+                            revision: String(a.revision),
+                          } as never
+                        }
                       >
-                        Open application definition
+                        Open assigned revision
                       </Link>
                     )}
                   </li>
@@ -130,7 +198,10 @@ function AssignmentList({ field, id }: { field: keyof Props; id: string }) {
                 <Button
                   size="sm"
                   disabled={!query.data.next}
-                  onClick={() => setCursors((c) => [...c, query.data.next!])}
+                  onClick={() => {
+                    const next = query.data.next;
+                    if (next) setCursors((c) => [...c, next]);
+                  }}
                 >
                   Next
                 </Button>

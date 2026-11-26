@@ -73,14 +73,14 @@ test("design a building, floor and section footprint", async ({ page }) => {
     await entry.getByRole("link", { name: "Start item setup" }).click();
     const wizard = page.getByRole("region", { name: "Sentinel factory setup", exact: true });
     await expect(wizard).toContainText("Inspection bay");
-    await wizard.getByRole("link", { name: /Next setup stage: Production lines/ }).click();
+    await expect(wizard.getByRole("link", { name: /Next setup stage/ })).toHaveCount(0);
     const itemId = new URL(page.url()).searchParams.get("setupItem");
     expect(itemId).toBeTruthy();
     await page.reload();
     await expect(wizard).toContainText("Inspection bay");
-    await wizard.getByRole("link", { name: "Return to item in 3D" }).click();
+    await wizard.getByRole("button", { name: "Finish setup" }).click();
     expect(new URL(page.url()).searchParams.get("space")).toBe(itemId);
-    await wizard.getByRole("button", { name: "Leave setup" }).click();
+    await expect(wizard).toHaveCount(0);
     await page.reload();
     await controls.getByLabel("Building", { exact: true }).selectOption({ label: "Annex" });
     await controls.getByLabel("Floor", { exact: true }).selectOption({ label: "Mezzanine" });
