@@ -18,6 +18,9 @@ import { FactoryShell } from "@/components/engineering/factory-shell";
 import { emsSession } from "@/lib/production/session.functions";
 import { Shell } from "@/components/Shell";
 import { EngineeringProvider } from "@/lib/engineering/context";
+import { FactorySetupProvider } from "@/components/engineering/setup-wizard";
+import { isSetupRoute } from "@/components/engineering/setup-wizard-state";
+import { loadFactoryWorkspace } from "@/lib/production/workspace.functions";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
@@ -85,6 +88,11 @@ type EngineeringSearch = {
   site?: string | undefined;
   engLine?: string | undefined;
   engStation?: string | undefined;
+  engAsset?: string | undefined;
+  setup?: string | undefined;
+  setupSite?: string | undefined;
+  setupItem?: string | undefined;
+  setupType?: string | undefined;
 };
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
@@ -118,12 +126,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   }),
   validateSearch: (params): EngineeringSearch =>
     Object.fromEntries(
-      ["site", "engLine", "engStation"].flatMap((key) =>
-        typeof params[key] === "string" && params[key].length <= 128 ? [[key, params[key]]] : [],
+      ["site", "engLine", "engStation", "engAsset", "setup", "setupSite", "setupItem", "setupType"].flatMap((key) =>
+        typeof params[key] === "string" && params[key].length <= (key === "engAsset" ? 250 : 180) ? [[key, params[key]]] : [],
       ),
     ),
   search: {
-    middlewares: [retainSearchParams<EngineeringSearch>(["site", "engLine", "engStation"])],
+    middlewares: [retainSearchParams<EngineeringSearch>(["site", "engLine", "engStation", "engAsset", "setup", "setupSite", "setupItem", "setupType"])],
   },
   beforeLoad: async () => ({ ems: await emsSession() }),
   shellComponent: RootShell,
@@ -186,7 +194,10 @@ function RootComponent() {
             actions={authorizedSite?.actions}
             scopeLine={params.get("engLine")}
             scopeStation={params.get("engStation")}
+            scopeAsset={params.get("engAsset")}
+            strictScope={params.get("setup") === "guided" && params.get("setupSite") === site && isSetupRoute(router.state.location.pathname)}
             onScopeChange={(engLine, engStation) => {
+              if (params.get("setup") === "guided" && isSetupRoute(router.state.location.pathname)) return;
               if (
                 (params.get("engLine") ?? "") === engLine &&
                 (params.get("engStation") ?? "") === engStation
@@ -210,8 +221,11 @@ function RootComponent() {
             native={!!ems.identity}
             site={site}
           >
-            <Shell identity={ems.identity ?? undefined} site={site} />
-            <Toaster />
+            <FactorySetupProvider site={site} actions={authorizedSite?.actions ?? []}
+              readLayout={(factory) => loadFactoryWorkspace({ data: { site: factory, workspace: "spatial" } })}>
+              <Shell identity={ems.identity ?? undefined} site={site} />
+              <Toaster />
+            </FactorySetupProvider>
           </EngineeringProvider>
         </MesProvider>
       </StoreProvider>

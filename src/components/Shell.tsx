@@ -4,6 +4,7 @@ import {
   SentinelPresence,
 } from "@/components/engineering/ems-persona";
 import { EngineeringWorkspaceGate } from "@/components/engineering/workspace-gate";
+import { SetupWizardFrame } from "@/components/engineering/setup-wizard";
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
@@ -513,7 +514,7 @@ export function Shell(props: NativeProps) {
           >
             <EngineeringWorkspaceGate>
               {permitted ? (
-                <Outlet />
+                <SetupWizardFrame><Outlet /></SetupWizardFrame>
               ) : (
                 <section className="ref-surface p-5">
                   <h1>Workspace access required</h1>

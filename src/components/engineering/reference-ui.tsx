@@ -1,5 +1,6 @@
 import "./engineering-workspace.css";
 import {workspaceForPath} from '@/lib/engineering/navigation';
+import {useGuidedSetup} from './setup-wizard-context';
 import { useRef, useState, type ReactNode } from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
 import { Building2, Network, ChevronDown, ChevronRight, Folder, Settings2, Search, Info, CheckCircle2, AlertTriangle, X, Save } from 'lucide-react';
@@ -29,19 +30,20 @@ export function ReferencePage({children,title,sub,crumb,actions,sourceLabel}:{ch
 }
 export function ScopeSelectors() {
   const {workspaceModel, lineId, selectLine} = useEngineering();
+  const guided = useGuidedSetup();
   const lines = workspaceModel.lines.filter(line => !line.archived);
   const plant = lines.find(line => line.id === lineId)?.plant ?? '';
   const plants = Array.from(new Set(lines.map(line => line.plant)));
   const plantLines = lines.filter(line => line.plant === plant);
   return <div className="ref-scope">
-    <label><Building2 size={16}/><span>Plant<select aria-label="Plant" value={plant} disabled={!plants.length} onChange={event => {
+    <label><Building2 size={16}/><span>Plant<select aria-label="Plant" value={plant} disabled={guided || !plants.length} onChange={event => {
       const line = lines.find(line => line.plant === event.target.value);
       if (line) selectLine(line.id);
     }}>
       {!plants.length && <option value="">No plants</option>}
       {plants.map(name => <option key={name}>{name}</option>)}
     </select></span></label>
-    <label><Network size={16}/><span>Production line<select aria-label="Production line" value={lineId} disabled={!plantLines.length} onChange={event => selectLine(event.target.value)}>
+    <label><Network size={16}/><span>Production line<select aria-label="Production line" value={lineId} disabled={guided || !plantLines.length} onChange={event => selectLine(event.target.value)}>
       {!plantLines.length && <option value={lineId}>No lines</option>}
       {plantLines.map(line => <option value={line.id} key={line.id}>{line.id} {line.name}</option>)}
     </select></span></label>

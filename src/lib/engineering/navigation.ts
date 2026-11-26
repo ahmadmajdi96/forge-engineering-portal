@@ -72,14 +72,6 @@ const sections = [
     ],
   },
   {
-    label: "Operations",
-    items: [
-      { title: "Live Shopfloor", url: "/live", icon: LayoutDashboard },
-      { title: "Operator Consoles", url: "/operator", icon: ListChecks },
-      { title: "HMI Runtime", url: "/hmi", icon: LayoutGrid },
-    ],
-  },
-  {
     label: "Governance",
     items: [
       { title: "Release & MES Readiness", url: "/release-readiness", icon: GitBranch },

@@ -26,15 +26,12 @@ import { Route as FactoryAssignmentRouteImport } from './routes/factory-assignme
 import { Route as FactoryLayoutRouteImport } from './routes/factory-layout'
 import { Route as FactoryProcessRouteImport } from './routes/factory-process'
 import { Route as FactoryReleasesRouteImport } from './routes/factory-releases'
-import { Route as HmiRouteImport } from './routes/hmi'
 import { Route as HmiLayoutsRouteImport } from './routes/hmi-layouts'
 import { Route as IntegrationsRouteImport } from './routes/integrations'
 import { Route as LineEngineeringRouteImport } from './routes/line-engineering'
 import { Route as LinesRouteImport } from './routes/lines'
-import { Route as LiveRouteImport } from './routes/live'
 import { Route as MachinesRouteImport } from './routes/machines'
 import { Route as MesIntegrationRouteImport } from './routes/mes-integration'
-import { Route as OperatorRouteImport } from './routes/operator'
 import { Route as OperatorAppRouteImport } from './routes/operator-app'
 import { Route as OperatorAppsRouteImport } from './routes/operator-apps'
 import { Route as ProcedureDesignerRouteImport } from './routes/procedure-designer'
@@ -47,19 +44,12 @@ import { Route as StationConnectivityRouteImport } from './routes/station-connec
 import { Route as StationsRouteImport } from './routes/stations'
 import { Route as StepTemplatesRouteImport } from './routes/step-templates'
 import { Route as TerminalsRouteImport } from './routes/terminals'
-import { Route as WasteReasonsRouteImport } from './routes/waste-reasons'
 import { Route as WorkstationsRouteImport } from './routes/workstations'
 import { Route as AdminQaRouteImport } from './routes/admin/qa'
-import { Route as HmiIndexRouteImport } from './routes/hmi.index'
-import { Route as HmiStationIdRouteImport } from './routes/hmi.$stationId'
 import { Route as LinesIndexRouteImport } from './routes/lines.index'
 import { Route as LinesLineIdRouteImport } from './routes/lines.$lineId'
-import { Route as OperatorIndexRouteImport } from './routes/operator.index'
-import { Route as OperatorStationIdRouteImport } from './routes/operator.$stationId'
 import { Route as StationsIndexRouteImport } from './routes/stations.index'
 import { Route as StationsStationIdRouteImport } from './routes/stations.$stationId'
-import { Route as UnitsUidRouteImport } from './routes/units.$uid'
-import { Route as WorkOrdersWoIdRouteImport } from './routes/work-orders.$woId'
 import { Route as ApiEmsArtifactRouteImport } from './routes/api/ems/artifact'
 import { Route as ApiEmsAssignmentsRouteImport } from './routes/api/ems/assignments'
 import { Route as ApiEmsHealthRouteImport } from './routes/api/ems/health'
@@ -157,11 +147,6 @@ const FactoryReleasesRoute = FactoryReleasesRouteImport.update({
   path: '/factory-releases',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HmiRoute = HmiRouteImport.update({
-  id: '/hmi',
-  path: '/hmi',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const HmiLayoutsRoute = HmiLayoutsRouteImport.update({
   id: '/hmi-layouts',
   path: '/hmi-layouts',
@@ -182,11 +167,6 @@ const LinesRoute = LinesRouteImport.update({
   path: '/lines',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LiveRoute = LiveRouteImport.update({
-  id: '/live',
-  path: '/live',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const MachinesRoute = MachinesRouteImport.update({
   id: '/machines',
   path: '/machines',
@@ -195,11 +175,6 @@ const MachinesRoute = MachinesRouteImport.update({
 const MesIntegrationRoute = MesIntegrationRouteImport.update({
   id: '/mes-integration',
   path: '/mes-integration',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OperatorRoute = OperatorRouteImport.update({
-  id: '/operator',
-  path: '/operator',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OperatorAppRoute = OperatorAppRouteImport.update({
@@ -262,11 +237,6 @@ const TerminalsRoute = TerminalsRouteImport.update({
   path: '/terminals',
   getParentRoute: () => rootRouteImport,
 } as any)
-const WasteReasonsRoute = WasteReasonsRouteImport.update({
-  id: '/waste-reasons',
-  path: '/waste-reasons',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const WorkstationsRoute = WorkstationsRouteImport.update({
   id: '/workstations',
   path: '/workstations',
@@ -276,16 +246,6 @@ const AdminQaRoute = AdminQaRouteImport.update({
   id: '/admin/qa',
   path: '/admin/qa',
   getParentRoute: () => rootRouteImport,
-} as any)
-const HmiIndexRoute = HmiIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => HmiRoute,
-} as any)
-const HmiStationIdRoute = HmiStationIdRouteImport.update({
-  id: '/$stationId',
-  path: '/$stationId',
-  getParentRoute: () => HmiRoute,
 } as any)
 const LinesIndexRoute = LinesIndexRouteImport.update({
   id: '/',
@@ -297,16 +257,6 @@ const LinesLineIdRoute = LinesLineIdRouteImport.update({
   path: '/$lineId',
   getParentRoute: () => LinesRoute,
 } as any)
-const OperatorIndexRoute = OperatorIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => OperatorRoute,
-} as any)
-const OperatorStationIdRoute = OperatorStationIdRouteImport.update({
-  id: '/$stationId',
-  path: '/$stationId',
-  getParentRoute: () => OperatorRoute,
-} as any)
 const StationsIndexRoute = StationsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -316,16 +266,6 @@ const StationsStationIdRoute = StationsStationIdRouteImport.update({
   id: '/$stationId',
   path: '/$stationId',
   getParentRoute: () => StationsRoute,
-} as any)
-const UnitsUidRoute = UnitsUidRouteImport.update({
-  id: '/units/$uid',
-  path: '/units/$uid',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const WorkOrdersWoIdRoute = WorkOrdersWoIdRouteImport.update({
-  id: '/work-orders/$woId',
-  path: '/work-orders/$woId',
-  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiEmsArtifactRoute = ApiEmsArtifactRouteImport.update({
   id: '/api/ems/artifact',
@@ -402,15 +342,12 @@ export interface FileRoutesByFullPath {
   '/factory-layout': typeof FactoryLayoutRoute
   '/factory-process': typeof FactoryProcessRoute
   '/factory-releases': typeof FactoryReleasesRoute
-  '/hmi': typeof HmiRouteWithChildren
   '/hmi-layouts': typeof HmiLayoutsRoute
   '/integrations': typeof IntegrationsRoute
   '/line-engineering': typeof LineEngineeringRoute
   '/lines': typeof LinesRouteWithChildren
-  '/live': typeof LiveRoute
   '/machines': typeof MachinesRoute
   '/mes-integration': typeof MesIntegrationRoute
-  '/operator': typeof OperatorRouteWithChildren
   '/operator-app': typeof OperatorAppRoute
   '/operator-apps': typeof OperatorAppsRoute
   '/procedure-designer': typeof ProcedureDesignerRoute
@@ -423,18 +360,11 @@ export interface FileRoutesByFullPath {
   '/stations': typeof StationsRouteWithChildren
   '/step-templates': typeof StepTemplatesRoute
   '/terminals': typeof TerminalsRoute
-  '/waste-reasons': typeof WasteReasonsRoute
   '/workstations': typeof WorkstationsRoute
   '/admin/qa': typeof AdminQaRoute
-  '/hmi/$stationId': typeof HmiStationIdRoute
   '/lines/$lineId': typeof LinesLineIdRoute
-  '/operator/$stationId': typeof OperatorStationIdRoute
   '/stations/$stationId': typeof StationsStationIdRoute
-  '/units/$uid': typeof UnitsUidRoute
-  '/work-orders/$woId': typeof WorkOrdersWoIdRoute
-  '/hmi/': typeof HmiIndexRoute
   '/lines/': typeof LinesIndexRoute
-  '/operator/': typeof OperatorIndexRoute
   '/stations/': typeof StationsIndexRoute
   '/api/ems/artifact': typeof ApiEmsArtifactRoute
   '/api/ems/assignments': typeof ApiEmsAssignmentsRoute
@@ -469,7 +399,6 @@ export interface FileRoutesByTo {
   '/hmi-layouts': typeof HmiLayoutsRoute
   '/integrations': typeof IntegrationsRoute
   '/line-engineering': typeof LineEngineeringRoute
-  '/live': typeof LiveRoute
   '/machines': typeof MachinesRoute
   '/mes-integration': typeof MesIntegrationRoute
   '/operator-app': typeof OperatorAppRoute
@@ -483,18 +412,11 @@ export interface FileRoutesByTo {
   '/station-connectivity': typeof StationConnectivityRoute
   '/step-templates': typeof StepTemplatesRoute
   '/terminals': typeof TerminalsRoute
-  '/waste-reasons': typeof WasteReasonsRoute
   '/workstations': typeof WorkstationsRoute
   '/admin/qa': typeof AdminQaRoute
-  '/hmi/$stationId': typeof HmiStationIdRoute
   '/lines/$lineId': typeof LinesLineIdRoute
-  '/operator/$stationId': typeof OperatorStationIdRoute
   '/stations/$stationId': typeof StationsStationIdRoute
-  '/units/$uid': typeof UnitsUidRoute
-  '/work-orders/$woId': typeof WorkOrdersWoIdRoute
-  '/hmi': typeof HmiIndexRoute
   '/lines': typeof LinesIndexRoute
-  '/operator': typeof OperatorIndexRoute
   '/stations': typeof StationsIndexRoute
   '/api/ems/artifact': typeof ApiEmsArtifactRoute
   '/api/ems/assignments': typeof ApiEmsAssignmentsRoute
@@ -527,15 +449,12 @@ export interface FileRoutesById {
   '/factory-layout': typeof FactoryLayoutRoute
   '/factory-process': typeof FactoryProcessRoute
   '/factory-releases': typeof FactoryReleasesRoute
-  '/hmi': typeof HmiRouteWithChildren
   '/hmi-layouts': typeof HmiLayoutsRoute
   '/integrations': typeof IntegrationsRoute
   '/line-engineering': typeof LineEngineeringRoute
   '/lines': typeof LinesRouteWithChildren
-  '/live': typeof LiveRoute
   '/machines': typeof MachinesRoute
   '/mes-integration': typeof MesIntegrationRoute
-  '/operator': typeof OperatorRouteWithChildren
   '/operator-app': typeof OperatorAppRoute
   '/operator-apps': typeof OperatorAppsRoute
   '/procedure-designer': typeof ProcedureDesignerRoute
@@ -548,18 +467,11 @@ export interface FileRoutesById {
   '/stations': typeof StationsRouteWithChildren
   '/step-templates': typeof StepTemplatesRoute
   '/terminals': typeof TerminalsRoute
-  '/waste-reasons': typeof WasteReasonsRoute
   '/workstations': typeof WorkstationsRoute
   '/admin/qa': typeof AdminQaRoute
-  '/hmi/$stationId': typeof HmiStationIdRoute
   '/lines/$lineId': typeof LinesLineIdRoute
-  '/operator/$stationId': typeof OperatorStationIdRoute
   '/stations/$stationId': typeof StationsStationIdRoute
-  '/units/$uid': typeof UnitsUidRoute
-  '/work-orders/$woId': typeof WorkOrdersWoIdRoute
-  '/hmi/': typeof HmiIndexRoute
   '/lines/': typeof LinesIndexRoute
-  '/operator/': typeof OperatorIndexRoute
   '/stations/': typeof StationsIndexRoute
   '/api/ems/artifact': typeof ApiEmsArtifactRoute
   '/api/ems/assignments': typeof ApiEmsAssignmentsRoute
@@ -593,15 +505,12 @@ export interface FileRouteTypes {
     | '/factory-layout'
     | '/factory-process'
     | '/factory-releases'
-    | '/hmi'
     | '/hmi-layouts'
     | '/integrations'
     | '/line-engineering'
     | '/lines'
-    | '/live'
     | '/machines'
     | '/mes-integration'
-    | '/operator'
     | '/operator-app'
     | '/operator-apps'
     | '/procedure-designer'
@@ -614,18 +523,11 @@ export interface FileRouteTypes {
     | '/stations'
     | '/step-templates'
     | '/terminals'
-    | '/waste-reasons'
     | '/workstations'
     | '/admin/qa'
-    | '/hmi/$stationId'
     | '/lines/$lineId'
-    | '/operator/$stationId'
     | '/stations/$stationId'
-    | '/units/$uid'
-    | '/work-orders/$woId'
-    | '/hmi/'
     | '/lines/'
-    | '/operator/'
     | '/stations/'
     | '/api/ems/artifact'
     | '/api/ems/assignments'
@@ -660,7 +562,6 @@ export interface FileRouteTypes {
     | '/hmi-layouts'
     | '/integrations'
     | '/line-engineering'
-    | '/live'
     | '/machines'
     | '/mes-integration'
     | '/operator-app'
@@ -674,18 +575,11 @@ export interface FileRouteTypes {
     | '/station-connectivity'
     | '/step-templates'
     | '/terminals'
-    | '/waste-reasons'
     | '/workstations'
     | '/admin/qa'
-    | '/hmi/$stationId'
     | '/lines/$lineId'
-    | '/operator/$stationId'
     | '/stations/$stationId'
-    | '/units/$uid'
-    | '/work-orders/$woId'
-    | '/hmi'
     | '/lines'
-    | '/operator'
     | '/stations'
     | '/api/ems/artifact'
     | '/api/ems/assignments'
@@ -717,15 +611,12 @@ export interface FileRouteTypes {
     | '/factory-layout'
     | '/factory-process'
     | '/factory-releases'
-    | '/hmi'
     | '/hmi-layouts'
     | '/integrations'
     | '/line-engineering'
     | '/lines'
-    | '/live'
     | '/machines'
     | '/mes-integration'
-    | '/operator'
     | '/operator-app'
     | '/operator-apps'
     | '/procedure-designer'
@@ -738,18 +629,11 @@ export interface FileRouteTypes {
     | '/stations'
     | '/step-templates'
     | '/terminals'
-    | '/waste-reasons'
     | '/workstations'
     | '/admin/qa'
-    | '/hmi/$stationId'
     | '/lines/$lineId'
-    | '/operator/$stationId'
     | '/stations/$stationId'
-    | '/units/$uid'
-    | '/work-orders/$woId'
-    | '/hmi/'
     | '/lines/'
-    | '/operator/'
     | '/stations/'
     | '/api/ems/artifact'
     | '/api/ems/assignments'
@@ -782,15 +666,12 @@ export interface RootRouteChildren {
   FactoryLayoutRoute: typeof FactoryLayoutRoute
   FactoryProcessRoute: typeof FactoryProcessRoute
   FactoryReleasesRoute: typeof FactoryReleasesRoute
-  HmiRoute: typeof HmiRouteWithChildren
   HmiLayoutsRoute: typeof HmiLayoutsRoute
   IntegrationsRoute: typeof IntegrationsRoute
   LineEngineeringRoute: typeof LineEngineeringRoute
   LinesRoute: typeof LinesRouteWithChildren
-  LiveRoute: typeof LiveRoute
   MachinesRoute: typeof MachinesRoute
   MesIntegrationRoute: typeof MesIntegrationRoute
-  OperatorRoute: typeof OperatorRouteWithChildren
   OperatorAppRoute: typeof OperatorAppRoute
   OperatorAppsRoute: typeof OperatorAppsRoute
   ProcedureDesignerRoute: typeof ProcedureDesignerRoute
@@ -803,11 +684,8 @@ export interface RootRouteChildren {
   StationsRoute: typeof StationsRouteWithChildren
   StepTemplatesRoute: typeof StepTemplatesRoute
   TerminalsRoute: typeof TerminalsRoute
-  WasteReasonsRoute: typeof WasteReasonsRoute
   WorkstationsRoute: typeof WorkstationsRoute
   AdminQaRoute: typeof AdminQaRoute
-  UnitsUidRoute: typeof UnitsUidRoute
-  WorkOrdersWoIdRoute: typeof WorkOrdersWoIdRoute
   ApiEmsArtifactRoute: typeof ApiEmsArtifactRoute
   ApiEmsAssignmentsRoute: typeof ApiEmsAssignmentsRoute
   ApiEmsHealthRoute: typeof ApiEmsHealthRoute
@@ -942,13 +820,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FactoryReleasesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/hmi': {
-      id: '/hmi'
-      path: '/hmi'
-      fullPath: '/hmi'
-      preLoaderRoute: typeof HmiRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/hmi-layouts': {
       id: '/hmi-layouts'
       path: '/hmi-layouts'
@@ -977,13 +848,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LinesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/live': {
-      id: '/live'
-      path: '/live'
-      fullPath: '/live'
-      preLoaderRoute: typeof LiveRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/machines': {
       id: '/machines'
       path: '/machines'
@@ -996,13 +860,6 @@ declare module '@tanstack/react-router' {
       path: '/mes-integration'
       fullPath: '/mes-integration'
       preLoaderRoute: typeof MesIntegrationRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/operator': {
-      id: '/operator'
-      path: '/operator'
-      fullPath: '/operator'
-      preLoaderRoute: typeof OperatorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/operator-app': {
@@ -1089,13 +946,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TerminalsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/waste-reasons': {
-      id: '/waste-reasons'
-      path: '/waste-reasons'
-      fullPath: '/waste-reasons'
-      preLoaderRoute: typeof WasteReasonsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/workstations': {
       id: '/workstations'
       path: '/workstations'
@@ -1109,20 +959,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/qa'
       preLoaderRoute: typeof AdminQaRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/hmi/': {
-      id: '/hmi/'
-      path: '/'
-      fullPath: '/hmi/'
-      preLoaderRoute: typeof HmiIndexRouteImport
-      parentRoute: typeof HmiRoute
-    }
-    '/hmi/$stationId': {
-      id: '/hmi/$stationId'
-      path: '/$stationId'
-      fullPath: '/hmi/$stationId'
-      preLoaderRoute: typeof HmiStationIdRouteImport
-      parentRoute: typeof HmiRoute
     }
     '/lines/': {
       id: '/lines/'
@@ -1138,20 +974,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LinesLineIdRouteImport
       parentRoute: typeof LinesRoute
     }
-    '/operator/': {
-      id: '/operator/'
-      path: '/'
-      fullPath: '/operator/'
-      preLoaderRoute: typeof OperatorIndexRouteImport
-      parentRoute: typeof OperatorRoute
-    }
-    '/operator/$stationId': {
-      id: '/operator/$stationId'
-      path: '/$stationId'
-      fullPath: '/operator/$stationId'
-      preLoaderRoute: typeof OperatorStationIdRouteImport
-      parentRoute: typeof OperatorRoute
-    }
     '/stations/': {
       id: '/stations/'
       path: '/'
@@ -1165,20 +987,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/stations/$stationId'
       preLoaderRoute: typeof StationsStationIdRouteImport
       parentRoute: typeof StationsRoute
-    }
-    '/units/$uid': {
-      id: '/units/$uid'
-      path: '/units/$uid'
-      fullPath: '/units/$uid'
-      preLoaderRoute: typeof UnitsUidRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/work-orders/$woId': {
-      id: '/work-orders/$woId'
-      path: '/work-orders/$woId'
-      fullPath: '/work-orders/$woId'
-      preLoaderRoute: typeof WorkOrdersWoIdRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/api/ems/artifact': {
       id: '/api/ems/artifact'
@@ -1260,18 +1068,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface HmiRouteChildren {
-  HmiStationIdRoute: typeof HmiStationIdRoute
-  HmiIndexRoute: typeof HmiIndexRoute
-}
-
-const HmiRouteChildren: HmiRouteChildren = {
-  HmiStationIdRoute: HmiStationIdRoute,
-  HmiIndexRoute: HmiIndexRoute,
-}
-
-const HmiRouteWithChildren = HmiRoute._addFileChildren(HmiRouteChildren)
-
 interface LinesRouteChildren {
   LinesLineIdRoute: typeof LinesLineIdRoute
   LinesIndexRoute: typeof LinesIndexRoute
@@ -1283,20 +1079,6 @@ const LinesRouteChildren: LinesRouteChildren = {
 }
 
 const LinesRouteWithChildren = LinesRoute._addFileChildren(LinesRouteChildren)
-
-interface OperatorRouteChildren {
-  OperatorStationIdRoute: typeof OperatorStationIdRoute
-  OperatorIndexRoute: typeof OperatorIndexRoute
-}
-
-const OperatorRouteChildren: OperatorRouteChildren = {
-  OperatorStationIdRoute: OperatorStationIdRoute,
-  OperatorIndexRoute: OperatorIndexRoute,
-}
-
-const OperatorRouteWithChildren = OperatorRoute._addFileChildren(
-  OperatorRouteChildren,
-)
 
 interface StationsRouteChildren {
   StationsStationIdRoute: typeof StationsStationIdRoute
@@ -1330,15 +1112,12 @@ const rootRouteChildren: RootRouteChildren = {
   FactoryLayoutRoute: FactoryLayoutRoute,
   FactoryProcessRoute: FactoryProcessRoute,
   FactoryReleasesRoute: FactoryReleasesRoute,
-  HmiRoute: HmiRouteWithChildren,
   HmiLayoutsRoute: HmiLayoutsRoute,
   IntegrationsRoute: IntegrationsRoute,
   LineEngineeringRoute: LineEngineeringRoute,
   LinesRoute: LinesRouteWithChildren,
-  LiveRoute: LiveRoute,
   MachinesRoute: MachinesRoute,
   MesIntegrationRoute: MesIntegrationRoute,
-  OperatorRoute: OperatorRouteWithChildren,
   OperatorAppRoute: OperatorAppRoute,
   OperatorAppsRoute: OperatorAppsRoute,
   ProcedureDesignerRoute: ProcedureDesignerRoute,
@@ -1351,11 +1130,8 @@ const rootRouteChildren: RootRouteChildren = {
   StationsRoute: StationsRouteWithChildren,
   StepTemplatesRoute: StepTemplatesRoute,
   TerminalsRoute: TerminalsRoute,
-  WasteReasonsRoute: WasteReasonsRoute,
   WorkstationsRoute: WorkstationsRoute,
   AdminQaRoute: AdminQaRoute,
-  UnitsUidRoute: UnitsUidRoute,
-  WorkOrdersWoIdRoute: WorkOrdersWoIdRoute,
   ApiEmsArtifactRoute: ApiEmsArtifactRoute,
   ApiEmsAssignmentsRoute: ApiEmsAssignmentsRoute,
   ApiEmsHealthRoute: ApiEmsHealthRoute,

@@ -24,7 +24,7 @@ The older route modules contained alternate editors or copied operational previe
 
 ## Application Studio and authorization
 
-Application Studio is a sibling EMS section, available from the section selector, sidebar and workspace search. It owns `/application-studio`, `/edge-app-studio`, `/operator-apps` and its existing `/operator-app` alias, `/procedure-designer`, `/screen-editor`, `/hmi-layouts`, `/factory-releases` and `/factory-assignment`. Runtime entry points `/operator`, `/hmi` and `/live` remain under Operations. Existing URLs, app definitions, releases and assignments retain their identities.
+Application Studio is a sibling EMS section, available from the section selector, sidebar and workspace search. It owns `/application-studio`, `/edge-app-studio`, `/operator-apps` and its existing `/operator-app` alias, `/procedure-designer`, `/screen-editor`, `/hmi-layouts`, `/factory-releases` and `/factory-assignment`. The Operations consoles and their subordinate runtime-only pages have been retired. Old Operations bookmarks return the standard 404. Studio URLs, app definitions, releases and assignments retain their identities.
 
 Station, step, machine and terminal inspectors read authorized assignment relationships. The panel shows the assigned app, Studio workspace revision, immutable release ID, configuration revision, assignment ID, node and effective interval. The Studio link opens the matching definition where available and carries factory, line, station and source entity for return navigation. A recorded assignment supplies intended configuration. Device activation requires separate readback evidence.
 
@@ -121,3 +121,16 @@ The engineering navigation connects line setup, manufacturing sections and steps
 In the layout, buildings, floors and sections share the desktop hierarchy column. On smaller screens, open **Floors & hierarchy** to select or manage a space and **Views** to return to the canvas. A compact stage selector and revision bar leave room for the scene. Screenshots from the populated training factory showed the canvas starting 287 CSS pixels below the top at 1920×1080 and 1440×900, 339 pixels at 1024×768 and 373 pixels at 390×844. These are measurements from Chromium at default zoom.
 
 Lovable authored the interface in revisions `d96cc05` and `bb7ce23`. The second revision addressed the canvas being pushed below the first screen in the first pass. This change uses the existing EMS records, assignments, and save APIs. The new browser regression follows a packaging station through its signals into the layout and checks all three scope IDs.
+
+### Set up an item from the 3D viewer
+
+| Engineer's task | Where and how |
+| --- | --- |
+| Choose what to configure | Create or select a physical space or placement in Factory layout. A new item needs a saved layout revision before the wizard can use it. Choose **Start item setup**. Other engineering pages offer **Start setup in 3D**. Overview stays independent. |
+| Follow the item's configuration | Use **Next**, **Previous**, or **All 14 setup stages**. The sequence covers physical layout, production lines, line design, manufacturing sections and routes, process design, production steps, step templates, stations, station composition, equipment, terminals, signals, command policy, and the registry. |
+| Resolve missing prerequisites | Stage availability comes from the current factory permissions and the item's engineering links. For example, a scale uses equipment setup and skips terminal setup. A section without a linked line can reach line lists, templates, and the registry. The stage list explains unavailable actions. |
+| Resume or finish | The URL identifies the factory and the saved physical item. Reload or use **Return to item in 3D** to inspect that item. **Finish setup** returns to its placement. Saving, release approval and commissioning use their existing controls. |
+
+The Operations section, shop-floor consoles, and their unit, work-order and waste-reason pages have been removed. Their disconnected runtime controls and simulated telemetry timer were removed with them. Application Studio still owns operator-app and HMI definitions, assignments and releases. This change requires no database migration.
+
+The browser regression covers a saved scale through the applicable stages, a missing item, cross-factory context, and retired bookmarks. The disposable PostgreSQL scenario creates a new section, saves it, follows it into setup, reloads, and returns to the same section. Lovable authored the wizard in draft revision `7567fb5`.

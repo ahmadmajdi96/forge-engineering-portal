@@ -16,7 +16,9 @@ describe("engineering and studio ownership", () => {
       expect(workspaceForPath(path)?.group).toBe("Application Studio");
     for (const path of ["/process-routes", "/asset-steps", "/stations/ST-2", "/step-templates"])
       expect(workspaceForPath(path)?.group).toBe("Factory Engineering");
-    expect(workspaceForPath("/hmi")?.group).toBe("Operations");
+    expect(workspaceGroups().some((group) => group.label === "Operations")).toBe(false);
+    for (const path of ["/live", "/operator", "/operator/ST-101", "/hmi", "/hmi/ST-101"])
+      expect(workspaceForPath(path)).toBeUndefined();
     const actions = ["ems.engineering.view"];
     expect(allowedWorkspace("/operator-app", actions)).toBe(false);
     expect(

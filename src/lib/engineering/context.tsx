@@ -64,6 +64,8 @@ export function EngineeringProvider({
   actions = [],
   scopeLine,
   scopeStation,
+  scopeAsset,
+  strictScope = false,
   onScopeChange,
   site,
 }: {
@@ -73,6 +75,9 @@ export function EngineeringProvider({
   actions?: readonly string[] | undefined;
   scopeLine?: string | null;
   scopeStation?: string | null;
+  scopeAsset?: string | null;
+  /** Guided setup must never fall back to a different line, station or hardware record. */
+  strictScope?: boolean;
   onScopeChange?: (line: string, station: string) => void;
   site?: string | undefined;
 }) {
@@ -98,17 +103,18 @@ export function EngineeringProvider({
   const lineId =
     (
       availableLines.find((line) => line.id === (requestedLine || requestedStation?.lineId)) ??
-      availableLines[0]
+      (strictScope ? undefined : availableLines[0])
     )?.id ?? "";
   const currentStations = model.stations.filter((s) => (s.lineId ?? "L-01") === lineId);
   const selected =
-    (currentStations.find((s) => s.id === requestedStation?.id) ?? currentStations[0])?.id ?? "";
+    (currentStations.find((s) => s.id === requestedStation?.id) ?? (strictScope ? undefined : currentStations[0]))?.id ?? "";
   useEffect(() => {
-    if (loadState !== "ready" || !onScopeChange) return;
+    if (strictScope || loadState !== "ready" || !onScopeChange) return;
     if ((scopeLine && scopeLine !== lineId) || (scopeStation && scopeStation !== selected))
       onScopeChange(lineId, selected);
-  }, [loadState, scopeLine, scopeStation, lineId, selected, onScopeChange]);
+  }, [loadState, scopeLine, scopeStation, lineId, selected, onScopeChange, strictScope]);
   function selectLine(id: string) {
+    if (strictScope) return;
     if (!availableLines.some((line) => line.id === id)) return;
     const station = model.stations.find((s) => (s.lineId ?? "L-01") === id)?.id ?? "";
     setLocalLine(id);
@@ -116,6 +122,7 @@ export function EngineeringProvider({
     onScopeChange?.(id, station);
   }
   function select(id: string) {
+    if (strictScope) return;
     const station = model.stations.find((s) => s.id === id);
     if (!station || selected === id) return;
     const nextLine = station.lineId ?? "L-01";
@@ -271,16 +278,18 @@ export function EngineeringProvider({
     }
   }
   const line =
-    model.lines.find((l) => l.id === lineId && !l.archived) ?? model.lines.find((l) => !l.archived);
+    model.lines.find((l) => l.id === lineId && !l.archived) ?? (strictScope ? undefined : model.lines.find((l) => !l.archived));
   const activeLine = line?.id ?? lineId;
   const scopedStations = model.stations.filter((s) => (s.lineId ?? "L-01") === activeLine);
   const stationIds = new Set(scopedStations.map((s) => s.id));
   const scopedRecords = model.records.filter(
-    (r) =>
-      !["operation", "buffer"].includes(r.kind) ||
-      r.parent === activeLine ||
-      stationIds.has(r.parent) ||
-      r.binding.split(",").some((id) => stationIds.has(id.trim())),
+    (r) => {
+      if (strictScope && ["equipment", "terminal"].includes(r.kind))
+        return !r.archived && (selected ? r.parent === selected : stationIds.has(r.parent)) && (!scopeAsset || r.id === scopeAsset);
+      return !["operation", "buffer"].includes(r.kind) ||
+        r.parent === activeLine || stationIds.has(r.parent) ||
+        r.binding.split(",").some((id) => stationIds.has(id.trim()));
+    },
   );
   const canonicalStations = scopedStations.map((s) => ({
     ...s,

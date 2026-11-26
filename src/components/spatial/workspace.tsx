@@ -1,4 +1,6 @@
 import { FloorStrip } from "./floor-strip";
+import { LayoutSetupEntry } from "./layout-setup-entry";
+import { useGuidedSetup } from "@/components/engineering/setup-wizard-context";
 import { buildingLevels } from "@/lib/spatial/floor-display";
 import { SpaceControls } from "./space-controls";
 import { useProcessApplications } from "@/lib/engineering/process-catalog";
@@ -186,6 +188,8 @@ function LayoutEditor({
   initial: Snapshot;
   target: LayoutTarget;
 }) {
+  const guidedSetup = useGuidedSetup();
+  const [guidedExit, setGuidedExit] = useState(false);
   const initialTarget = useMemo(
     () => resolveLayoutTarget(initial.document, target),
     [initial, target],
@@ -241,7 +245,8 @@ function LayoutEditor({
   const available = useMemo(() => placementLibrary(document.catalog), [document.catalog]);
   const firstFloor = document.spaces.find((node) => node.kind === "floor");
   const siteNode = document.spaces.find((node) => node.kind === "site");
-  const scope = spaces.get(scopeId) ?? firstFloor ?? siteNode;
+  const scope =
+    spaces.get(scopeId) ?? (initialTarget.missing ? undefined : (firstFloor ?? siteNode));
   const selectedFloor =
     scope &&
     (floorOf(spaces, scope.id) ??
@@ -424,8 +429,12 @@ function LayoutEditor({
   };
 
   const exit = useBlocker({
-    shouldBlockFn: ({ current, next }) =>
-      dirty && (current.pathname !== next.pathname || !sameValue(current.search, next.search)),
+    shouldBlockFn: ({ current, next }) => {
+      const leaving =
+        dirty && (current.pathname !== next.pathname || !sameValue(current.search, next.search));
+      if (leaving) setGuidedExit(guidedSetup || next.search["setup"] === "guided");
+      return leaving;
+    },
     enableBeforeUnload: dirty,
     withResolver: true,
   });
@@ -769,12 +778,14 @@ function LayoutEditor({
             <button
               type="button"
               className={button}
+              disabled={guidedExit}
               onClick={() => {
+                if (guidedExit) return;
                 download(draft.current, baseline.revision);
                 exit.proceed();
               }}
             >
-              Download draft and leave
+              {guidedExit ? "Save workspace before guided setup" : "Download draft and leave"}
             </button>
           </div>
         </div>
@@ -957,6 +968,29 @@ function LayoutEditor({
           station in the hierarchy to link a saved engineering record.
         </p>
       )}
+      <LayoutSetupEntry
+        site={site}
+        document={document}
+        savedDocument={baseline.document}
+        itemId={selection.length ? selection.at(-1) : scopeId || undefined}
+        itemType={selection.length ? "occurrence" : "space"}
+        dirty={dirty}
+        busy={busy}
+        showSave={() => {
+          setReadonlyView(false);
+          setRevisionTools(true);
+          requestAnimationFrame(() =>
+            window.document.querySelector<HTMLInputElement>(".ems-layout-save input")?.focus(),
+          );
+        }}
+        showInspector={() => setCompactPanel("properties")}
+        showHierarchy={() => setCompactPanel("library")}
+        showItem={(id) => {
+          jumpTo(id);
+          setCompactPanel("scene");
+          requestAnimationFrame(() => viewport.current?.fit());
+        }}
+      />
       <nav
         aria-label="Layout workspace panels"
         className="ems-layout-panes grid grid-cols-3 gap-1 rounded-lg border border-border bg-card p-1 xl:hidden"
@@ -1796,6 +1830,30 @@ function LayoutEditor({
           aria-label="Placement properties"
           className={`min-w-0 space-y-3 ${compactPanel === "properties" ? "" : "hidden xl:block"}`}
         >
+          <LayoutSetupEntry
+            inspector
+            site={site}
+            document={document}
+            savedDocument={baseline.document}
+            itemId={selection.length ? selection.at(-1) : scopeId || undefined}
+            itemType={selection.length ? "occurrence" : "space"}
+            dirty={dirty}
+            busy={busy}
+            showSave={() => {
+              setReadonlyView(false);
+              setRevisionTools(true);
+              requestAnimationFrame(() =>
+                window.document.querySelector<HTMLInputElement>(".ems-layout-save input")?.focus(),
+              );
+            }}
+            showInspector={() => setCompactPanel("properties")}
+            showHierarchy={() => setCompactPanel("library")}
+            showItem={(id) => {
+              jumpTo(id);
+              setCompactPanel("scene");
+              requestAnimationFrame(() => viewport.current?.fit());
+            }}
+          />
           {scope && (
             <EngineeringPlacement
               key={scope.id + "/" + (selectedRecord?.record.id ?? "")}

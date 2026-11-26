@@ -1,4 +1,5 @@
 import "./engineering-journey.css";
+import { useGuidedSetup } from "./setup-wizard-context";
 import { createContext, useContext, type ComponentProps, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import {
@@ -148,7 +149,7 @@ export function ScopedLink({
 
 const JourneyPresence = createContext(false);
 /** True when a page already shows the journey rail, so duplicate link rows can step aside. */
-export const useJourneyPresent = () => useContext(JourneyPresence);
+export const useJourneyPresent = () => { const present = useContext(JourneyPresence); const guided = useGuidedSetup(); return present || guided; };
 export function JourneyProvider({ children }: { children: ReactNode }) {
   return <JourneyPresence.Provider value>{children}</JourneyPresence.Provider>;
 }
@@ -171,6 +172,8 @@ export function EngineeringJourney({
   /** Secondary pages, rendered in a disclosure so they never compete with the journey. */
   more?: ReactNode;
 }) {
+  const guided = useGuidedSetup();
+  if (guided) return primary ? <div className="ems-journey-primary">{primary}</div> : null;
   const index = journeyStages.findIndex((item) => item.id === stage);
   const resolved = journeyStages.map((item) => ({ item, target: item.target(scope, access) }));
   const reachable = (from: number, step: 1 | -1) => {

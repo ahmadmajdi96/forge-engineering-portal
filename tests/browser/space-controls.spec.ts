@@ -64,9 +64,23 @@ test("design a building, floor and section footprint", async ({ page }) => {
   await nav.getByRole("button", { name: "Inspection bay" }).click();
   await expect(stack).toHaveAttribute("aria-pressed", "false");
   if (process.env["EMS_DISPOSABLE_SPACE_TEST"] === "1") {
+    const entry = page.getByRole("region", { name: "Set up selected physical item" });
+    await entry.getByRole("button", { name: "Save layout before setup" }).click();
+    await expect(entry.getByRole("link", { name: "Start item setup" })).toHaveCount(0);
     await page.getByLabel("Revision reason").fill("Verify hierarchy persistence");
     await page.getByRole("button", { name: "Save workspace" }).click();
     await expect(page.getByText(/All changes saved/)).toBeVisible();
+    await entry.getByRole("link", { name: "Start item setup" }).click();
+    const wizard = page.getByRole("region", { name: "Sentinel factory setup", exact: true });
+    await expect(wizard).toContainText("Inspection bay");
+    await wizard.getByRole("link", { name: /Next setup stage: Production lines/ }).click();
+    const itemId = new URL(page.url()).searchParams.get("setupItem");
+    expect(itemId).toBeTruthy();
+    await page.reload();
+    await expect(wizard).toContainText("Inspection bay");
+    await wizard.getByRole("link", { name: "Return to item in 3D" }).click();
+    expect(new URL(page.url()).searchParams.get("space")).toBe(itemId);
+    await wizard.getByRole("button", { name: "Leave setup" }).click();
     await page.reload();
     await controls.getByLabel("Building", { exact: true }).selectOption({ label: "Annex" });
     await controls.getByLabel("Floor", { exact: true }).selectOption({ label: "Mezzanine" });

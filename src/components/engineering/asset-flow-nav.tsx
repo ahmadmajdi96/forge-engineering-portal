@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { Network, ListOrdered, Boxes, Cable } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEngineering } from "@/lib/engineering/context";
+import { useGuidedSetup } from "./setup-wizard-context";
 
 const stages = [
   {
@@ -35,8 +36,10 @@ const detailLinks = [
 ] as const;
 
 export function EngineeringDetailNav() {
+  const guided = useGuidedSetup();
   const { site, lineId, selected } = useEngineering();
   const scope = { ...(site ? { site } : {}), engLine: lineId, engStation: selected };
+  if (guided) return null;
   return (
     <>
       <nav
@@ -55,6 +58,7 @@ export function EngineeringDetailNav() {
 }
 
 export function RelatedEngineeringPages({ standalone = false }: { standalone?: boolean }) {
+  const guided = useGuidedSetup();
   const { site, lineId, selected } = useEngineering();
   const scope = { ...(site ? { site } : {}), engLine: lineId, engStation: selected };
   const path = useRouterState({ select: (state) => state.location.pathname });
@@ -62,6 +66,7 @@ export function RelatedEngineeringPages({ standalone = false }: { standalone?: b
     ...stages,
     ...detailLinks.filter((link) => !stages.some((stage) => stage.to === link.to)),
   ];
+  if (guided) return null;
   return (
     <details
       className={"engineering-related-pages" + (standalone ? " engineering-detail-disclosure" : "")}
@@ -84,9 +89,11 @@ export function RelatedEngineeringPages({ standalone = false }: { standalone?: b
 }
 
 export function AssetFlowNav() {
+  const guided = useGuidedSetup();
   const path = useRouterState({ select: (state) => state.location.pathname });
   const { site, lineId, selected } = useEngineering();
   const scope = { ...(site ? { site } : {}), engLine: lineId, engStation: selected };
+  if (guided) return null;
   return (
     <div className="engineering-flow-links">
       <nav className="asset-flow-nav" aria-label="Related engineering views">
