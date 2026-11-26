@@ -1,6 +1,6 @@
 import { MES_CONNECTION_MESSAGE } from "./mes-disconnected";
 import { useStore } from "./store";
-import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   workOrders as seedWO,
   downtime as seedDT,
@@ -141,23 +141,6 @@ function diffObject(a: any, b: any) {
   return { before, after };
 }
 
-function hhmmss() {
-  const d = new Date();
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-}
-
-// Jitter helpers for the simulated live tick
-function jitterNumeric(s: string | undefined, pct = 0.02): string | undefined {
-  if (!s) return s;
-  const m = s.match(/^([\d.]+)(.*)$/);
-  if (!m) return s;
-  const n = parseFloat(m[1] ?? "0");
-  if (!isFinite(n)) return s;
-  const delta = n * pct * (Math.random() - 0.5) * 2;
-  const next = Math.round((n + delta) * 100) / 100;
-  return `${next}${m[2]}`;
-}
-
 export function MesProvider({ children }: { children: ReactNode }) {
   const { session } = useStore();
   const [state, setState] = useState<State>(() => ({
@@ -197,30 +180,6 @@ export function MesProvider({ children }: { children: ReactNode }) {
     if (typeof window === "undefined") return;
     try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {}
   }, [state]);
-
-  // ===== Live tick: refresh running automatic stations every 3s
-  const tickRef = useRef<number | null>(null);
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    tickRef.current = window.setInterval(() => {
-      setState((s) => {
-        const now = hhmmss();
-        const stations = s.stations.map((st) => {
-          if (st.status !== "running") return { ...st, lastTickAt: st.lastTickAt };
-          // Re-render trigger + jitter on numeric currentValue
-          return {
-            ...st,
-            currentValue: jitterNumeric(st.currentValue),
-            lastTickAt: now,
-          };
-        });
-        return { ...s, stations };
-      });
-    }, 3000);
-    return () => {
-      if (tickRef.current) window.clearInterval(tickRef.current);
-    };
-  }, []);
 
   useEffect(() => { if (session) setCurrentActor({ id: session.email, name: session.name ?? session.email }); }, [session]);
 

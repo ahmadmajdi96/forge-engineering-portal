@@ -23,7 +23,7 @@ export const listApprovals = createServerFn({ method: 'POST' }).middleware([requ
 });
 
 export const signRevision = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth])
-  .inputValidator((i) => z.object({ revisionId: z.string().uuid(), stage: z.enum(['In Review', 'Approved', 'Rejected', 'Released', 'Effective']), meaning: z.string().trim().min(3).max(200), reason: z.string().trim().min(3).max(500) }).parse(i))
+  .inputValidator((i) => z.object({ revisionId: z.string().uuid(), stage: z.enum(['In Review', 'Approved', 'Rejected']), meaning: z.string().trim().min(3).max(200), reason: z.string().trim().min(3).max(500) }).parse(i))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.rpc('sign_engineering_revision', { p_revision: data.revisionId, p_stage: data.stage, p_meaning: data.meaning, p_reason: data.reason });
     if (error) throw new Error(error.message);

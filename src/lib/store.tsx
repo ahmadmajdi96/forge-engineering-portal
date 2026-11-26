@@ -19,7 +19,7 @@ export type LogEntry = {
   id: string; entityId: string; entityName: string; kind: string; at: string;
   user: string; action: string; note?: string | undefined; signature?: string | undefined; version: number;
 };
-export type Session = { email: string; name?: string | undefined; roles: string[]; permissions: string[]; source: "hub" | "demo" | "verified" };
+export type Session = { email: string; name?: string | undefined; roles: string[]; permissions: string[]; source: "hub" | "demo" | "verified" | "ems" };
 
 type State = { entities: Entity[]; log: LogEntry[] };
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -71,21 +71,23 @@ type Ctx = State & {
 };
 const C = createContext<Ctx | null>(null);
 
-export function StoreProvider({ children }: { children: ReactNode }) {
+export function StoreProvider({ children, nativeName, site }: { children: ReactNode; nativeName?:string | undefined; site?:string | undefined }) {
   const [state, setState] = useState<State>(SEED);
-  const [session, setSessionState] = useState<Session | null>(null);
+  const storageKey = nativeName ? "ep.preview."+JSON.stringify([nativeName,site]) : "ep.state";
+  const [storedSession, setSessionState] = useState<Session | null>(null);
+  const session:Session|null = nativeName ? {name:nativeName,email:nativeName,roles:[],permissions:[],source:"ems"} : storedSession;
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     try {
-      const s = localStorage.getItem("ep.state"); if (s) setState(JSON.parse(s));
-      const ss = localStorage.getItem("ep.session"); if (ss) setSessionState(JSON.parse(ss));
+      const s = localStorage.getItem(storageKey); if (s) setState(JSON.parse(s));
+      const ss = localStorage.getItem("ep.session"); if (!nativeName && ss) setSessionState(JSON.parse(ss));
       const t = localStorage.getItem("ep.theme"); if (t === "light") setTheme("light");
     } catch { /* ignore */ }
     setReady(true);
   }, []);
-  useEffect(() => { if (ready) localStorage.setItem("ep.state", JSON.stringify(state)); }, [state, ready]);
+  useEffect(() => { if (ready) localStorage.setItem(storageKey, JSON.stringify(state)); }, [state, ready]);
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
     if (ready) localStorage.setItem("ep.theme", theme);

@@ -1,0 +1,1408 @@
+{
+  "engineering": {
+    "model": {
+      "name": "Packaging Line A (training)",
+      "lines": [
+        {
+          "id": "PACK-A",
+          "name": "Packaging Line A",
+          "plant": "Training Factory South",
+          "status": "idle",
+          "target": 0,
+          "archived": false
+        }
+      ],
+      "scope": "Training Factory South",
+      "steps": [],
+      "actual": "Unknown",
+      "mesAck": false,
+      "reason": "",
+      "adapter": {
+        "pollMs": 1000,
+        "endpoint": "",
+        "protocol": "OPC UA",
+        "securityMode": "SignAndEncrypt",
+        "credentialRef": ""
+      },
+      "desired": "",
+      "edgeAck": false,
+      "offline": "read-only-offline",
+      "records": [
+        {
+          "id": "PACK-BENCH",
+          "kind": "equipment",
+          "name": "Load bench",
+          "unit": "",
+          "value": "",
+          "parent": "LOAD",
+          "binding": "",
+          "version": "r1",
+          "archived": false,
+          "required": false,
+          "description": "Training configuration"
+        },
+        {
+          "id": "PACK-GATE",
+          "kind": "equipment",
+          "name": "Entry gate",
+          "unit": "",
+          "value": "",
+          "parent": "LOAD",
+          "binding": "",
+          "version": "r1",
+          "archived": false,
+          "required": false,
+          "description": "Training configuration"
+        },
+        {
+          "id": "PACK-RACK",
+          "kind": "equipment",
+          "name": "Supply rack",
+          "unit": "",
+          "value": "",
+          "parent": "LOAD",
+          "binding": "",
+          "version": "r1",
+          "archived": false,
+          "required": false,
+          "description": "Training configuration"
+        },
+        {
+          "id": "PACK-FILL",
+          "kind": "equipment",
+          "name": "Filling cell",
+          "unit": "",
+          "value": "",
+          "parent": "FILL",
+          "binding": "",
+          "version": "r1",
+          "archived": false,
+          "required": false,
+          "description": "Training configuration"
+        },
+        {
+          "id": "PACK-SCALE",
+          "kind": "equipment",
+          "name": "Inspection scale",
+          "unit": "",
+          "value": "",
+          "parent": "CHECK",
+          "binding": "",
+          "version": "r1",
+          "archived": false,
+          "required": false,
+          "description": "Training configuration"
+        },
+        {
+          "id": "PACK-HMI",
+          "kind": "terminal",
+          "name": "Inspection panel",
+          "unit": "",
+          "value": "",
+          "parent": "CHECK",
+          "binding": "",
+          "version": "r1",
+          "archived": false,
+          "required": false,
+          "description": "Training configuration"
+        },
+        {
+          "id": "PACK-OP",
+          "kind": "terminal",
+          "name": "Operator terminal",
+          "unit": "",
+          "value": "",
+          "parent": "LOAD",
+          "binding": "",
+          "version": "r1",
+          "archived": false,
+          "required": false,
+          "description": "Training configuration"
+        },
+        {
+          "id": "PACK-WEIGHT",
+          "kind": "mapping",
+          "name": "Recorded inspection weight",
+          "unit": "",
+          "value": "",
+          "parent": "CHECK",
+          "binding": "MES.Quality.Weight",
+          "version": "r1",
+          "archived": false,
+          "required": false,
+          "description": "Training configuration"
+        },
+        {
+          "id": "OP-LOAD",
+          "kind": "operation",
+          "name": "Load container",
+          "unit": "",
+          "value": "",
+          "parent": "LOAD",
+          "binding": "",
+          "version": "r1",
+          "archived": false,
+          "required": false,
+          "description": "Training configuration"
+        },
+        {
+          "id": "OP-FILL",
+          "kind": "operation",
+          "name": "Automatic filling cell",
+          "unit": "",
+          "value": "",
+          "parent": "FILL",
+          "binding": "",
+          "version": "r1",
+          "archived": false,
+          "required": false,
+          "description": "Training configuration"
+        },
+        {
+          "id": "OP-CHECK",
+          "kind": "operation",
+          "name": "Verify weight",
+          "unit": "",
+          "value": "",
+          "parent": "CHECK",
+          "binding": "FILL",
+          "version": "r1",
+          "archived": false,
+          "required": false,
+          "description": "Training configuration"
+        }
+      ],
+      "signals": [
+        {
+          "age": 0,
+          "key": "inspection_weight",
+          "type": "Number",
+          "unit": "kg",
+          "scale": 1,
+          "value": "",
+          "access": "Read",
+          "maxAge": 5,
+          "offset": 0,
+          "address": "WeightKg",
+          "quality": "Unavailable",
+          "protocol": "OPC UA",
+          "required": true,
+          "stationId": "CHECK",
+          "equipmentId": "PACK-SCALE",
+          "expectedUnit": "kg",
+          "interfaceRef": "Training gateway"
+        }
+      ],
+      "stations": [
+        {
+          "id": "LOAD",
+          "app": "",
+          "mode": "manual",
+          "name": "Load container",
+          "lineId": "PACK-A",
+          "tracking": "lot",
+          "equipment": [
+            "PACK-BENCH",
+            "PACK-GATE",
+            "PACK-RACK",
+            "PACK-OP"
+          ],
+          "operation": "OP-LOAD",
+          "scaleBound": false,
+          "requiresScale": false,
+          "challengeBound": true,
+          "requiresChallenge": false
+        },
+        {
+          "id": "FILL",
+          "app": "",
+          "mode": "automatic",
+          "name": "Automatic filling cell",
+          "lineId": "PACK-A",
+          "tracking": "lot",
+          "equipment": [
+            "PACK-FILL"
+          ],
+          "operation": "OP-FILL",
+          "scaleBound": false,
+          "requiresScale": false,
+          "challengeBound": true,
+          "requiresChallenge": false
+        },
+        {
+          "id": "CHECK",
+          "app": "",
+          "mode": "semi_auto",
+          "name": "Verify weight",
+          "lineId": "PACK-A",
+          "tracking": "lot",
+          "equipment": [
+            "PACK-SCALE",
+            "PACK-HMI"
+          ],
+          "operation": "OP-CHECK",
+          "scaleBound": true,
+          "requiresScale": true,
+          "challengeBound": true,
+          "requiresChallenge": false
+        }
+      ],
+      "routeEdges": [],
+      "appWorkflows": {},
+      "commissioned": false,
+      "offlineMinutes": 0
+    },
+    "lifecycle": "Draft"
+  },
+  "studio": {
+    "version": 1,
+    "applications": [
+      {
+        "id": "pack-inspection-hmi",
+        "kind": "hmi",
+        "name": "Inspection panel (training)",
+        "entry": "start",
+        "media": [],
+        "nodes": [
+          {
+            "id": "start",
+            "kind": "screen",
+            "name": "Start",
+            "outcome": null,
+            "screenId": "welcome",
+            "timeoutMs": null,
+            "connectorId": null,
+            "inputVariableIds": [],
+            "requiredEvidence": []
+          },
+          {
+            "id": "done",
+            "kind": "terminal",
+            "name": "Work complete",
+            "outcome": "complete",
+            "screenId": null,
+            "timeoutMs": null,
+            "connectorId": null,
+            "inputVariableIds": [],
+            "requiredEvidence": []
+          },
+          {
+            "id": "cancelled",
+            "kind": "terminal",
+            "name": "Work cancelled",
+            "outcome": "cancelled",
+            "screenId": null,
+            "timeoutMs": null,
+            "connectorId": null,
+            "inputVariableIds": [],
+            "requiredEvidence": []
+          }
+        ],
+        "theme": "system",
+        "screens": [
+          {
+            "id": "welcome",
+            "name": "Welcome",
+            "widgets": [
+              {
+                "id": "intro",
+                "kind": "instruction",
+                "unit": "",
+                "event": "submit",
+                "title": "Instructions",
+                "target": null,
+                "choices": [],
+                "content": "Review the work instructions before continuing.",
+                "layouts": {
+                  "panel": {
+                    "row": 1,
+                    "width": 6,
+                    "column": 1,
+                    "height": 2
+                  },
+                  "tablet": {
+                    "row": 1,
+                    "width": 4,
+                    "column": 1,
+                    "height": 2
+                  },
+                  "portrait": {
+                    "row": 1,
+                    "width": 4,
+                    "column": 1,
+                    "height": 2
+                  }
+                },
+                "mediaId": null,
+                "signalId": null,
+                "tolerance": null,
+                "variableId": null
+              },
+              {
+                "id": "weight-readout",
+                "kind": "signal",
+                "unit": "kg",
+                "event": "submit",
+                "title": "Weight (kg)",
+                "target": null,
+                "choices": [],
+                "content": "",
+                "layouts": {
+                  "panel": {
+                    "row": 3,
+                    "width": 6,
+                    "column": 1,
+                    "height": 2
+                  },
+                  "tablet": {
+                    "row": 3,
+                    "width": 4,
+                    "column": 1,
+                    "height": 2
+                  },
+                  "portrait": {
+                    "row": 3,
+                    "width": 4,
+                    "column": 1,
+                    "height": 2
+                  }
+                },
+                "mediaId": null,
+                "signalId": "weight",
+                "tolerance": null,
+                "variableId": null
+              }
+            ]
+          }
+        ],
+        "signals": [
+          {
+            "id": "weight",
+            "name": "Measured weight",
+            "type": "number",
+            "unit": "kg",
+            "freshnessMs": 5000
+          }
+        ],
+        "variables": [],
+        "components": [],
+        "evidenceIds": [],
+        "transitions": [
+          {
+            "id": "complete-run",
+            "to": "done",
+            "from": "start",
+            "event": "submit",
+            "guard": null,
+            "effects": []
+          },
+          {
+            "id": "cancel-run",
+            "to": "cancelled",
+            "from": "start",
+            "event": "cancel",
+            "guard": null,
+            "effects": []
+          }
+        ],
+        "capabilities": [],
+        "connectorIds": [],
+        "dependencies": [],
+        "offlinePolicy": "online-required",
+        "schemaVersion": 1,
+        "runtimeVersion": 1
+      },
+      {
+        "id": "pack-operator",
+        "kind": "operator",
+        "name": "Packaging operator (training)",
+        "entry": "start",
+        "media": [],
+        "nodes": [
+          {
+            "id": "start",
+            "kind": "screen",
+            "name": "Start",
+            "outcome": null,
+            "screenId": "welcome",
+            "timeoutMs": null,
+            "connectorId": null,
+            "inputVariableIds": [],
+            "requiredEvidence": []
+          },
+          {
+            "id": "done",
+            "kind": "terminal",
+            "name": "Work complete",
+            "outcome": "complete",
+            "screenId": null,
+            "timeoutMs": null,
+            "connectorId": null,
+            "inputVariableIds": [],
+            "requiredEvidence": []
+          },
+          {
+            "id": "cancelled",
+            "kind": "terminal",
+            "name": "Work cancelled",
+            "outcome": "cancelled",
+            "screenId": null,
+            "timeoutMs": null,
+            "connectorId": null,
+            "inputVariableIds": [],
+            "requiredEvidence": []
+          }
+        ],
+        "theme": "system",
+        "screens": [
+          {
+            "id": "welcome",
+            "name": "Welcome",
+            "widgets": [
+              {
+                "id": "intro",
+                "kind": "instruction",
+                "unit": "",
+                "event": "submit",
+                "title": "Instructions",
+                "target": null,
+                "choices": [],
+                "content": "Review the work instructions before continuing.",
+                "layouts": {
+                  "panel": {
+                    "row": 1,
+                    "width": 6,
+                    "column": 1,
+                    "height": 2
+                  },
+                  "tablet": {
+                    "row": 1,
+                    "width": 4,
+                    "column": 1,
+                    "height": 2
+                  },
+                  "portrait": {
+                    "row": 1,
+                    "width": 4,
+                    "column": 1,
+                    "height": 2
+                  }
+                },
+                "mediaId": null,
+                "signalId": null,
+                "tolerance": null,
+                "variableId": null
+              }
+            ]
+          }
+        ],
+        "signals": [],
+        "variables": [],
+        "components": [],
+        "evidenceIds": [],
+        "transitions": [
+          {
+            "id": "complete-run",
+            "to": "done",
+            "from": "start",
+            "event": "submit",
+            "guard": null,
+            "effects": []
+          },
+          {
+            "id": "cancel-run",
+            "to": "cancelled",
+            "from": "start",
+            "event": "cancel",
+            "guard": null,
+            "effects": []
+          }
+        ],
+        "capabilities": [],
+        "connectorIds": [],
+        "dependencies": [],
+        "offlinePolicy": "online-required",
+        "schemaVersion": 1,
+        "runtimeVersion": 1
+      }
+    ]
+  },
+  "spatial": {
+    "spaces": [
+      {
+        "id": "organization",
+        "kind": "organization",
+        "floor": null,
+        "label": "Organization",
+        "parentId": null
+      },
+      {
+        "id": "site",
+        "kind": "site",
+        "floor": null,
+        "label": "training-south",
+        "parentId": "organization"
+      },
+      {
+        "id": "50ce1853-6023-4f23-92d2-038eff1e53f8",
+        "kind": "building",
+        "floor": null,
+        "label": "Building A",
+        "parentId": "site"
+      },
+      {
+        "id": "faef2810-fbf5-42b7-8aad-2212d2fd421c",
+        "kind": "floor",
+        "floor": {
+          "size": {
+            "x": 12,
+            "y": 6,
+            "z": 12
+          },
+          "origin": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "reference": null
+        },
+        "label": "Ground Floor",
+        "parentId": "50ce1853-6023-4f23-92d2-038eff1e53f8"
+      },
+      {
+        "id": "bb59a949-4621-4a65-91af-6d0502fc53e1",
+        "kind": "area",
+        "floor": null,
+        "label": "Production Area",
+        "parentId": "faef2810-fbf5-42b7-8aad-2212d2fd421c"
+      },
+      {
+        "id": "b861a6d1-27e5-46cd-869f-30551162e288",
+        "kind": "line",
+        "floor": null,
+        "label": "Packaging Line A",
+        "parentId": "bb59a949-4621-4a65-91af-6d0502fc53e1",
+        "engineeringId": "PACK-A"
+      },
+      {
+        "id": "ad944248-fceb-4930-bcd6-4429d19ee342",
+        "kind": "station",
+        "floor": null,
+        "label": "Load container",
+        "parentId": "b861a6d1-27e5-46cd-869f-30551162e288",
+        "engineeringId": "LOAD"
+      },
+      {
+        "id": "238d0c0f-1004-49d1-858b-5a63e5fe9fec",
+        "kind": "station",
+        "floor": null,
+        "label": "Automatic filling cell",
+        "parentId": "b861a6d1-27e5-46cd-869f-30551162e288",
+        "engineeringId": "FILL"
+      },
+      {
+        "id": "2ffec00e-d0cd-47fe-903b-afa3b953fa8e",
+        "kind": "station",
+        "floor": null,
+        "label": "Verify weight",
+        "parentId": "b861a6d1-27e5-46cd-869f-30551162e288",
+        "engineeringId": "CHECK"
+      }
+    ],
+    "cameras": [],
+    "catalog": [
+      {
+        "id": "machine",
+        "kind": "machine",
+        "size": {
+          "x": 2.8,
+          "y": 2.3,
+          "z": 1.7
+        },
+        "label": "Machine envelope",
+        "ports": [],
+        "revision": 1,
+        "artifactId": null,
+        "provenance": null,
+        "capabilities": [],
+        "subcomponents": [],
+        "allowDimensionOverride": true
+      },
+      {
+        "id": "robot",
+        "kind": "robot",
+        "size": {
+          "x": 2.4,
+          "y": 2.4,
+          "z": 2.4
+        },
+        "label": "Robot cell envelope",
+        "ports": [],
+        "revision": 1,
+        "artifactId": null,
+        "provenance": null,
+        "capabilities": [],
+        "subcomponents": [],
+        "allowDimensionOverride": true
+      },
+      {
+        "id": "conveyor",
+        "kind": "conveyor",
+        "size": {
+          "x": 3.2,
+          "y": 0.9,
+          "z": 0.85
+        },
+        "label": "Belt conveyor",
+        "ports": [
+          {
+            "id": "feed",
+            "kind": "material",
+            "label": "Material inlet",
+            "position": {
+              "x": -1.6,
+              "y": 0.9,
+              "z": 0
+            },
+            "direction": "input",
+            "interface": "belt handoff"
+          },
+          {
+            "id": "exit",
+            "kind": "material",
+            "label": "Material exit",
+            "position": {
+              "x": 1.6,
+              "y": 0.9,
+              "z": 0
+            },
+            "direction": "output",
+            "interface": "belt handoff"
+          }
+        ],
+        "revision": 1,
+        "artifactId": null,
+        "provenance": null,
+        "capabilities": [
+          "material transfer"
+        ],
+        "subcomponents": [],
+        "allowDimensionOverride": true
+      },
+      {
+        "id": "buffer",
+        "kind": "buffer",
+        "size": {
+          "x": 1.8,
+          "y": 1.4,
+          "z": 0.9
+        },
+        "label": "Material buffer",
+        "ports": [],
+        "revision": 1,
+        "artifactId": null,
+        "provenance": null,
+        "capabilities": [
+          "material storage"
+        ],
+        "subcomponents": [],
+        "allowDimensionOverride": true
+      },
+      {
+        "id": "fixture",
+        "kind": "fixture",
+        "size": {
+          "x": 1.4,
+          "y": 0.92,
+          "z": 0.7
+        },
+        "label": "Fixture envelope",
+        "ports": [],
+        "revision": 1,
+        "artifactId": null,
+        "provenance": null,
+        "capabilities": [],
+        "subcomponents": [],
+        "allowDimensionOverride": true
+      },
+      {
+        "id": "terminal",
+        "kind": "terminal",
+        "size": {
+          "x": 0.55,
+          "y": 1.55,
+          "z": 0.44
+        },
+        "label": "Operator terminal",
+        "ports": [],
+        "revision": 1,
+        "artifactId": null,
+        "provenance": null,
+        "capabilities": [
+          "display"
+        ],
+        "subcomponents": [],
+        "allowDimensionOverride": true
+      },
+      {
+        "id": "hmi",
+        "kind": "hmi",
+        "size": {
+          "x": 0.38,
+          "y": 0.28,
+          "z": 0.12
+        },
+        "label": "HMI panel",
+        "ports": [],
+        "revision": 1,
+        "artifactId": null,
+        "provenance": null,
+        "capabilities": [
+          "display"
+        ],
+        "subcomponents": [],
+        "allowDimensionOverride": true
+      },
+      {
+        "id": "cabinet",
+        "kind": "cabinet",
+        "size": {
+          "x": 0.85,
+          "y": 1.95,
+          "z": 0.5
+        },
+        "label": "Control cabinet",
+        "ports": [],
+        "revision": 1,
+        "artifactId": null,
+        "provenance": null,
+        "capabilities": [],
+        "subcomponents": [],
+        "allowDimensionOverride": true
+      },
+      {
+        "id": "scanner",
+        "kind": "scanner",
+        "size": {
+          "x": 0.15,
+          "y": 0.2,
+          "z": 0.22
+        },
+        "label": "Barcode scanner",
+        "ports": [],
+        "revision": 1,
+        "artifactId": null,
+        "provenance": null,
+        "capabilities": [
+          "barcode input"
+        ],
+        "subcomponents": [],
+        "allowDimensionOverride": true
+      },
+      {
+        "id": "edge-node",
+        "kind": "edge-node",
+        "size": {
+          "x": 0.27,
+          "y": 0.2,
+          "z": 0.2
+        },
+        "label": "Industrial edge node",
+        "ports": [],
+        "revision": 1,
+        "artifactId": null,
+        "provenance": null,
+        "capabilities": [],
+        "subcomponents": [],
+        "allowDimensionOverride": true
+      },
+      {
+        "id": "manuqube-commissioning-bench",
+        "kind": "fixture",
+        "size": {
+          "x": 2,
+          "y": 1.55,
+          "z": 1
+        },
+        "label": "Commissioning workbench",
+        "ports": [],
+        "revision": 1,
+        "artifactId": null,
+        "provenance": {
+          "accuracy": "approximate",
+          "manufacturer": "ManuQube",
+          "documentReference": "Factory viewer · illustrative station assembly"
+        },
+        "capabilities": [],
+        "stationModel": "commissioning-bench",
+        "subcomponents": [],
+        "allowDimensionOverride": true
+      },
+      {
+        "id": "manuqube-inspection-station",
+        "kind": "machine",
+        "size": {
+          "x": 2,
+          "y": 1.8,
+          "z": 1.25
+        },
+        "label": "Quality inspection station",
+        "ports": [],
+        "revision": 1,
+        "artifactId": null,
+        "provenance": {
+          "accuracy": "approximate",
+          "manufacturer": "ManuQube",
+          "documentReference": "Factory viewer · illustrative station assembly"
+        },
+        "capabilities": [],
+        "stationModel": "inspection-station",
+        "subcomponents": [],
+        "allowDimensionOverride": true
+      },
+      {
+        "id": "manuqube-production-cell",
+        "kind": "assembly",
+        "size": {
+          "x": 4.2,
+          "y": 2.4,
+          "z": 2.6
+        },
+        "label": "Robot and conveyor cell",
+        "ports": [],
+        "revision": 1,
+        "artifactId": null,
+        "provenance": {
+          "accuracy": "approximate",
+          "manufacturer": "ManuQube",
+          "documentReference": "Factory viewer · illustrative station assembly"
+        },
+        "capabilities": [],
+        "stationModel": "production-cell",
+        "subcomponents": [],
+        "allowDimensionOverride": true
+      },
+      {
+        "id": "manuqube-storage-rack",
+        "kind": "buffer",
+        "size": {
+          "x": 2.4,
+          "y": 2.1,
+          "z": 1.2
+        },
+        "label": "Warehouse storage rack",
+        "ports": [],
+        "revision": 1,
+        "artifactId": null,
+        "provenance": {
+          "accuracy": "approximate",
+          "manufacturer": "ManuQube",
+          "documentReference": "Factory viewer · illustrative station assembly"
+        },
+        "capabilities": [],
+        "stationModel": "storage-rack",
+        "subcomponents": [],
+        "allowDimensionOverride": true
+      },
+      {
+        "id": "manuqube-access-gate",
+        "kind": "fixture",
+        "size": {
+          "x": 1.85,
+          "y": 2.2,
+          "z": 0.5
+        },
+        "label": "Access control gate",
+        "ports": [],
+        "revision": 1,
+        "artifactId": null,
+        "provenance": {
+          "accuracy": "approximate",
+          "manufacturer": "ManuQube",
+          "documentReference": "Factory viewer · illustrative station assembly"
+        },
+        "capabilities": [],
+        "stationModel": "access-gate",
+        "subcomponents": [],
+        "allowDimensionOverride": true
+      },
+      {
+        "id": "manuqube-inspection-station",
+        "kind": "machine",
+        "size": {
+          "x": 2,
+          "y": 1.8,
+          "z": 1.25
+        },
+        "label": "Quality inspection station",
+        "ports": [
+          {
+            "id": "training-network",
+            "kind": "network",
+            "label": "Training Ethernet port",
+            "position": {
+              "x": 0,
+              "y": 0.3,
+              "z": 0
+            },
+            "direction": "bidirectional",
+            "interface": "Ethernet"
+          }
+        ],
+        "revision": 2,
+        "artifactId": null,
+        "provenance": {
+          "accuracy": "approximate",
+          "manufacturer": "ManuQube",
+          "documentReference": "Factory viewer · illustrative station assembly"
+        },
+        "capabilities": [],
+        "stationModel": "inspection-station",
+        "subcomponents": [],
+        "allowDimensionOverride": true
+      },
+      {
+        "id": "hmi",
+        "kind": "hmi",
+        "size": {
+          "x": 0.38,
+          "y": 0.28,
+          "z": 0.12
+        },
+        "label": "HMI panel",
+        "ports": [
+          {
+            "id": "training-network",
+            "kind": "network",
+            "label": "Training Ethernet port",
+            "position": {
+              "x": 0,
+              "y": 0.3,
+              "z": 0
+            },
+            "direction": "bidirectional",
+            "interface": "Ethernet"
+          }
+        ],
+        "revision": 2,
+        "artifactId": null,
+        "provenance": null,
+        "capabilities": [
+          "display"
+        ],
+        "subcomponents": [],
+        "allowDimensionOverride": true
+      }
+    ],
+    "siteCode": "training-south",
+    "artifacts": [],
+    "connections": [
+      {
+        "id": "inspection-network",
+        "to": {
+          "portId": "training-network",
+          "occurrenceId": "fa6b7a7d-2a0a-4243-afc2-b374c7ca5db1"
+        },
+        "from": {
+          "portId": "training-network",
+          "occurrenceId": "3b02f1f5-4595-4033-9975-99de76aab4e7"
+        },
+        "kind": "network"
+      }
+    ],
+    "occurrences": [
+      {
+        "id": "f24581a7-948b-499c-b875-72b9b466898e",
+        "asset": {
+          "id": "PACK-BENCH",
+          "kind": "equipment",
+          "system": "EMS",
+          "exclusive": true
+        },
+        "group": null,
+        "label": "Commissioning workbench",
+        "layer": "Equipment",
+        "notes": "",
+        "hidden": false,
+        "locked": false,
+        "position": {
+          "x": 8.7,
+          "y": 0,
+          "z": 8.95
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "clearance": null,
+        "documents": [],
+        "stationId": "ad944248-fceb-4930-bcd6-4429d19ee342",
+        "templateId": "manuqube-commissioning-bench",
+        "terminalId": null,
+        "sizeOverride": null,
+        "authoringAppId": null,
+        "processStepIds": [],
+        "templateRevision": 1
+      },
+      {
+        "id": "3b02f1f5-4595-4033-9975-99de76aab4e7",
+        "asset": {
+          "id": "PACK-SCALE",
+          "kind": "equipment",
+          "system": "EMS",
+          "exclusive": true
+        },
+        "group": null,
+        "label": "Quality inspection station",
+        "layer": "Equipment",
+        "notes": "",
+        "hidden": false,
+        "locked": false,
+        "position": {
+          "x": 9.33,
+          "y": 0,
+          "z": 4.3
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "clearance": null,
+        "documents": [],
+        "stationId": "2ffec00e-d0cd-47fe-903b-afa3b953fa8e",
+        "templateId": "manuqube-inspection-station",
+        "terminalId": null,
+        "sizeOverride": null,
+        "authoringAppId": null,
+        "processStepIds": [],
+        "templateRevision": 2
+      },
+      {
+        "id": "6c419ff3-d7e2-4ae3-9495-243f5e4d9d06",
+        "asset": {
+          "id": "PACK-FILL",
+          "kind": "equipment",
+          "system": "EMS",
+          "exclusive": true
+        },
+        "group": null,
+        "label": "Robot and conveyor cell",
+        "layer": "Equipment",
+        "notes": "",
+        "hidden": false,
+        "locked": false,
+        "position": {
+          "x": 5.74,
+          "y": 0,
+          "z": 2.17
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "clearance": null,
+        "documents": [],
+        "stationId": "238d0c0f-1004-49d1-858b-5a63e5fe9fec",
+        "templateId": "manuqube-production-cell",
+        "terminalId": null,
+        "sizeOverride": null,
+        "authoringAppId": null,
+        "processStepIds": [],
+        "templateRevision": 1
+      },
+      {
+        "id": "faf0cff7-46e0-4326-b8aa-b9a814bf7976",
+        "asset": {
+          "id": "PACK-RACK",
+          "kind": "equipment",
+          "system": "EMS",
+          "exclusive": true
+        },
+        "group": null,
+        "label": "Warehouse storage rack",
+        "layer": "Equipment",
+        "notes": "",
+        "hidden": false,
+        "locked": false,
+        "position": {
+          "x": 1.76,
+          "y": 0,
+          "z": 5.82
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "clearance": null,
+        "documents": [],
+        "stationId": "ad944248-fceb-4930-bcd6-4429d19ee342",
+        "templateId": "manuqube-storage-rack",
+        "terminalId": null,
+        "sizeOverride": null,
+        "authoringAppId": null,
+        "processStepIds": [],
+        "templateRevision": 1
+      },
+      {
+        "id": "cc967490-2c35-4faa-bde8-c5adaf9e4b75",
+        "asset": {
+          "id": "PACK-GATE",
+          "kind": "equipment",
+          "system": "EMS",
+          "exclusive": true
+        },
+        "group": null,
+        "label": "Access control gate",
+        "layer": "Equipment",
+        "notes": "",
+        "hidden": false,
+        "locked": false,
+        "position": {
+          "x": 3.73,
+          "y": 0,
+          "z": 9.44
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "clearance": null,
+        "documents": [],
+        "stationId": "ad944248-fceb-4930-bcd6-4429d19ee342",
+        "templateId": "manuqube-access-gate",
+        "terminalId": null,
+        "sizeOverride": null,
+        "authoringAppId": null,
+        "processStepIds": [],
+        "templateRevision": 1
+      },
+      {
+        "id": "fa6b7a7d-2a0a-4243-afc2-b374c7ca5db1",
+        "asset": {
+          "id": "PACK-HMI",
+          "kind": "terminal",
+          "system": "EMS",
+          "exclusive": true
+        },
+        "group": null,
+        "label": "HMI panel",
+        "layer": "Equipment",
+        "notes": "",
+        "hidden": false,
+        "locked": false,
+        "position": {
+          "x": 10.6,
+          "y": 0,
+          "z": 6.5
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "clearance": null,
+        "documents": [],
+        "stationId": "2ffec00e-d0cd-47fe-903b-afa3b953fa8e",
+        "templateId": "hmi",
+        "terminalId": "PACK-HMI",
+        "sizeOverride": null,
+        "authoringAppId": "pack-inspection-hmi",
+        "processStepIds": [],
+        "templateRevision": 2
+      },
+      {
+        "id": "b37ee606-7f2e-4b12-a884-c380e94e6056",
+        "asset": {
+          "id": "PACK-OP",
+          "kind": "terminal",
+          "system": "EMS",
+          "exclusive": true
+        },
+        "group": null,
+        "label": "Operator terminal",
+        "layer": "Equipment",
+        "notes": "",
+        "hidden": false,
+        "locked": false,
+        "position": {
+          "x": 10.3,
+          "y": 0,
+          "z": 9.6
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "clearance": null,
+        "documents": [],
+        "stationId": "ad944248-fceb-4930-bcd6-4429d19ee342",
+        "templateId": "terminal",
+        "terminalId": "PACK-OP",
+        "sizeOverride": null,
+        "authoringAppId": "pack-operator",
+        "processStepIds": [],
+        "templateRevision": 1
+      }
+    ],
+    "schemaVersion": 1
+  },
+  "process": {
+    "version": 1,
+    "routes": [
+      {
+        "id": "pack-route",
+        "name": "Fill and inspect (training)",
+        "start": "load",
+        "steps": [
+          {
+            "id": "load",
+            "name": "Load container",
+            "outcome": "operation",
+            "evidence": [
+              "container-scan"
+            ],
+            "sectionId": "fill-inspect",
+            "stationIds": [],
+            "operationId": "OP-LOAD",
+            "capabilities": [],
+            "operatorRole": "Packaging operator",
+            "expectedSeconds": 0,
+            "waitTimeoutSeconds": null,
+            "engineeringStationIds": [
+              "LOAD"
+            ]
+          },
+          {
+            "id": "dose",
+            "name": "Dose",
+            "outcome": "operation",
+            "evidence": [
+              "machine-cycle-complete"
+            ],
+            "sectionId": "fill-inspect",
+            "stationIds": [],
+            "operationId": "OP-FILL",
+            "capabilities": [],
+            "expectedSeconds": 0,
+            "waitTimeoutSeconds": null,
+            "engineeringStationIds": [
+              "FILL"
+            ]
+          },
+          {
+            "id": "weigh",
+            "name": "Verify weight",
+            "handoff": "Scan the unit, wait for a fresh weight, then review exceptions.",
+            "outcome": "operation",
+            "evidence": [],
+            "consumers": [
+              {
+                "kind": "studio",
+                "appId": "pack-inspection-hmi",
+                "signalId": "weight"
+              },
+              {
+                "kind": "mes",
+                "mappingId": "PACK-WEIGHT"
+              }
+            ],
+            "sectionId": "fill-inspect",
+            "stationIds": [],
+            "operationId": "OP-CHECK",
+            "capabilities": [],
+            "operatorRole": "Inspection operator",
+            "participation": "all",
+            "expectedSeconds": 0,
+            "completionSignal": "inspection_weight",
+            "waitTimeoutSeconds": null,
+            "engineeringStationIds": [
+              "CHECK",
+              "FILL"
+            ]
+          },
+          {
+            "id": "done",
+            "name": "Complete",
+            "outcome": "complete",
+            "evidence": [],
+            "sectionId": "fill-inspect",
+            "stationIds": [],
+            "capabilities": [],
+            "expectedSeconds": 0,
+            "waitTimeoutSeconds": null
+          },
+          {
+            "id": "hold",
+            "name": "Hold for inspection",
+            "outcome": "failed",
+            "evidence": [],
+            "sectionId": "fill-inspect",
+            "stationIds": [],
+            "capabilities": [],
+            "expectedSeconds": 0,
+            "waitTimeoutSeconds": null
+          }
+        ],
+        "lineId": "PACK-A",
+        "recipe": null,
+        "product": null,
+        "sections": [
+          {
+            "id": "fill-inspect",
+            "name": "Fill and inspect"
+          }
+        ],
+        "transitions": [
+          {
+            "to": "dose",
+            "from": "load",
+            "outcome": "success",
+            "condition": null,
+            "maxAttempts": null
+          },
+          {
+            "to": "weigh",
+            "from": "dose",
+            "outcome": "success",
+            "condition": null,
+            "maxAttempts": null
+          },
+          {
+            "to": "done",
+            "from": "weigh",
+            "outcome": "success",
+            "condition": null,
+            "maxAttempts": null
+          },
+          {
+            "to": "hold",
+            "from": "load",
+            "outcome": "failure",
+            "condition": null,
+            "maxAttempts": null
+          },
+          {
+            "to": "hold",
+            "from": "dose",
+            "outcome": "failure",
+            "condition": null,
+            "maxAttempts": null
+          },
+          {
+            "to": "hold",
+            "from": "weigh",
+            "outcome": "failure",
+            "condition": null,
+            "maxAttempts": null
+          }
+        ]
+      }
+    ]
+  }
+}

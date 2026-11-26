@@ -15,3 +15,21 @@ it('out of order events are diagnosed',()=>{expect(acceptSequence([],1,{id:'even
 it('sessions retain original release',()=>{const s=pinSession('r3');expect(Object.isFrozen(s)).toBe(true);expect(s.release).toBe('r3');});
 it('unbounded waits fail validation',()=>{const m=makeModel();const s=m.steps[0];if(!s)throw Error('missing');s.timeout=0;expect(validateModel(m).some(i=>i.message==='Unbounded wait')).toBe(true);});
 });
+
+import {appWorkflow,setAppWorkflow,modelSchema} from './model';
+
+it('keeps authored steps and weight settings on the selected application across revision parsing',()=>{
+ const original=makeModel();
+ const legacy=appWorkflow(original,'APP-INTAKE');
+ const second={...appWorkflow(original,'second'),steps:[{id:'weigh',label:'Weigh',kind:'Weigh',signal:'',timeout:30,failure:true,evidence:true,weightTarget:2.5,weightTolerance:0.1}]};
+ const saved=modelSchema.parse(setAppWorkflow(original,'second',second));
+ expect(appWorkflow(saved,'APP-INTAKE')).toEqual(legacy);
+ expect(appWorkflow(saved,'second')).toEqual(second);
+ expect(appWorkflow(saved,'third').steps).toEqual([]);
+});
+it('validates scale and challenge requirements by station capability when station IDs change',()=>{
+ const model=makeModel();model.stations=model.stations.map(s=>({...s,id:'new-'+s.id}));
+ const issues=validateModel(model);
+ expect(issues.find(i=>i.message==='Scale binding missing')?.object).toBe('new-ST-101');
+ expect(issues.find(i=>i.message==='CCP challenge workflow unassigned')?.object).toBe('new-ST-104');
+});

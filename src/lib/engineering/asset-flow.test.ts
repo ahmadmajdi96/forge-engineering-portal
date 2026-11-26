@@ -11,7 +11,7 @@ describe('Asset engineering flow', () => {
   });
   it('calculates line design metrics from current components rather than fixed values', () => {
     const model = makeModel();
-    expect(lineDesignMetrics(model)).toEqual({steps: 8, stations: 6, manual: 2, automatic: 4, unassigned: 0, missingApps: 0});
+    expect(lineDesignMetrics(model)).toEqual({steps: 8, stations: 6, manual: 2, automatic: 4, semiAutomatic: 0, unassigned: 0, missingApps: 0});
     model.stations = model.stations.filter(station => station.id !== 'ST-101');
     expect(lineDesignMetrics(model).stations).toBe(5);
     expect(lineDesignMetrics(model).unassigned).toBe(1);

@@ -1,0 +1,100 @@
+/* EMS viewer presentation only. Canvas surfaces and application theme remain untouched. */
+.ems-layout-page {
+  --ems-panel-border: color-mix(in oklab, var(--border) 72%, transparent);
+  --ems-panel-surface: color-mix(in oklab, var(--card) 94%, var(--background));
+  --ems-row-surface: color-mix(in oklab, var(--muted) 58%, transparent);
+
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  color: var(--foreground);
+}
+
+.ems-layout-page #layout-library,
+.ems-layout-page #layout-properties {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  align-self: start;
+  gap: 0.875rem;
+  padding: 0;
+  border-color: var(--ems-panel-border);
+}
+
+.ems-layout-page #layout-library.rounded-lg.border.bg-card,
+.ems-layout-page #layout-properties.rounded-lg.border.bg-card,
+.ems-layout-page #layout-library .rounded-lg.border.bg-card,
+.ems-layout-page #layout-properties .rounded-lg.border.bg-card {
+  min-width: 0;
+  border-color: var(--ems-panel-border);
+  background-color: var(--ems-panel-surface);
+  box-shadow: 0 1px 2px color-mix(in oklab, var(--foreground) 4%, transparent);
+}
+
+.ems-layout-page #layout-library .rounded-lg.border.bg-card,
+.ems-layout-page #layout-properties .rounded-lg.border.bg-card {
+  padding: 0.875rem;
+}
+
+.ems-layout-page :is(#layout-library, #layout-properties) h2 {
+  color: var(--foreground);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+.ems-layout-page :is(#layout-library, #layout-properties) h3 {
+  color: var(--foreground);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.ems-layout-page :is(#layout-library, #layout-properties) :is(p, label) {
+  line-height: 1.5;
+}
+
+.ems-layout-page #layout-library :is([draggable="true"], [role="option"], [data-component-item]) {
+  min-width: 0;
+  min-height: 2.75rem;
+  gap: 0.625rem;
+  padding: 0.625rem 0.75rem;
+  border-color: var(--ems-panel-border);
+  border-radius: var(--radius-md);
+  line-height: 1.45;
+}
+
+.ems-layout-page #layout-library :is([draggable="true"], [role="option"], [data-component-item]):hover {
+  background-color: var(--ems-row-surface);
+}
+
+.ems-layout-page #layout-properties :is(input, select, textarea) {
+  max-width: 100%;
+  min-height: 2.5rem;
+  line-height: 1.4;
+}
+
+.ems-layout-page #layout-properties textarea {
+  min-height: 5rem;
+}
+
+.ems-layout-page
+  :is(a, button, input, select, textarea, [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+@media (max-width: 767px) {
+  .ems-layout-page #layout-library,
+  .ems-layout-page #layout-properties,
+  .ems-layout-page #layout-library .rounded-lg.border.bg-card,
+  .ems-layout-page #layout-properties .rounded-lg.border.bg-card {
+    padding: 0.75rem;
+  }
+
+  .ems-layout-page #layout-library :is([draggable="true"], [role="option"], [data-component-item]) {
+    min-height: 2.5rem;
+    padding: 0.5rem 0.625rem;
+  }
+}

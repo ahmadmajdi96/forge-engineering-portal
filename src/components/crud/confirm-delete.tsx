@@ -29,7 +29,7 @@ export function ConfirmDelete({
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
         {trigger ?? (
-          <button className="grid h-8 w-8 place-items-center rounded-lg border border-border/60 bg-card/60 text-muted-foreground hover:text-destructive hover:border-destructive/40">
+          <button type="button" aria-label={label} className="grid h-8 w-8 place-items-center rounded-lg border border-border/60 bg-card/60 text-muted-foreground hover:text-destructive hover:border-destructive/40">
             <Trash2 className="h-3.5 w-3.5" />
           </button>
         )}
@@ -43,10 +43,15 @@ export function ConfirmDelete({
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            onClick={() => {
-              onConfirm();
-              toast.success(`${label.replace("Delete ", "")} deleted`);
-              setOpen(false);
+            onClick={event => {
+              event.preventDefault();
+              try {
+                onConfirm();
+                toast.success(label.startsWith("Archive ") ? `${label.slice(8)} archived in draft` : `${label.replace("Delete ", "")} deleted`);
+                setOpen(false);
+              } catch (error) {
+                toast.error(error instanceof Error ? error.message : "The change could not be completed.");
+              }
             }}
           >
             {label}

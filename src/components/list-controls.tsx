@@ -8,6 +8,7 @@ type Opts<T> = {
   searchKeys?: (keyof T)[];
   /** Field holding the created/recorded time. */
   dateKey?: keyof T;
+  scopeKey?: string;
   /** File name for exports. */
   exportName?: string;
 };
@@ -73,10 +74,11 @@ export function useListControls<T extends object>(rows: T[], opts: Opts<T> = {})
     });
   }, [rows, q, from, to, opts.dateKey, opts.searchKeys]);
 
-  useEffect(() => { setPage(0); }, [q, from, to, size, rows.length]);
+  useEffect(() => { setPage(0); }, [q, from, to, size, opts.scopeKey]);
 
   const pages = Math.max(1, Math.ceil(filtered.length / size));
   const cur = Math.min(page, pages - 1);
+  useEffect(() => { setPage(current => Math.min(current, pages - 1)); }, [pages]);
   const visible = filtered.slice(cur * size, cur * size + size);
 
   const quick = (ms: number | "today") => {

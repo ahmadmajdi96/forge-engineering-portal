@@ -23,3 +23,15 @@
 - [x] Integration outbox/inbox with PLMS & MES, signed acknowledgement receiver, system status page
 - [ ] Brief WP1–WP7, WP9 (revisioned resources, PLMS inbox, release/approve, RMS/QMS refs) — not started (budget)
 - [ ] Configure PLMS/MES/RMS/QMS URLs + API keys and INTEGRATION_WEBHOOK_SECRET — needs credentials
+
+## Native factory candidate
+
+- [x] Isolated scoped PostgreSQL workspaces with immutable revisions and audited revision conflicts
+- [x] Interactive 3D authoring and synchronized plan/elevation, layout imports and terminal context
+- [x] Revisioned Studio, validation and shared preview/kiosk runtime
+- [x] Signed fixture publication, persisted assignment resolution and isolated edge readback
+- [x] Native acknowledgement atomicity and database restore tested in isolation
+- [ ] Complete Docker daemon run and image gates in a Docker-enabled environment
+- [ ] Confirm EMS deployment target, HTTPS, AMS client, exact site/action grants and step-up
+- [ ] Migrate scoped historical actor/design records through an approved crosswalk
+- [ ] Complete line-level authorization, verified peer deployment adapters, live device lifecycle and physical commissioning

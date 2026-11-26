@@ -30,63 +30,61 @@ function stationFields(lines: { id: string; name: string }[], templates: { id: s
     { name: "name", label: "Name", type: "text", required: true },
     { name: "lineId", label: "Line", type: "select", required: true,
       options: lines.map((l) => ({ value: l.id, label: `${l.id} · ${l.name}` })) },
-    { name: "sequence", label: "Sequence # (same number = parallel in same step)", type: "number", required: true },
+    { name: "sequence", label: "Station display order", type: "number", required: true },
     { name: "type", label: "Type", type: "select", required: true, options: [
       { value: "manual", label: "Manual (operator)" },
       { value: "automatic", label: "Automatic (machine)" },
+      { value: "semi_auto", label: "Semi-automatic (operator and machine)" },
     ]},
-    { name: "status", label: "Status", type: "select", required: true, options: [
+    { name: "status", label: "Configured state", type: "select", required: true, options: [
       { value: "running", label: "running" },
       { value: "idle", label: "idle" },
       { value: "down", label: "down" },
       { value: "maintenance", label: "maintenance" },
     ]},
-    { name: "cycleTimeSec", label: "Cycle time (s)", type: "number" },
-    { name: "currentStep", label: "Current step", type: "text", span: 2 },
-    { name: "currentValue", label: "Current value", type: "text" },
+    { name: "cycleTimeSec", label: "Configured cycle time (s)", type: "number", min: 0 },
     { name: "target", label: "Target", type: "text" },
-    { name: "oee", label: "OEE %", type: "number" },
 
-    { name: "templateIds", label: "Step templates (select at least one)", type: "multiselect", span: 2,
-      section: "Step templates", required: true, minSelected: 1,
+    { name: "templateIds", label: "Step templates", type: "multiselect", span: 2,
+      section: "Step templates",
       options: templates.map((t) => ({ value: t.id, label: `${t.id} · ${t.name}` })) },
 
-    { name: "machine_model", label: "Machine model", type: "text", section: "Machine (automatic only)",
-      visibleWhen: { field: "type", equals: "automatic" } },
-    { name: "machine_vendor", label: "Vendor", type: "text", visibleWhen: { field: "type", equals: "automatic" } },
+    { name: "machine_model", label: "Machine model", type: "text", section: "Machine (machine-assisted stations)",
+      visibleWhen: { field: "type", equals: ["automatic", "semi_auto"] } },
+    { name: "machine_vendor", label: "Vendor", type: "text", visibleWhen: { field: "type", equals: ["automatic", "semi_auto"] } },
     { name: "machine_ipAddress", label: "IP address", type: "text", placeholder: "10.0.0.10",
-      visibleWhen: { field: "type", equals: "automatic" } },
+      visibleWhen: { field: "type", equals: ["automatic", "semi_auto"] } },
     { name: "machine_port", label: "Port", type: "number", placeholder: "4840",
-      visibleWhen: { field: "type", equals: "automatic" } },
+      visibleWhen: { field: "type", equals: ["automatic", "semi_auto"] } },
     { name: "machine_protocol", label: "Protocol", type: "select",
       options: protocols.map((p) => ({ value: p, label: p })),
-      visibleWhen: { field: "type", equals: "automatic" } },
-    { name: "machine_firmware", label: "Firmware", type: "text", visibleWhen: { field: "type", equals: "automatic" } },
+      visibleWhen: { field: "type", equals: ["automatic", "semi_auto"] } },
+    { name: "machine_firmware", label: "Firmware", type: "text", visibleWhen: { field: "type", equals: ["automatic", "semi_auto"] } },
     { name: "machine_receivedDataTypes", label: "Received data types", type: "textarea", span: 2,
       placeholder: "temp_c,pressure_bar,rpm,vibration",
-      visibleWhen: { field: "type", equals: "automatic" } },
+      visibleWhen: { field: "type", equals: ["automatic", "semi_auto"] } },
     { name: "machine_sentDataTypes", label: "Sent data types", type: "textarea", span: 2,
       placeholder: "setpoint_rpm,recipe_id,start,stop",
-      visibleWhen: { field: "type", equals: "automatic" } },
+      visibleWhen: { field: "type", equals: ["automatic", "semi_auto"] } },
 
     { name: "machine_outputKind", label: "Output kind", type: "select",
-      section: "Output (automatic only)",
+      section: "Output (machine-assisted stations)",
       options: [
         { value: "none", label: "No output" },
         { value: "text", label: "Text (e.g. PASS/FAIL, reading)" },
         { value: "file", label: "File (e.g. inspection image)" },
       ],
-      visibleWhen: { field: "type", equals: "automatic" } },
+      visibleWhen: { field: "type", equals: ["automatic", "semi_auto"] } },
     { name: "machine_outputLabel", label: "Output label / filename pattern", type: "text",
       placeholder: "inspection_{lot}.png",
-      visibleWhen: { field: "type", equals: "automatic" } },
+      visibleWhen: { field: "type", equals: ["automatic", "semi_auto"] } },
     { name: "machine_outputProtocol", label: "Decision protocol", type: "select",
       options: protocols.map((p) => ({ value: p, label: p })),
-      visibleWhen: { field: "type", equals: "automatic" } },
+      visibleWhen: { field: "type", equals: ["automatic", "semi_auto"] } },
     { name: "machine_acceptCommand", label: "Accept command", type: "text", placeholder: "ACK / PASS",
-      visibleWhen: { field: "type", equals: "automatic" } },
+      visibleWhen: { field: "type", equals: ["automatic", "semi_auto"] } },
     { name: "machine_rejectCommand", label: "Reject command", type: "text", placeholder: "NAK / REJECT",
-      visibleWhen: { field: "type", equals: "automatic" } },
+      visibleWhen: { field: "type", equals: ["automatic", "semi_auto"] } },
   ];
 }
 
@@ -125,7 +123,7 @@ export function fromFlatStation(v: any): Station {
     oee: Number(v.oee) || 0,
     templateIds: Array.isArray(v.templateIds) ? v.templateIds : [],
   };
-  if (v.type === "automatic") {
+  if (v.type !== "manual" && (v.machine_model || v.machine_vendor || v.machine_ipAddress)) {
     base.machine = {
       model: v.machine_model,
       vendor: v.machine_vendor,
@@ -147,7 +145,6 @@ export function fromFlatStation(v: any): Station {
 
 function StationsPage() {
   const store = useMes();
-  const [q, setQ] = useState("");
   const [lineFilter, setLineFilter] = useState<"all" | string>("all");
   const [typeFilter, setTypeFilter] = useState<"all" | StationType>("all");
 
@@ -157,18 +154,8 @@ function StationsPage() {
     return store.stations
       .filter((s) => (lineFilter === "all" ? true : s.lineId === lineFilter))
       .filter((s) => (typeFilter === "all" ? true : s.type === typeFilter))
-      .filter((s) => {
-        if (!q) return true;
-        const t = q.toLowerCase();
-        return (
-          s.name.toLowerCase().includes(t) ||
-          s.id.toLowerCase().includes(t) ||
-          (s.machine?.vendor.toLowerCase().includes(t) ?? false) ||
-          (s.machine?.model.toLowerCase().includes(t) ?? false)
-        );
-      })
       .sort((a, b) => a.lineId.localeCompare(b.lineId) || a.sequence - b.sequence);
-  }, [store.stations, q, lineFilter, typeFilter]);
+  }, [store.stations, lineFilter, typeFilter]);
 
   const counts = {
     total: store.stations.length,
@@ -177,7 +164,7 @@ function StationsPage() {
     down: store.stations.filter((s) => s.status === "down").length,
   };
 
-  const lc = useListControls(filtered, { exportName: "stations", dateKey: "updated_at" as never });
+  const lc = useListControls(filtered, { exportName: "stations", scopeKey: JSON.stringify([lineFilter,typeFilter]), searchKeys:["name","id","lineId","type","machine"] });
   return (
     <div className="space-y-6">
       <AssetPageLinks/>
@@ -186,7 +173,7 @@ function StationsPage() {
         <div>
           <h1 className="font-display text-2xl font-semibold tracking-tight">Stations</h1>
           <p className="text-sm text-muted-foreground">
-            {counts.total} stations · {counts.automatic} automatic · {counts.manual} manual · {counts.down} down
+            {counts.total} stations · {counts.automatic} automatic · {counts.manual} manual · {counts.total - counts.automatic - counts.manual} semi-automatic
           </p>
         </div>
         <EntityFormDialog<Station>
@@ -203,16 +190,8 @@ function StationsPage() {
       </div>
 
       <div className="glass-panel flex flex-wrap items-center gap-2 rounded-2xl p-3">
-        <div className="relative flex-1 min-w-[220px]">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search id, name, machine vendor or model…"
-            className="h-9 w-full rounded-lg border border-border/60 bg-card/60 pl-8 pr-3 text-sm focus:border-primary/50 focus:outline-none"
-          />
-        </div>
         <select
+          aria-label="Filter stations by line"
           value={lineFilter}
           onChange={(e) => setLineFilter(e.target.value)}
           className="h-9 rounded-lg border border-border/60 bg-card/60 px-2 text-xs"
@@ -221,7 +200,7 @@ function StationsPage() {
           {store.lines.map((l) => <option key={l.id} value={l.id}>{l.id} · {l.name}</option>)}
         </select>
         <div className="flex gap-1">
-          {(["all", "automatic", "manual"] as const).map((t) => (
+          {(["all", "automatic", "manual", "semi_auto"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTypeFilter(t)}
@@ -229,7 +208,7 @@ function StationsPage() {
                 typeFilter === t ? "border-primary/50 bg-primary/15 text-primary" : "border-border/60 bg-card/60 text-muted-foreground hover:text-foreground"
               }`}
             >
-              {t}
+              {t === "semi_auto" ? "Semi-automatic" : t}
             </button>
           ))}
         </div>
@@ -243,18 +222,15 @@ function StationsPage() {
                 <th className="px-4 py-3 text-left font-medium">Station</th>
                 <th className="px-4 py-3 text-left font-medium">Line</th>
                 <th className="px-4 py-3 text-left font-medium">Type</th>
-                <th className="px-4 py-3 text-left font-medium">Status</th>
+                <th className="px-4 py-3 text-left font-medium">Configured state</th>
                 <th className="px-4 py-3 text-left font-medium">Machine</th>
                 <th className="px-4 py-3 text-left font-medium">Comms</th>
-                <th className="px-4 py-3 text-left font-medium">Operator</th>
                 <th className="px-4 py-3 text-right font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
               {lc.visible.map((s) => {
                 const line = store.lines.find((l) => l.id === s.lineId);
-                const asmt = store.assignments.find((a) => a.active && a.targetType === "station" && a.targetId === s.id);
-                const op = asmt ? store.users.find((u) => u.id === asmt.userId) : undefined;
                 const dot =
                   s.status === "running" ? "bg-success animate-pulse"
                   : s.status === "down" ? "bg-destructive"
@@ -263,14 +239,14 @@ function StationsPage() {
                 return (
                   <tr key={s.id} className="border-t border-border/40 hover:bg-card/40">
                     <td className="px-4 py-3">
-                      <Link to="/stations/$stationId" params={{ stationId: s.id }} className="font-medium hover:text-primary">
+                      <Link to="/stations/$stationId" params={{ stationId: s.id }} search={p=>({...p,engLine:s.lineId,engStation:s.id})} className="font-medium hover:text-primary">
                         {s.name}
                       </Link>
                       <div className="font-mono text-[10px] text-muted-foreground">{s.id} · seq {s.sequence}</div>
                     </td>
                     <td className="px-4 py-3 text-xs">
                       {line ? (
-                        <Link to="/lines/$lineId" params={{ lineId: line.id }} className="hover:text-primary">
+                        <Link to="/lines/$lineId" params={{ lineId: line.id }} search={(p) => ({ ...p, engLine: line.id, engStation: s.id, engAsset: undefined })} className="hover:text-primary">
                           {line.name}
                         </Link>
                       ) : s.lineId}
@@ -305,16 +281,11 @@ function StationsPage() {
                         </div>
                       ) : <span className="text-muted-foreground">—</span>}
                     </td>
-                    <td className="px-4 py-3 text-xs">
-                      {op ? (
-                        <span className="hover:text-primary">{op.name}</span>
-                      ) : <span className="text-warning">unassigned</span>}
-                    </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-1.5">
                         <Link
                           to="/stations/$stationId"
-                          params={{ stationId: s.id }}
+                          params={{ stationId: s.id }} search={p=>({...p,engLine:s.lineId,engStation:s.id})}
                           className="inline-flex h-8 items-center gap-1 rounded-lg border border-primary/30 bg-primary/10 px-2 text-[11px] text-primary hover:bg-primary/20"
                         >
                           Profile <ArrowRight className="h-3 w-3" />
@@ -337,14 +308,14 @@ function StationsPage() {
                             </button>
                           }
                         />
-                        <ConfirmDelete label={`Delete ${s.id}`} onConfirm={() => store.deleteStation(s.id)} />
+                        <ConfirmDelete label={`Archive ${s.id}`} description="This station will leave the active registry. Hardware, application and process dependencies must be reassigned first. The station identity and its saved history are retained." onConfirm={() => store.deleteStation(s.id)} />
                       </div>
                     </td>
                   </tr>
                 );
               })}
-              {filtered.length === 0 && (
-                <tr><td colSpan={8} className="px-4 py-10 text-center text-sm text-muted-foreground">No stations match those filters.</td></tr>
+              {lc.filtered.length === 0 && (
+                <tr><td colSpan={7} className="px-4 py-10 text-center text-sm text-muted-foreground">No stations match those filters.</td></tr>
               )}
             </tbody>
           </table>

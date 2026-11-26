@@ -1,0 +1,40 @@
+{
+  "workspace": "Factory layout",
+  "cpu": "Intel Core i5-10300H at 2.50 GHz, four cores and eight logical processors",
+  "browser": "Headless Chromium, ANGLE SwiftShader WebGL 2",
+  "viewport": {
+    "width": 1280,
+    "height": 800
+  },
+  "scenario": "One procedural template on a single floor. The Three.js canvas and both selectable SVG projections mount together. First draw includes renderer initialization. Orbit measurements use 25 pointer steps. Domain validation is the median of ten warmed schema, relationship and geometry checks.",
+  "measurements": [
+    {
+      "placements": 30,
+      "serializedBytes": 16550,
+      "firstInstancedDrawMs": 167.6,
+      "orbitP95FrameMs": 16.8,
+      "orbitDraws": 25,
+      "heapMiB": 12.5,
+      "medianValidationMs": 1.31
+    },
+    {
+      "placements": 450,
+      "serializedBytes": 198548,
+      "firstInstancedDrawMs": 121.6,
+      "orbitP95FrameMs": 16.8,
+      "orbitDraws": 25,
+      "heapMiB": 13.5,
+      "medianValidationMs": 5.89
+    },
+    {
+      "placements": 1800,
+      "serializedBytes": 784550,
+      "firstInstancedDrawMs": 237.5,
+      "orbitP95FrameMs": 16.7,
+      "orbitDraws": 25,
+      "heapMiB": 17.5,
+      "medianValidationMs": 28.18
+    }
+  ],
+  "limitations": "Procedural geometry, one floor, no connections, no imported CAD or textured models. The measurements exclude database and network time. Other CPU load affected earlier cold-start samples. Device and physical GPU results require separate measurement."
+}

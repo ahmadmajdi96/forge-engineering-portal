@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EMS v2 publication acknowledgement",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "consumer", "acknowledgement_id", "event_id", "release_id", "site", "content_hash", "decision"],
+  "properties": {
+    "version": { "const": 2 },
+    "consumer": { "enum": ["PLMS", "MES", "RMS", "QMS", "APS", "OMS", "WMS", "CMMS"] },
+    "acknowledgement_id": { "type": "string", "format": "uuid" },
+    "event_id": { "type": "string", "format": "uuid" },
+    "release_id": { "type": "string", "format": "uuid" },
+    "site": { "type": "string", "pattern": "^[a-z][a-z0-9-]{1,63}$" },
+    "content_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "decision": { "enum": ["accepted", "rejected"] },
+    "reason": { "type": "string", "maxLength": 500 }
+  }
+}

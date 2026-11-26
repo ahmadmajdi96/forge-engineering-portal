@@ -1,0 +1,58 @@
+.ems-nav-tools {
+  margin: 2px 0 8px;
+  border-top: 1px solid var(--sidebar-border);
+}
+.ems-nav-tools > summary {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  padding: 8px 10px 6px;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  list-style-position: inside;
+}
+.ems-nav-tools > summary:hover {
+  color: var(--sidebar-foreground);
+}
+.ems-nav-tools > summary:focus-visible,
+.ems-asset-report-tabs button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.ems-nav-tools[open] > summary {
+  color: var(--primary);
+}
+.ems-asset-report-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-bottom: 12px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.ems-asset-report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+@media (max-width: 640px) {
+  .ems-asset-report-actions {
+    width: 100%;
+  }
+  .ems-asset-report-actions > * {
+    flex: 1;
+    justify-content: center;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ems-nav-tools *,
+  .ems-asset-reports * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

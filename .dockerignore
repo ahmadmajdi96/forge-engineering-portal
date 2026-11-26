@@ -6,3 +6,10 @@ dist
 .lovable
 *.log
 tsconfig.tsbuildinfo
+.env
+.env.*
+.ems/
+.envrc
+.dev.vars
+*.pem
+docs/launch/verification/

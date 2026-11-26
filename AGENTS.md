@@ -9,7 +9,7 @@
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
 
-- Access checks go through `checkAccess` server fn calling Command Access Hub with ACCESS_HUB_URL + ACCESS_HUB_API_KEY secrets — the key must never reach the browser.
+- Legacy Cloud sandbox access lookup uses `checkAccess`. Native factory requests require an opaque server session and current exact AMS action at the mapped site. Runtime credentials stay server-side.
 - Asset configuration collections/details use the canonical engineering asset projection and revision model; MES runtime previews remain in MesProvider so simulated operations never overwrite engineering definitions.
 - Copied MES runtime UI binds to `src/lib/mes-disconnected.ts` until a real MES integration is authorized and verified; unavailable writes must refuse rather than simulate operational success.
 - Role→module rules live in `src/lib/permissions.ts` (tested); hub "module:action" permissions override.
@@ -20,8 +20,11 @@
 - Reference-screen presentation lives in reference-ui, reference-assets and reference-process modules and reads engineering sandbox context; keep presentation-only edits separate from production authority and copied MES preview state.
 
 - Engineering design records are schema-validated revision payloads with stable IDs and archive semantics; snapshot saving preserves history and cannot confer MES acknowledgement, edge activation or approval authority.
-- Docker builds use vite.docker.config.ts (nitro node-server preset) via Dockerfile/docker-compose.yml; why: run anywhere with `docker compose up --build` without changing Lovable's Cloudflare build.
+- Docker builds the Nitro Node server with a frozen lock and private PostgreSQL, migrations and delivery worker. Preserve the Cloudflare Lovable build. Start local fixtures through `scripts/bootstrap-local.sh` and Compose.
 - Asset Engineering flow projects existing operation records as production steps and existing station identities as their assignments; why: organize the design journey without creating a second asset store or changing production authority.
 
 - Engineering workspace revisions contain line identities and station machine configuration; scoped selectors preserve unrelated line records, and equipment records project into station profiles so all asset/process pages share one draft authority.
-- Cross-system messages use integration_outbox/inbox: per-consumer delivery + business status, ack only via HMAC-signed /api/public/integrations/ack bound to content hash; why: spec §12, no faked acknowledgements.
+- Native partner delivery uses `ems.outbox` and `ems.inbox`. Acknowledge the exact published event through a per-peer signed callback transaction. Local fixtures have outbound publishers disabled.
+
+- Historical Drizzle SQL is canonical for the Cloud sandbox. Native migrations and checksums live in `database/migrations`. Never regenerate production SQL from the empty Drizzle schema.
+- Production release signing and assignments remain fail-closed while the live AMS step-up and quality-policy contracts are unverified. Maintain staged, active, and authenticated observation evidence separately. Physical devices and site commissioning require independent evidence.
